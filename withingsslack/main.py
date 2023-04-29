@@ -1,14 +1,15 @@
 from typing import Annotated
+
+import uvicorn
 from fastapi import Depends, FastAPI, Form, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-import uvicorn
 
 from withingsslack import database
 from withingsslack.database.connection import SessionLocal
-from withingsslack.services import withings
 from withingsslack.services import slack
-
+from withingsslack.services.withings import api as withings_api
+from withingsslack.services.withings import oauth as withings_oauth
 
 database.init()
 
@@ -26,7 +27,9 @@ app = FastAPI()
 
 @app.get("/v1/withings-authorization/{slack_alias}")
 def get_withings_authorization(slack_alias: str):
-    return RedirectResponse(url=withings.create_oauth_url(slack_alias=slack_alias))
+    return RedirectResponse(
+        url=withings_oauth.create_oauth_url(slack_alias=slack_alias)
+    )
 
 
 @app.head("/withings-oauth-webhook/")
@@ -36,8 +39,8 @@ def validate_withings_oauth_webhook():
 
 @app.get("/withings-oauth-webhook/")
 def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
-    user = withings.fetch_token(db=db, state=state, code=code)
-    withings.subscribe(user)
+    user = withings_oauth.fetch_token(db=db, state=state, code=code)
+    withings_api.subscribe(db, user)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -53,7 +56,7 @@ def withings_notification_webhook(
     enddate: Annotated[int, Form()],
     db: Session = Depends(get_db),
 ):
-    last_weight_data = withings.get_last_weight(
+    last_weight_data = withings_api.get_last_weight(
         db,
         userid=userid,
         startdate=startdate,
