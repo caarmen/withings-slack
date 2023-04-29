@@ -2,7 +2,7 @@ from typing import Annotated
 
 import uvicorn
 from fastapi import Depends, FastAPI, Form, Response, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
 from withingsslack import database
@@ -32,8 +32,8 @@ def get_withings_authorization(slack_alias: str):
     )
 
 
-@app.head("/withings-oauth-webhook/")
-def validate_withings_oauth_webhook():
+@app.head("/")
+def validate_callback_url():
     return Response()
 
 
@@ -41,12 +41,17 @@ def validate_withings_oauth_webhook():
 def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
     user = withings_oauth.fetch_token(db=db, state=state, code=code)
     withings_api.subscribe(db, user)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@app.head("/withings-notification-webhook/")
-def validate_withings_notification_webhook():
-    return Response()
+    html_content = """
+    <html>
+        <head>
+            <title>Login complete</title>
+        </head>
+        <body>
+            <h1>Congrats, login complete</h1>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 @app.post("/withings-notification-webhook/")
