@@ -46,7 +46,7 @@ def create_oauth_url(slack_alias: str) -> HttpUrl:
     url = "https://account.withings.com/oauth2_user/authorize2"
     query_params = {
         "client_id": settings.withings_client_id,
-        "redirect_uri": f"{settings.withings_callback_url}withings-oauth-webhook",
+        "redirect_uri": f"{settings.withings_callback_url}withings-oauth-webhook/",
         "response_type": "code",
         "scope": ",".join(settings.withings_oauth_scopes),
         "state": state,
@@ -65,7 +65,7 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
             "client_id": settings.withings_client_id,
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": f"{settings.withings_callback_url}withings-oauth-webhook",
+            "redirect_uri": f"{settings.withings_callback_url}withings-oauth-webhook/",
             **signing.sign_action("requesttoken"),
         },
     )
