@@ -10,13 +10,12 @@ Pushes messages to a pre-selected slack channel, when users log new weight data 
 
 ## Retrieve the docker image
 
-### Option 1: build the docker image from this repositor:
+Log into the [github container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
-docker build -t withings-slack .
-
-### Option 2: pull the docker image
-
+Retrieve the image:
+```
 docker pull ghcr.io/caarmen/withings-slack:latest
+```
 
 ## Run the docker image
 
@@ -25,7 +24,7 @@ Create a folder on the host where the database will be saved. This should match 
 Run the docker image. In this example, we save the database to the `/tmp/withingsslack/` folder on the host, and `DATABASE_PATH` has been set to `/tmp/withingsslack/users.db`.
 
 ```
-docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /tmp/withingsslack/:/tmp/withingsslack withings-slack
+docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /tmp/withingsslack/:/tmp/withingsslack ghcr.io/caarmen/withings-slack
 ```
 
 ## Using the application
