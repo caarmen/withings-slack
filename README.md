@@ -4,8 +4,8 @@ Pushes messages to a pre-selected slack channel, when users log new weight data 
 
 ## Configuration
 
-* Create an application in the Withings developer console
-* Create an application on Slack, with a webhook to post messages to a specific channel.
+* Create an application in the [Withings developer dashboard](https://developer.withings.com/dashboard/).
+* Create an application [on Slack](https://api.slack.com/apps), with a webhook to post messages to a specific channel.
 * Copy the `.env.template` file to `.env`, and modify the values.
 
 ## Retrieve the docker image
