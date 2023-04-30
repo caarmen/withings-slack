@@ -36,7 +36,17 @@ def get_withings_authorization(slack_alias: str):
 
 
 @app.head("/")
-def validate_callback_url():
+def validate_root():
+    return Response()
+
+
+@app.head("/withings-oauth-webhook/")
+def validate_oauth_webhook():
+    return Response()
+
+
+@app.head("/withings-notification-webhook/")
+def validate_notification_webhook():
     return Response()
 
 
