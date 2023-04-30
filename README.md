@@ -19,12 +19,12 @@ docker pull ghcr.io/caarmen/withings-slack:latest
 
 ## Run the docker image
 
-Create a folder on the host where the database will be saved. This should match what you put in `.env` for `DATABASE_PATH`.
+Create a folder on the host where the database will be saved: `/path/to/data/`.
 
-Run the docker image. In this example, we save the database to the `/tmp/withingsslack/` folder on the host, and `DATABASE_PATH` has been set to `/tmp/withingsslack/users.db`.
+Run the docker image.
 
 ```
-docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /tmp/withingsslack/:/tmp/withingsslack ghcr.io/caarmen/withings-slack
+docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /path/to/data/:/tmp/data ghcr.io/caarmen/withings-slack
 ```
 
 ## Using the application
@@ -47,6 +47,5 @@ curl --location 'http://your-server/withings-notification-webhook/' \
 
 You can find your userid in the database file:
 ```
-sqlite3 /path/to/database.db "select slack_alias, oauth_userid from users;"
+sqlite3 /path/to/withingsslack.db "select slack_alias, oauth_userid from users;"
 ```
-where `/path/to/database.db` matches `DATABASE_PATH` in `.env`.

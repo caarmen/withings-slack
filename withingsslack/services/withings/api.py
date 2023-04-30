@@ -12,6 +12,7 @@ from withingsslack.services.withings import requests
 
 
 def subscribe(db: Session, user: db_models.User):
+    callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = requests.post(
         db,
@@ -19,7 +20,7 @@ def subscribe(db: Session, user: db_models.User):
         url=f"{settings.withings_base_url}notify",
         data={
             "action": "subscribe",
-            "callbackurl": str(settings.withings_notification_callback_url),
+            "callbackurl": callbackurl,
             "appli": 1,
         },
     )
