@@ -1,4 +1,5 @@
 import datetime
+import logging
 from typing import Optional
 
 from sqlalchemy.orm import Session
@@ -22,7 +23,7 @@ def subscribe(db: Session, user: db_models.User):
             "appli": 1,
         },
     )
-    print(f"Subscription response: {response.json()}")
+    logging.info(f"Subscription response: {response.json()}")
 
 
 def get_last_weight(

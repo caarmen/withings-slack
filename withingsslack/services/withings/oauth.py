@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import logging
 import random
 import string
 from typing import Self
@@ -90,7 +91,7 @@ def get_access_token(db: Session, user: db_models.User) -> str:
 
 
 def refresh_token(db: Session, user: db_models.User) -> str:
-    print(f"Refreshing access token for {user.slack_alias}")
+    logging.info(f"Refreshing access token for {user.slack_alias}")
     response = requests.post(
         f"{settings.withings_base_url}v2/oauth2",
         data={

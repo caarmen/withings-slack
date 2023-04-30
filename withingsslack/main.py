@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 import uvicorn
@@ -12,6 +13,8 @@ from withingsslack.services.withings import api as withings_api
 from withingsslack.services.withings import oauth as withings_oauth
 
 database.init()
+
+logging.basicConfig(level=logging.INFO)
 
 
 def get_db():
