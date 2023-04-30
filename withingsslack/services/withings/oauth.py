@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from withingsslack.database import crud
 from withingsslack.database import models as db_models
 from withingsslack.settings import settings
+from withingsslack.services.withings import signing
 
 
 @dataclasses.dataclass
@@ -61,10 +62,10 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
         data={
             "action": "requesttoken",
             "client_id": settings.withings_client_id,
-            "client_secret": settings.withings_client_secret,
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": settings.withings_oauth_redirect_url,
+            **signing.sign_action("requesttoken"),
         },
     )
     response_data = response.json()["body"]
@@ -95,9 +96,9 @@ def refresh_token(db: Session, user: db_models.User) -> str:
         data={
             "action": "requesttoken",
             "client_id": settings.withings_client_id,
-            "client_secret": settings.withings_client_secret,
             "grant_type": "refresh_token",
             "refresh_token": user.oauth_refresh_token,
+            **signing.sign_action("requesttoken"),
         },
     )
     response_data = response.json()["body"]
