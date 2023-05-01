@@ -16,6 +16,7 @@ from withingsslack.services.withings import oauth as withings_oauth
 database.init()
 
 log_format = "%(asctime)s [%(name)-14s] %(levelname)-8s %(message)s"
+LOGGING_CONFIG["formatters"]["access"]["fmt"] = log_format
 LOGGING_CONFIG["formatters"]["default"]["fmt"] = log_format
 logging.basicConfig(
     format=log_format,
