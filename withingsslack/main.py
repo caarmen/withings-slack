@@ -2,6 +2,7 @@ import logging
 from typing import Annotated
 
 import uvicorn
+from uvicorn.config import LOGGING_CONFIG
 from fastapi import Depends, FastAPI, Form, Response, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
@@ -14,7 +15,12 @@ from withingsslack.services.withings import oauth as withings_oauth
 
 database.init()
 
-logging.basicConfig(level=logging.INFO)
+log_format = "%(asctime)s [%(name)-14s] %(levelname)-8s %(message)s"
+LOGGING_CONFIG["formatters"]["default"]["fmt"] = log_format
+logging.basicConfig(
+    format=log_format,
+    level=logging.INFO,
+)
 
 
 def get_db():
