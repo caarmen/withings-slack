@@ -2,26 +2,19 @@ import logging
 from typing import Annotated
 
 import uvicorn
-from uvicorn.config import LOGGING_CONFIG
 from fastapi import Depends, FastAPI, Form, Response, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
-from withingsslack import database
+from withingsslack import database, logger
 from withingsslack.database.connection import SessionLocal
 from withingsslack.services import slack
 from withingsslack.services.withings import api as withings_api
 from withingsslack.services.withings import oauth as withings_oauth
+from starlette.middleware import Middleware
+
 
 database.init()
-
-uvicorn_log_format = "%(asctime)s [%(name)-14s] %(levelprefix)s %(message)s"
-LOGGING_CONFIG["formatters"]["access"]["fmt"] = uvicorn_log_format
-LOGGING_CONFIG["formatters"]["default"]["fmt"] = uvicorn_log_format
-logging.basicConfig(
-    format="%(asctime)s [%(name)-14s] %(levelname)-9s %(message)s",
-    level=logging.INFO,
-)
 
 
 def get_db():
@@ -32,7 +25,9 @@ def get_db():
         db.close()
 
 
-app = FastAPI()
+app = FastAPI(
+    middleware=[Middleware(logger.LoggerMiddleware)],
+)
 
 
 @app.get("/v1/withings-authorization/{slack_alias}")
@@ -104,4 +99,9 @@ def withings_notification_webhook(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_config=logger.get_uvicorn_log_config(),
+    )
