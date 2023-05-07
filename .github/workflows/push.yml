@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: Create and archive a distribution
 
 on: [pull_request]
 
@@ -16,14 +16,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install -r requirements/prod.txt --upgrade pip
-          python -m pip install pex==2.1.136
-      - name: Package with pex
+          pip install pyinstaller==5.10.1
+      - name: Package with pyinstaller
         run: |
-          pex --sources-directory . $(pip freeze) -o slackwithings.pex
+          pyinstaller --onefile withingsslack/main.py
       - name: Archive
         uses: actions/upload-artifact@v3
         with:
-          name: slackwithings.pex
-          path: slackwithings.pex
+          name: main
+          path: dist/main
 
 
