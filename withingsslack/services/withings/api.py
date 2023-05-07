@@ -3,6 +3,7 @@ import logging
 from typing import Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 
 from withingsslack.database import crud
 from withingsslack.database import models as db_models
@@ -34,7 +35,11 @@ def get_last_weight(
     enddate: int,
 ) -> Optional[svc_models.WeightData]:
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
-    user = crud.get_user(db, oauth_userid=userid)
+    try:
+        user = crud.get_user(db, oauth_userid=userid)
+    except NoResultFound:
+        logging.info(f"get_last_weight: User {userid} unknown")
+        return None
     response = requests.post(
         db,
         user=user,
