@@ -74,6 +74,9 @@ def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db))
     return HTMLResponse(content=html_content, status_code=200)
 
 
+last_processed_notification_per_user = {}
+
+
 @app.post("/withings-notification-webhook/")
 def withings_notification_webhook(
     userid: Annotated[str, Form()],
@@ -81,14 +84,22 @@ def withings_notification_webhook(
     enddate: Annotated[int, Form()],
     db: Session = Depends(get_db),
 ):
-    last_weight_data = withings_api.get_last_weight(
-        db,
-        userid=userid,
-        startdate=startdate,
-        enddate=enddate,
+    logging.info(
+        "withings_notification_webhook: "
+        + f"userid={userid}, startdate={startdate}, enddate={enddate}"
     )
-    if last_weight_data:
-        slack.post_weight(last_weight_data)
+    if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
+        last_weight_data = withings_api.get_last_weight(
+            db,
+            userid=userid,
+            startdate=startdate,
+            enddate=enddate,
+        )
+        if last_weight_data:
+            slack.post_weight(last_weight_data)
+            last_processed_notification_per_user[userid] = (startdate, enddate)
+    else:
+        logging.info("Ignoring duplicate notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
