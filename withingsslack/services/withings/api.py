@@ -1,4 +1,3 @@
-import datetime
 import logging
 from typing import Optional
 
@@ -60,10 +59,8 @@ def get_last_weight(
         if measures:
             last_measure = measures[0]
             weight_kg = last_measure["value"] * pow(10, last_measure["unit"])
-            measure_date = datetime.datetime.fromtimestamp(last_measuregrp_item["date"])
             return svc_models.WeightData(
                 weight_kg=weight_kg,
-                date=measure_date,
                 slack_alias=user.slack_alias,
             )
     return None

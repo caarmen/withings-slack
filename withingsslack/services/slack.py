@@ -5,10 +5,9 @@ from withingsslack.settings import settings
 
 
 def post_weight(weight_data: WeightData):
-    date_str = weight_data.date.strftime("%a %d %b %Y, %H:%M")
     message = (
-        f"<@{weight_data.slack_alias}> weighed in at "
-        + f"{weight_data.weight_kg:.2f} kg on {date_str}."
+        f"New weight from <@{weight_data.slack_alias}>: "
+        + f"{weight_data.weight_kg:.2f} kg."
     )
     requests.post(
         url=settings.slack_webhook_url,
