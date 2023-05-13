@@ -72,12 +72,13 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     response_data = response.json()["body"]
     oauth_userid = response_data["userid"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.get_or_create_user(db, oauth_userid=oauth_userid)
+    user = crud.upsert_user(
+        db, oauth_userid=oauth_userid, data={"slack_alias": slack_alias}
+    )
     crud.update_user(
         db,
         user=user,
         data={
-            "slack_alias": slack_alias,
             **dataclasses.asdict(oauth_fields),
         },
     )

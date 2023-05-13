@@ -8,11 +8,12 @@ def get_user(db: Session, oauth_userid: str) -> models.User:
     return db.query(models.User).filter(models.User.oauth_userid == oauth_userid).one()
 
 
-def get_or_create_user(db: Session, oauth_userid: str) -> models.User:
+def upsert_user(db: Session, oauth_userid: str, data: dict) -> models.User:
     try:
-        return get_user(db, oauth_userid=oauth_userid)
+        user = get_user(db, oauth_userid=oauth_userid)
+        return update_user(db, user, data)
     except NoResultFound:
-        return create_user(db, models.User(oauth_userid=oauth_userid))
+        return create_user(db, models.User(oauth_userid=oauth_userid, **data))
 
 
 def create_user(db: Session, user: models.User) -> models.User:
