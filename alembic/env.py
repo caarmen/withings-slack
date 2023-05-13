@@ -5,7 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from withingsslack import database
+from withingsslack.database import models as db_models
+from withingsslack.database.connection import connection_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,7 +21,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = database.models.Base.metadata
+target_metadata = db_models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -40,7 +41,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = database.connection.connection_url
+    url = connection_url
 
     context.configure(
         url=url,
@@ -61,7 +62,7 @@ def run_migrations_online() -> None:
 
     """
     config_dict = config.get_section(config.config_ini_section, {})
-    db_connection_dict = {"sqlalchemy.url": database.connection.connection_url}
+    db_connection_dict = {"sqlalchemy.url": connection_url}
 
     connectable = engine_from_config(
         {**config_dict, **db_connection_dict},

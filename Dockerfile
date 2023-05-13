@@ -8,4 +8,4 @@ RUN pip install -r requirements.txt
 
 COPY withingsslack withingsslack
 
-CMD python -m withingsslack.main
+CMD alembic upgrade head && python -m withingsslack.main
