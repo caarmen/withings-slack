@@ -50,7 +50,9 @@ You can find your userid in the database file:
 sqlite3 -header -column /path/to/withingsslack.db \
   "select
      slack_alias,
-     withings_users.oauth_userid as withings_userid
+     withings_users.oauth_userid as withings_userid,
+     fitbit_users.oauth_userid as fitbit_userid
   from users
     left outer join withings_users on users.id = withings_users.user_id
+    left outer join fitbit_users on users.id = fitbit_users.user_id;"
 ```

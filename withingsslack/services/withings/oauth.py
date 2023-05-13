@@ -93,7 +93,7 @@ def get_access_token(db: Session, user: db_models.User) -> str:
 
 
 def refresh_token(db: Session, user: db_models.User) -> str:
-    logging.info(f"Refreshing access token for {user.slack_alias}")
+    logging.info(f"Refreshing withings access token for {user.slack_alias}")
     response = requests.post(
         f"{settings.withings_base_url}v2/oauth2",
         data={
