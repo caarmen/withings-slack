@@ -35,7 +35,7 @@ def get_last_weight(
 ) -> Optional[svc_models.WeightData]:
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
     try:
-        user = crud.get_user(db, oauth_userid=userid)
+        user = crud.get_user(db, withings_oauth_userid=userid)
     except NoResultFound:
         logging.info(f"get_last_weight: User {userid} unknown")
         return None
