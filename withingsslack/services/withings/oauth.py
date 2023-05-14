@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from withingsslack.database import crud
 from withingsslack.database import models as db_models
+from withingsslack.services.exceptions import UserLoggedOutException
 from withingsslack.settings import settings
 from withingsslack.services.withings import signing
 
@@ -84,6 +85,10 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
 
 
 def get_access_token(db: Session, user: db_models.User) -> str:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     if (
         not user.withings.oauth_expiration_date
         or user.withings.oauth_expiration_date < datetime.datetime.utcnow()
@@ -93,6 +98,10 @@ def get_access_token(db: Session, user: db_models.User) -> str:
 
 
 def refresh_token(db: Session, user: db_models.User) -> str:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     logging.info(f"Refreshing withings access token for {user.slack_alias}")
     response = requests.post(
         f"{settings.withings_base_url}v2/oauth2",
@@ -104,8 +113,11 @@ def refresh_token(db: Session, user: db_models.User) -> str:
             **signing.sign_action("requesttoken"),
         },
     )
-    response_data = response.json()["body"]
-    oauth_fields = OauthFields.parse_response_data(response_data)
+
+    response_data = response.json()
+    if response_data["status"] != 200:
+        raise UserLoggedOutException
+    oauth_fields = OauthFields.parse_response_data(response_data["body"])
     user = crud.update_user(
         db,
         user=user,

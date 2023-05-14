@@ -8,6 +8,7 @@ import string
 from typing import Optional, Self
 
 import requests
+from withingsslack.services.exceptions import UserLoggedOutException
 from withingsslack.settings import settings
 from pydantic import HttpUrl
 from urllib.parse import urlencode
@@ -109,6 +110,10 @@ def fetch_token(db: Session, code: str, state: str) -> db_models.User:
 
 
 def get_access_token(db: Session, user: db_models.User) -> str:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     if (
         not user.fitbit.oauth_expiration_date
         or user.fitbit.oauth_expiration_date < datetime.datetime.utcnow()
@@ -118,6 +123,10 @@ def get_access_token(db: Session, user: db_models.User) -> str:
 
 
 def refresh_token(db: Session, user: db_models.User) -> str:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     logging.info(f"Refreshing fitbit access token for {user.slack_alias}")
     response = requests.post(
         f"{settings.fitbit_base_url}oauth2/token",
@@ -129,6 +138,8 @@ def refresh_token(db: Session, user: db_models.User) -> str:
         },
     )
     response_data = response.json()
+    if response.status_code != 200:
+        raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data)
     user = crud.update_user(
         db,

@@ -33,6 +33,10 @@ def get_last_weight(
     startdate: int,
     enddate: int,
 ) -> Optional[svc_models.WeightData]:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
     try:
         user = crud.get_user(db, withings_oauth_userid=userid)
