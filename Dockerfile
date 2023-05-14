@@ -7,5 +7,7 @@ COPY requirements/prod.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY withingsslack withingsslack
+COPY alembic.ini alembic.ini
+COPY alembic alembic
 
 CMD alembic upgrade head && python -m withingsslack.main
