@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     withings_client_secret: str
     withings_client_id: str
     withings_callback_url: AnyHttpUrl
+    fitbit_base_url: str = "https://api.fitbit.com/"
+    fitbit_oauth_scopes: list[str] = ["sleep"]
+    fitbit_client_id: str
+    fitbit_client_secret: str
+    fitbit_poll_interval_s: int = 3600
     slack_webhook_url: HttpUrl
 
     class Config:

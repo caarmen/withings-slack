@@ -24,7 +24,7 @@ def subscribe(db: Session, user: db_models.User):
             "appli": 1,
         },
     )
-    logging.info(f"Subscription response: {response.json()}")
+    logging.info(f"Withings subscription response: {response.json()}")
 
 
 def get_last_weight(
