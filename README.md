@@ -2,15 +2,15 @@
 
 Pushes messages to a pre-selected slack channel, when users log new weight data in Withings.
 
-![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/withings-slack/check.yml)
-![GitHub](https://img.shields.io/github/license/caarmen/withings-slack)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/caarmen/withings-slack)
+[![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/withings-slack/check.yml)](https://github.com/caarmen/withings-slack/actions/workflows/check.yml?query=branch%3Amain)
+[![GitHub](https://img.shields.io/github/license/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/releases)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/caarmen/withings-slack)
+[![GitHub repo size](https://img.shields.io/github/repo-size/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/archive/refs/heads/main.zip)
 ![GitHub language count](https://img.shields.io/github/languages/count/caarmen/withings-slack)
-![GitHub Release Date](https://img.shields.io/github/release-date/caarmen/withings-slack)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/caarmen/withings-slack)
-![GitHub last commit](https://img.shields.io/github/last-commit/caarmen/withings-slack)
+[![GitHub Release Date](https://img.shields.io/github/release-date/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/releases)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
+[![GitHub last commit](https://img.shields.io/github/last-commit/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/caarmen/withings-slack?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/caarmen/withings-slack?style=social)
