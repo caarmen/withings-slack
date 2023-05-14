@@ -1,4 +1,4 @@
-for project in withingsslack alembic
+for project in withingsslack alembic tests
 do
   black $project
   ruff check $project

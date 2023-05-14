@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 from sqlalchemy.orm import Session
 import datetime
-from withingsslack.services.fitbit import requests
+from withingsslack.services.fitbit import requests, parser
 from sqlalchemy.exc import NoResultFound
 from withingsslack.database import crud
 from withingsslack.services import models as svc_models
@@ -36,14 +36,4 @@ def get_sleep(
         user=user,
         url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/{when_str}.json",
     )
-    summary = response.json()["summary"]
-    if "stages" not in summary:
-        return None
-    return svc_models.SleepData(
-        total_sleep_minutes=summary["totalMinutesAsleep"],
-        deep_minutes=summary["stages"]["deep"],
-        light_minutes=summary["stages"]["light"],
-        rem_minutes=summary["stages"]["rem"],
-        wake_minutes=summary["stages"]["wake"],
-        slack_alias=user.slack_alias,
-    )
+    return parser.parse_sleep(response.content, slack_alias=user.slack_alias)
