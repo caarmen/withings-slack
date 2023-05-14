@@ -1,11 +1,11 @@
-name: PR check
+name: Code check
 on:
   pull_request:
   push:
       branches:
         - main
 jobs:
-  PR:
+  Check:
     runs-on: ubuntu-latest
     permissions:
       checks: write
