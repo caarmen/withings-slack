@@ -24,6 +24,10 @@ def get_sleep(
     userid: str,
     when: datetime.date,
 ) -> Optional[svc_models.WeightData]:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     logging.info(f"get_sleep for user {userid}")
     try:
         user = crud.get_user(db, fitbit_oauth_userid=userid)

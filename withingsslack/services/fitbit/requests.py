@@ -14,6 +14,8 @@ def request(
 ) -> requests.Response:
     """
     Execute a request, and retry with a refreshed access token if we get a 401.
+    :raises:
+        UserLoggedOutException if the refresh token request fails
     """
     oauth_access_token = oauth.get_access_token(db, user=user)
     headers = {
@@ -32,6 +34,10 @@ def get(
     url: str,
     retry_count=1,
 ) -> requests.Response:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     return request(db, user, "get", url, retry_count)
 
 
@@ -41,4 +47,8 @@ def post(
     url: str,
     retry_count=1,
 ) -> requests.Response:
+    """
+    :raises:
+        UserLoggedOutException if the refresh token request fails
+    """
     return request(db, user, "post", url, retry_count)

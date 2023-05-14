@@ -9,8 +9,10 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from withingsslack import logger, scheduler
+from withingsslack.database import crud
 from withingsslack.database.connection import SessionLocal
 from withingsslack.services import slack
+from withingsslack.services.exceptions import UserLoggedOutException
 from withingsslack.services.withings import api as withings_api
 from withingsslack.services.fitbit import api as fitbit_api
 from withingsslack.services.withings import oauth as withings_oauth
@@ -135,15 +137,23 @@ def withings_notification_webhook(
         + f"userid={userid}, startdate={startdate}, enddate={enddate}"
     )
     if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
-        last_weight_data = withings_api.get_last_weight(
-            db,
-            userid=userid,
-            startdate=startdate,
-            enddate=enddate,
-        )
-        if last_weight_data:
-            slack.post_weight(last_weight_data)
-            last_processed_notification_per_user[userid] = (startdate, enddate)
+        try:
+            last_weight_data = withings_api.get_last_weight(
+                db,
+                userid=userid,
+                startdate=startdate,
+                enddate=enddate,
+            )
+        except UserLoggedOutException:
+            user = crud.get_user(db, withings_oauth_userid=userid)
+            slack.post_user_logged_out(
+                slack_alias=user.slack_alias,
+                service="withings",
+            )
+        else:
+            if last_weight_data:
+                slack.post_weight(last_weight_data)
+                last_processed_notification_per_user[userid] = (startdate, enddate)
     else:
         logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)

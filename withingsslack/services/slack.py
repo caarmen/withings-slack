@@ -42,3 +42,17 @@ def post_sleep(sleep_data: SleepData):
             "text": message,
         },
     )
+
+
+def post_user_logged_out(slack_alias: str, service: str):
+    message = f"""
+Oh no <@{slack_alias}>, looks like you were logged out of {service}! 😳.
+You'll need to log in again to get your sleep reports:
+{settings.server_url}v1/{service}-authorization/{slack_alias}
+"""
+    requests.post(
+        url=settings.slack_webhook_url,
+        json={
+            "text": message,
+        },
+    )
