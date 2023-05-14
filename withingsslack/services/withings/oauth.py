@@ -26,6 +26,7 @@ _settings = MemorySettings()
 
 @dataclasses.dataclass
 class OauthFields:
+    oauth_userid: str
     oauth_access_token: str
     oauth_refresh_token: str
     oauth_expiration_date: datetime
@@ -33,6 +34,7 @@ class OauthFields:
     @classmethod
     def parse_response_data(cls, response_data: dict) -> Self:
         return cls(
+            oauth_userid=response_data["userid"],
             oauth_access_token=response_data["access_token"],
             oauth_refresh_token=response_data["refresh_token"],
             oauth_expiration_date=datetime.datetime.utcnow()
@@ -72,22 +74,22 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     response_data = response.json()["body"]
     oauth_userid = response_data["userid"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.get_or_create_user(db, oauth_userid=oauth_userid)
-    crud.update_user(
+    user = crud.upsert_user(
         db,
-        user=user,
-        data={
-            "slack_alias": slack_alias,
-            **dataclasses.asdict(oauth_fields),
-        },
+        withings_oauth_userid=oauth_userid,
+        data={"slack_alias": slack_alias},
+        withings_data=dataclasses.asdict(oauth_fields),
     )
     return user
 
 
 def get_access_token(db: Session, user: db_models.User) -> str:
-    if user.oauth_expiration_date < datetime.datetime.utcnow():
+    if (
+        not user.withings.oauth_expiration_date
+        or user.withings.oauth_expiration_date < datetime.datetime.utcnow()
+    ):
         refresh_token(db, user)
-    return user.oauth_access_token
+    return user.withings.oauth_access_token
 
 
 def refresh_token(db: Session, user: db_models.User) -> str:
@@ -98,7 +100,7 @@ def refresh_token(db: Session, user: db_models.User) -> str:
             "action": "requesttoken",
             "client_id": settings.withings_client_id,
             "grant_type": "refresh_token",
-            "refresh_token": user.oauth_refresh_token,
+            "refresh_token": user.withings.oauth_refresh_token,
             **signing.sign_action("requesttoken"),
         },
     )
@@ -107,6 +109,6 @@ def refresh_token(db: Session, user: db_models.User) -> str:
     user = crud.update_user(
         db,
         user=user,
-        data=dataclasses.asdict(oauth_fields),
+        withings_data=dataclasses.asdict(oauth_fields),
     )
-    return user.oauth_access_token
+    return user.withings.oauth_access_token

@@ -47,5 +47,10 @@ curl --location 'http://your-server/withings-notification-webhook/' \
 
 You can find your userid in the database file:
 ```
-sqlite3 /path/to/withingsslack.db "select slack_alias, oauth_userid from users;"
+sqlite3 -header -column /path/to/withingsslack.db \
+  "select
+     slack_alias,
+     withings_users.oauth_userid as withings_userid
+  from users
+    left outer join withings_users on users.id = withings_users.user_id
 ```
