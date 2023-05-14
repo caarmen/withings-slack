@@ -12,8 +12,8 @@ Pushes messages to a pre-selected slack channel, when users log new weight data 
 [![GitHub commit activity](https://img.shields.io/github/commit-activity/m/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
 [![GitHub last commit](https://img.shields.io/github/last-commit/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
 
-![GitHub Repo stars](https://img.shields.io/github/stars/caarmen/withings-slack?style=social)
-![GitHub forks](https://img.shields.io/github/forks/caarmen/withings-slack?style=social)
+[![GitHub Repo stars](https://img.shields.io/github/stars/caarmen/withings-slack?style=social)](https://github.com/caarmen/withings-slack/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/caarmen/withings-slack?style=social)](https://github.com/caarmen/withings-slack/forks)
 
 ## Configuration
 
