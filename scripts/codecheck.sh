@@ -1,4 +1,4 @@
-for project in withingsslack
+for project in withingsslack alembic
 do
   black $project
   ruff check $project

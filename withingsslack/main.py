@@ -14,8 +14,6 @@ from withingsslack.services.withings import oauth as withings_oauth
 from starlette.middleware import Middleware
 
 
-database.init()
-
 
 def get_db():
     db = SessionLocal()
