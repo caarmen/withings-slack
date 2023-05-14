@@ -1,4 +1,7 @@
 import dataclasses
+import datetime
+
+from pydantic import BaseModel, NonNegativeInt
 
 
 @dataclasses.dataclass
@@ -7,11 +10,10 @@ class WeightData:
     slack_alias: str
 
 
-@dataclasses.dataclass
-class SleepData:
-    total_sleep_minutes: int
-    deep_minutes: int
-    light_minutes: int
-    rem_minutes: int
-    wake_minutes: int
+class SleepData(BaseModel):
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    sleep_minutes: NonNegativeInt
+    wake_minutes: NonNegativeInt
+    score: NonNegativeInt
     slack_alias: str
