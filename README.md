@@ -2,6 +2,9 @@
 
 Pushes messages to a pre-selected slack channel, when users log new weight data in Withings.
 
+![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/withings-slack/check.yml)
+![GitHub](https://img.shields.io/github/license/caarmen/withings-slack)
+
 ## Configuration
 
 * Create an application in the [Withings developer dashboard](https://developer.withings.com/dashboard/).
