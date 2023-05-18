@@ -40,24 +40,27 @@ def handle_fail_poll(
 
 def fitbit_poll():
     logging.info("fitbit poll")
-    with SessionLocal() as db:
-        fitbit_users = db.query(models.FitbitUser).all()
-        today = datetime.date.today()
-        for fitbit_user in fitbit_users:
-            latest_successful_poll = _cache_success.get(fitbit_user.oauth_userid)
-            if not latest_successful_poll or latest_successful_poll < today:
-                try:
-                    sleep_data = fitbit_api.get_sleep(
-                        db,
-                        userid=fitbit_user.oauth_userid,
-                        when=today,
-                    )
-                except UserLoggedOutException:
-                    handle_fail_poll(fitbit_user=fitbit_user, when=today)
-                else:
-                    handle_success_poll(
-                        fitbit_user=fitbit_user, sleep_data=sleep_data, when=today
-                    )
+    try:
+        with SessionLocal() as db:
+            fitbit_users = db.query(models.FitbitUser).all()
+            today = datetime.date.today()
+            for fitbit_user in fitbit_users:
+                latest_successful_poll = _cache_success.get(fitbit_user.oauth_userid)
+                if not latest_successful_poll or latest_successful_poll < today:
+                    try:
+                        sleep_data = fitbit_api.get_sleep(
+                            db,
+                            userid=fitbit_user.oauth_userid,
+                            when=today,
+                        )
+                    except UserLoggedOutException:
+                        handle_fail_poll(fitbit_user=fitbit_user, when=today)
+                    else:
+                        handle_success_poll(
+                            fitbit_user=fitbit_user, sleep_data=sleep_data, when=today
+                        )
+    except Exception:
+        logging.error("Error polling fitbit", exc_info=True)
     schedule_fitbit_poll()
 
 
