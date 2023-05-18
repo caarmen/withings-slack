@@ -1,7 +1,7 @@
 import json
-from typing import Annotated, Literal, Optional, Self, Union
+from typing import Optional, Self
 from withingsslack.services import models as svc_models
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 import datetime
 
 
@@ -18,12 +18,8 @@ class FitbitStagesSleepItemSummary(BaseModel):
     wake: FitbitSleepItemSummaryItem
 
 
-class FitbitStagesSleepItemLevels(BaseModel):
-    summary: FitbitStagesSleepItemSummary
-
-
-class FitbitClassicSleepItemLevels(BaseModel):
-    summary: FitbitClassicSleepItemSummary
+class FitbitSleepItemLevels(BaseModel):
+    summary: FitbitClassicSleepItemSummary | FitbitStagesSleepItemSummary
 
 
 class FitbitSleepItem(BaseModel):
@@ -32,25 +28,12 @@ class FitbitSleepItem(BaseModel):
     endTime: str
     isMainSleep: bool
     startTime: str
-
-
-class FitbitClassicSleepItem(FitbitSleepItem):
-    type: Literal["classic"]
-    levels: FitbitClassicSleepItemLevels
-
-
-class FitbitStagesSleepItem(FitbitSleepItem):
-    type: Literal["stages"]
-    levels: FitbitStagesSleepItemLevels
+    levels: FitbitSleepItemLevels
+    type: str
 
 
 class FitbitSleep(BaseModel):
-    sleep: list[
-        Annotated[
-            Union[FitbitClassicSleepItem, FitbitStagesSleepItem],
-            Field(discriminator="type"),
-        ]
-    ]
+    sleep: list[FitbitSleepItem]
 
     @classmethod
     def parse(cls, input: str) -> Self:
