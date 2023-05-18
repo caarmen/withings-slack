@@ -1,7 +1,7 @@
 import json
-from typing import Optional, Self
+from typing import Annotated, Literal, Optional, Self, Union
 from withingsslack.services import models as svc_models
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import datetime
 
 
@@ -9,12 +9,21 @@ class FitbitSleepItemSummaryItem(BaseModel):
     minutes: int
 
 
-class FitbitSleepItemSummary(BaseModel):
+class FitbitClassicSleepItemSummary(BaseModel):
+    awake: FitbitSleepItemSummaryItem
+    asleep: FitbitSleepItemSummaryItem
+
+
+class FitbitStagesSleepItemSummary(BaseModel):
     wake: FitbitSleepItemSummaryItem
 
 
-class FitbitSleepItemLevels(BaseModel):
-    summary: FitbitSleepItemSummary
+class FitbitStagesSleepItemLevels(BaseModel):
+    summary: FitbitStagesSleepItemSummary
+
+
+class FitbitClassicSleepItemLevels(BaseModel):
+    summary: FitbitClassicSleepItemSummary
 
 
 class FitbitSleepItem(BaseModel):
@@ -23,11 +32,25 @@ class FitbitSleepItem(BaseModel):
     endTime: str
     isMainSleep: bool
     startTime: str
-    levels: FitbitSleepItemLevels
+
+
+class FitbitClassicSleepItem(FitbitSleepItem):
+    type: Literal["classic"]
+    levels: FitbitClassicSleepItemLevels
+
+
+class FitbitStagesSleepItem(FitbitSleepItem):
+    type: Literal["stages"]
+    levels: FitbitStagesSleepItemLevels
 
 
 class FitbitSleep(BaseModel):
-    sleep: list[FitbitSleepItem]
+    sleep: list[
+        Annotated[
+            Union[FitbitClassicSleepItem, FitbitStagesSleepItem],
+            Field(discriminator="type"),
+        ]
+    ]
 
     @classmethod
     def parse(cls, input: str) -> Self:
@@ -45,14 +68,23 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
     if not main_sleep_item:
         return None
 
+    wake_minutes = (
+        main_sleep_item.levels.summary.awake.minutes
+        if main_sleep_item.type == "classic"
+        else main_sleep_item.levels.summary.wake.minutes
+    )
+    asleep_minutes = (
+        main_sleep_item.levels.summary.asleep.minutes
+        if main_sleep_item.type == "classic"
+        else main_sleep_item.duration / 60000 - wake_minutes
+    )
     return svc_models.SleepData(
         start_time=datetime.datetime.strptime(
             main_sleep_item.startTime, DATETIME_FORMAT
         ),
         end_time=datetime.datetime.strptime(main_sleep_item.endTime, DATETIME_FORMAT),
         score=main_sleep_item.efficiency,
-        sleep_minutes=main_sleep_item.duration / 60000
-        - main_sleep_item.levels.summary.wake.minutes,
-        wake_minutes=main_sleep_item.levels.summary.wake.minutes,
+        sleep_minutes=asleep_minutes,
+        wake_minutes=wake_minutes,
         slack_alias=slack_alias,
     )
