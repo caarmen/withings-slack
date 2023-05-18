@@ -137,6 +137,7 @@ def withings_notification_webhook(
         + f"userid={userid}, startdate={startdate}, enddate={enddate}"
     )
     if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
+        last_processed_notification_per_user[userid] = (startdate, enddate)
         try:
             last_weight_data = withings_api.get_last_weight(
                 db,
@@ -153,7 +154,6 @@ def withings_notification_webhook(
         else:
             if last_weight_data:
                 slack.post_weight(last_weight_data)
-                last_processed_notification_per_user[userid] = (startdate, enddate)
     else:
         logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
