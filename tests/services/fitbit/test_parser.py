@@ -32,6 +32,17 @@ from withingsslack.services.models import SleepData
                 slack_alias="somebody",
             ),
         ),
+        (
+            "fitbit_sleep_response_classic.json",
+            SleepData(
+                start_time=datetime.datetime(2023, 5, 17, 0, 35, 0),
+                end_time=datetime.datetime(2023, 5, 17, 8, 7, 30),
+                sleep_minutes=439,
+                wake_minutes=2,
+                score=97,
+                slack_alias="somebody",
+            ),
+        ),
         ("fitbit_sleep_response_no_main_sleep_item.json", None),
     ],
 )
