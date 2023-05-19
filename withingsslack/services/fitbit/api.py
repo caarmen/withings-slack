@@ -16,7 +16,7 @@ def subscribe(db: Session, user: db_models.User):
         user=user,
         url=f"{settings.fitbit_base_url}1/user/-/sleep/apiSubscriptions/{user.fitbit.oauth_userid}.json",
     )
-    logging.info(f"Fitbit ubscription response: {response.json()}")
+    logging.info(f"Fitbit subscription response: {response.json()}")
 
 
 def get_sleep(
