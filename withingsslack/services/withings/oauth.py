@@ -116,7 +116,8 @@ def refresh_token(db: Session, user: db_models.User) -> str:
 
     response_data = response.json()
     logging.info(f"Refresh token response {response_data}")
-    if response_data["status"] != 200:
+    # https://developer.withings.com/api-reference/#section/Response-status
+    if response_data["status"] != 0:
         raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data["body"])
     user = crud.update_user(
