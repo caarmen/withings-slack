@@ -1,23 +1,23 @@
+import datetime
 import logging
 from typing import Annotated, Optional
 
-import datetime
 import uvicorn
 from fastapi import Depends, FastAPI, Form, Response, status
-from fastapi.responses import RedirectResponse, HTMLResponse
-from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-
-from withingsslack import logger, scheduler
-from withingsslack.database import crud
-from withingsslack.database.connection import SessionLocal
-from withingsslack.services import slack
-from withingsslack.services.exceptions import UserLoggedOutException
-from withingsslack.services.withings import api as withings_api
-from withingsslack.services.fitbit import api as fitbit_api
-from withingsslack.services.withings import oauth as withings_oauth
-from withingsslack.services.fitbit import oauth as fitbit_oauth
+from sqlalchemy.orm import Session
 from starlette.middleware import Middleware
+
+from slackhealthbot import logger, scheduler
+from slackhealthbot.database import crud
+from slackhealthbot.database.connection import SessionLocal
+from slackhealthbot.services import slack
+from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.services.fitbit import api as fitbit_api
+from slackhealthbot.services.fitbit import oauth as fitbit_oauth
+from slackhealthbot.services.withings import api as withings_api
+from slackhealthbot.services.withings import oauth as withings_oauth
 
 
 def get_db():

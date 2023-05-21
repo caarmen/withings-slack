@@ -1,9 +1,9 @@
 from datetime import datetime
+from typing import Optional
+
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from typing import Optional
 
 Base = declarative_base()
 

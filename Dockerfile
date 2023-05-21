@@ -6,8 +6,8 @@ COPY requirements/prod.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
-COPY withingsslack withingsslack
+COPY slackhealthbot slackhealthbot
 COPY alembic.ini alembic.ini
 COPY alembic alembic
 
-CMD alembic upgrade head && python -m withingsslack.main
+CMD alembic upgrade head && python -m slackhealthbot.main

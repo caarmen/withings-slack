@@ -1,10 +1,11 @@
-import os
 import datetime
+import os
 from pathlib import Path
 
 import pytest
-from withingsslack.services.fitbit.parser import parse_sleep
-from withingsslack.services.models import SleepData
+
+from slackhealthbot.services.fitbit.parser import parse_sleep
+from slackhealthbot.services.models import SleepData
 
 
 @pytest.mark.parametrize(

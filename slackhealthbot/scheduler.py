@@ -1,14 +1,15 @@
-from threading import Timer
 import datetime
-from typing import Optional
-from withingsslack.services.exceptions import UserLoggedOutException
-from withingsslack.services.models import SleepData
-from withingsslack.settings import settings
-from withingsslack.services.fitbit import api as fitbit_api
-from withingsslack.database.connection import SessionLocal
-from withingsslack.database import models
-from withingsslack.services import slack
 import logging
+from threading import Timer
+from typing import Optional
+
+from slackhealthbot.database import models
+from slackhealthbot.database.connection import SessionLocal
+from slackhealthbot.services import slack
+from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.services.fitbit import api as fitbit_api
+from slackhealthbot.services.models import SleepData
+from slackhealthbot.settings import settings
 
 _cache_success: dict[str, datetime.date] = {}
 _cache_fail: dict[str, datetime.date] = {}

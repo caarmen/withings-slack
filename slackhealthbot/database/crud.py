@@ -1,7 +1,7 @@
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import Session
 
-from withingsslack.database import models
+from slackhealthbot.database import models
 
 
 def get_user(

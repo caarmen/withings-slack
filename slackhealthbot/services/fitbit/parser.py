@@ -1,8 +1,10 @@
+import datetime
 import json
 from typing import Annotated, Literal, Optional, Self, Union
-from withingsslack.services import models as svc_models
+
 from pydantic import BaseModel, Field
-import datetime
+
+from slackhealthbot.services import models as svc_models
 
 
 class FitbitSleepItemSummaryItem(BaseModel):

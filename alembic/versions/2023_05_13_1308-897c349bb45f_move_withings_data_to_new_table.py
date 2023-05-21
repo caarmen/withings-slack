@@ -6,9 +6,10 @@ Create Date: 2023-05-13 13:08:11.083878
 
 """
 from datetime import datetime
-from alembic import op
+
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "897c349bb45f"

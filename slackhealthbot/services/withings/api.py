@@ -1,14 +1,14 @@
 import logging
 from typing import Optional
 
-from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import Session
 
-from withingsslack.database import crud
-from withingsslack.database import models as db_models
-from withingsslack.services import models as svc_models
-from withingsslack.settings import settings
-from withingsslack.services.withings import requests
+from slackhealthbot.database import crud
+from slackhealthbot.database import models as db_models
+from slackhealthbot.services import models as svc_models
+from slackhealthbot.services.withings import requests
+from slackhealthbot.settings import settings
 
 
 def subscribe(db: Session, user: db_models.User):

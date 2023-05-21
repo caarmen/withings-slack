@@ -1,9 +1,10 @@
 from pathlib import Path
+
 from pydantic import AnyHttpUrl, BaseSettings, HttpUrl
 
 
 class Settings(BaseSettings):
-    database_path: Path = "/tmp/data/withingsslack.db"
+    database_path: Path = "/tmp/data/slackhealthbot.db"
     server_url: AnyHttpUrl
     withings_base_url: str = "https://wbsapi.withings.net/"
     withings_oauth_scopes: list[str] = ["user.metrics", "user.activity"]

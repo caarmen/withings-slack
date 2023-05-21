@@ -1,13 +1,15 @@
+import datetime
 import logging
 from typing import Optional
-from sqlalchemy.orm import Session
-import datetime
-from withingsslack.services.fitbit import requests, parser
+
 from sqlalchemy.exc import NoResultFound
-from withingsslack.database import crud
-from withingsslack.services import models as svc_models
-from withingsslack.database import models as db_models
-from withingsslack.settings import settings
+from sqlalchemy.orm import Session
+
+from slackhealthbot.database import crud
+from slackhealthbot.database import models as db_models
+from slackhealthbot.services import models as svc_models
+from slackhealthbot.services.fitbit import parser, requests
+from slackhealthbot.settings import settings
 
 
 def subscribe(db: Session, user: db_models.User):

@@ -4,7 +4,7 @@ import hmac
 
 import requests
 
-from withingsslack.settings import settings
+from slackhealthbot.settings import settings
 
 
 def create_signature(action: str, nonce: str) -> str:

@@ -2,17 +2,17 @@
 Middleware which adds a correlation id to the response headers and logs.
 See https://github.com/tiangolo/fastapi/discussions/8190
 """
-from contextvars import ContextVar
 import copy
 import logging
+from contextvars import ContextVar
 from uuid import uuid4
+
 from fastapi import Request, Response
-from starlette.types import ASGIApp
-from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic.utils import deep_update
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 from uvicorn.config import LOGGING_CONFIG
 from uvicorn.logging import AccessFormatter
-
 
 _correlation_id_ctx_var: ContextVar[str] = ContextVar("correlation_id", default=None)
 

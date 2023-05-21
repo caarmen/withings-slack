@@ -10,11 +10,11 @@ import requests
 from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 
-from withingsslack.database import crud
-from withingsslack.database import models as db_models
-from withingsslack.services.exceptions import UserLoggedOutException
-from withingsslack.settings import settings
-from withingsslack.services.withings import signing
+from slackhealthbot.database import crud
+from slackhealthbot.database import models as db_models
+from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.services.withings import signing
+from slackhealthbot.settings import settings
 
 
 @dataclasses.dataclass

@@ -1,6 +1,8 @@
-from withingsslack.services import slack
-import pytest
 import datetime
+
+import pytest
+
+from slackhealthbot.services import slack
 
 
 @pytest.mark.parametrize(
