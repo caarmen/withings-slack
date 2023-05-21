@@ -1,19 +1,19 @@
-# Withings-Slack integration
+# slack-health-bot integration
 
 Pushes messages to a pre-selected slack channel, when users log new weight data in Withings.
 
-[![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/withings-slack/check.yml)](https://github.com/caarmen/withings-slack/actions/workflows/check.yml?query=branch%3Amain)
-[![GitHub](https://img.shields.io/github/license/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/blob/main/LICENSE)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/releases)
+[![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/slack-health-bot/check.yml)](https://github.com/caarmen/slack-health-bot/actions/workflows/check.yml?query=branch%3Amain)
+[![GitHub](https://img.shields.io/github/license/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/blob/main/LICENSE)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/releases)
 
-[![GitHub repo size](https://img.shields.io/github/repo-size/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/archive/refs/heads/main.zip)
-![GitHub language count](https://img.shields.io/github/languages/count/caarmen/withings-slack)
-[![GitHub Release Date](https://img.shields.io/github/release-date/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/releases)
-[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
-[![GitHub last commit](https://img.shields.io/github/last-commit/caarmen/withings-slack)](https://github.com/caarmen/withings-slack/commits/main)
+[![GitHub repo size](https://img.shields.io/github/repo-size/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/archive/refs/heads/main.zip)
+![GitHub language count](https://img.shields.io/github/languages/count/caarmen/slack-health-bot)
+[![GitHub Release Date](https://img.shields.io/github/release-date/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/releases)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/m/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/commits/main)
+[![GitHub last commit](https://img.shields.io/github/last-commit/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/commits/main)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/caarmen/withings-slack?style=social)](https://github.com/caarmen/withings-slack/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/caarmen/withings-slack?style=social)](https://github.com/caarmen/withings-slack/forks)
+[![GitHub Repo stars](https://img.shields.io/github/stars/caarmen/slack-health-bot?style=social)](https://github.com/caarmen/slack-health-bot/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/caarmen/slack-health-bot?style=social)](https://github.com/caarmen/slack-health-bot/forks)
 
 ## Configuration
 
@@ -27,7 +27,7 @@ Log into the [github container registry](https://docs.github.com/en/packages/wor
 
 Retrieve the image:
 ```
-docker pull ghcr.io/caarmen/withings-slack:latest
+docker pull ghcr.io/caarmen/slack-health-bot:latest
 ```
 
 ## Run the docker image
@@ -37,7 +37,7 @@ Create a folder on the host where the database will be saved: `/path/to/data/`.
 Run the docker image.
 
 ```
-docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /path/to/data/:/tmp/data ghcr.io/caarmen/withings-slack
+docker run --detach --publish 8000:8000 -v `pwd`/.env:/app/.env -v /path/to/data/:/tmp/data ghcr.io/caarmen/slack-health-bot
 ```
 
 ## Using the application
