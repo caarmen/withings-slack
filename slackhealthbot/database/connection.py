@@ -1,8 +1,9 @@
 from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from withingsslack.settings import settings
+from slackhealthbot.settings import settings
 
 connection_url = f"sqlite:///{settings.database_path}"
 Path(settings.database_path).parent.mkdir(parents=True, exist_ok=True)

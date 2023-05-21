@@ -1,8 +1,8 @@
 import requests
 from sqlalchemy.orm import Session
 
-from withingsslack.database import models as db_models
-from withingsslack.services.fitbit import oauth
+from slackhealthbot.database import models as db_models
+from slackhealthbot.services.fitbit import oauth
 
 
 def request(

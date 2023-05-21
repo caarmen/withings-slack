@@ -1,8 +1,9 @@
+import datetime
+
 import requests
 
-import datetime
-from withingsslack.services.models import WeightData, SleepData
-from withingsslack.settings import settings
+from slackhealthbot.services.models import SleepData, WeightData
+from slackhealthbot.settings import settings
 
 
 def post_weight(weight_data: WeightData):

@@ -1,19 +1,21 @@
-from base64 import urlsafe_b64encode
 import dataclasses
 import datetime
 import hashlib
 import logging
 import random
 import string
+from base64 import urlsafe_b64encode
 from typing import Optional, Self
+from urllib.parse import urlencode
 
 import requests
-from withingsslack.services.exceptions import UserLoggedOutException
-from withingsslack.settings import settings
 from pydantic import HttpUrl
-from urllib.parse import urlencode
-from withingsslack.database import crud, models as db_models
 from sqlalchemy.orm import Session
+
+from slackhealthbot.database import crud
+from slackhealthbot.database import models as db_models
+from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.settings import settings
 
 
 @dataclasses.dataclass
