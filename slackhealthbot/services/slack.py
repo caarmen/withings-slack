@@ -7,9 +7,10 @@ from slackhealthbot.settings import settings
 
 
 def post_weight(weight_data: WeightData):
+    icon = get_weight_change_icon(weight_data)
     message = (
         f"New weight from <@{weight_data.slack_alias}>: "
-        + f"{weight_data.weight_kg:.2f} kg."
+        + f"{weight_data.weight_kg:.2f} kg. {icon}"
     )
     requests.post(
         url=settings.slack_webhook_url,
@@ -17,6 +18,21 @@ def post_weight(weight_data: WeightData):
             "text": message,
         },
     )
+
+
+def get_weight_change_icon(weight_data: WeightData) -> str:
+    if not weight_data.last_weight_kg:
+        return ""
+    weight_change = weight_data.weight_kg - weight_data.last_weight_kg
+    if weight_change > 1:
+        return "⬆️"
+    if weight_change > 0.1:
+        return "↗️"
+    if weight_change < -1:
+        return "⬇️"
+    if weight_change < -0.1:
+        return "↘️"
+    return "➡️"
 
 
 def format_minutes(total_minutes: int) -> str:
