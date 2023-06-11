@@ -66,5 +66,6 @@ def get_last_weight(
             return svc_models.WeightData(
                 weight_kg=weight_kg,
                 slack_alias=user.slack_alias,
+                last_weight_kg=user.withings.last_weight,
             )
     return None
