@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import ForeignKey, String, func
+from sqlalchemy import Float, ForeignKey, String, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -32,6 +32,7 @@ class WithingsUser(TimestampMixin, Base):
     oauth_refresh_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_userid: Mapped[str] = mapped_column(String(40))
     oauth_expiration_date: Mapped[Optional[datetime]] = mapped_column()
+    last_weight: Mapped[Optional[float]] = mapped_column(Float())
 
 
 class FitbitUser(TimestampMixin, Base):
