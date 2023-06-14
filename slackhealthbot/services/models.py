@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+from typing import Optional
 
 from pydantic import BaseModel, NonNegativeInt
 
@@ -8,6 +9,7 @@ from pydantic import BaseModel, NonNegativeInt
 class WeightData:
     weight_kg: float
     slack_alias: str
+    last_weight_kg: Optional[float]
 
 
 class SleepData(BaseModel):

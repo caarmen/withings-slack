@@ -138,6 +138,7 @@ def withings_notification_webhook(
     )
     if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
         last_processed_notification_per_user[userid] = (startdate, enddate)
+        user = crud.get_user(db, withings_oauth_userid=userid)
         try:
             last_weight_data = withings_api.get_last_weight(
                 db,
@@ -146,13 +147,15 @@ def withings_notification_webhook(
                 enddate=enddate,
             )
         except UserLoggedOutException:
-            user = crud.get_user(db, withings_oauth_userid=userid)
             slack.post_user_logged_out(
                 slack_alias=user.slack_alias,
                 service="withings",
             )
         else:
             if last_weight_data:
+                crud.update_user(
+                    db, user, withings_data={"last_weight": last_weight_data.weight_kg}
+                )
                 slack.post_weight(last_weight_data)
     else:
         logging.info("Ignoring duplicate withings notification")
