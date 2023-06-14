@@ -2,8 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Float, ForeignKey, String, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 Base = declarative_base()
 
