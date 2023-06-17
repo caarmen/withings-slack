@@ -2,10 +2,8 @@ import datetime
 import logging
 from typing import Optional
 
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
-from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services.fitbit import parser, requests
@@ -23,19 +21,14 @@ def subscribe(db: Session, user: db_models.User):
 
 def get_sleep(
     db: Session,
-    userid: str,
+    user: db_models.User,
     when: datetime.date,
-) -> Optional[svc_models.WeightData]:
+) -> Optional[svc_models.SleepData]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
-    logging.info(f"get_sleep for user {userid}")
-    try:
-        user = crud.get_user(db, fitbit_oauth_userid=userid)
-    except NoResultFound:
-        logging.info(f"get_sleep: User {userid} unknown")
-        return None
+    logging.info(f"get_sleep for user {user.fitbit.oauth_userid}")
     when_str = when.strftime("%Y-%m-%d")
     response = requests.get(
         db,

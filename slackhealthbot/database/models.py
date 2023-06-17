@@ -43,3 +43,7 @@ class FitbitUser(TimestampMixin, Base):
     oauth_refresh_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_userid: Mapped[str] = mapped_column(String(40))
     oauth_expiration_date: Mapped[Optional[datetime]] = mapped_column()
+    last_sleep_start_time: Mapped[Optional[datetime]] = mapped_column()
+    last_sleep_end_time: Mapped[Optional[datetime]] = mapped_column()
+    last_sleep_sleep_minutes: Mapped[Optional[int]] = mapped_column()
+    last_sleep_wake_minutes: Mapped[Optional[int]] = mapped_column()
