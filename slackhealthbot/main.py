@@ -112,13 +112,14 @@ def fitbit_notification_webhook(
         (n for n in notifications if n.collectionType == "sleep" and n.ownerId), None
     )
     if notification:
+        user = crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
         sleep_data = fitbit_api.get_sleep(
-            db,
-            userid=notification.ownerId,
+            db=db,
+            user=user,
             when=notification.date,
         )
         if sleep_data:
-            slack.post_sleep(sleep_data)
+            slack.post_sleep(slack_alias=user.slack_alias, sleep_data=sleep_data)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

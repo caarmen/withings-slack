@@ -44,9 +44,9 @@ def format_time(input: datetime.datetime) -> str:
     return input.strftime("%-H:%M")
 
 
-def post_sleep(sleep_data: SleepData):
+def post_sleep(slack_alias: str, sleep_data: SleepData):
     message = f"""
-    New sleep from <@{sleep_data.slack_alias}>: 
+    New sleep from <@{slack_alias}>: 
     • Went to bed at {format_time(sleep_data.start_time)}
     • Woke up at {format_time(sleep_data.end_time)}
     • Total sleep: {format_minutes(sleep_data.sleep_minutes)}

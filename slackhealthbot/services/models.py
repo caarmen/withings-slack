@@ -17,4 +17,3 @@ class SleepData(BaseModel):
     end_time: datetime.datetime
     sleep_minutes: NonNegativeInt
     wake_minutes: NonNegativeInt
-    slack_alias: str

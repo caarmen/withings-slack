@@ -21,7 +21,9 @@ def handle_success_poll(
     when: datetime.date,
 ):
     if sleep_data:
-        slack.post_sleep(sleep_data)
+        slack.post_sleep(
+            slack_alias=fitbit_user.user.slack_alias, sleep_data=sleep_data
+        )
         _cache_success[fitbit_user.oauth_userid] = when
         _cache_fail.pop(fitbit_user.oauth_userid, None)
 
@@ -51,7 +53,7 @@ def fitbit_poll():
                     try:
                         sleep_data = fitbit_api.get_sleep(
                             db,
-                            userid=fitbit_user.oauth_userid,
+                            user=fitbit_user.user,
                             when=today,
                         )
                     except UserLoggedOutException:
