@@ -23,7 +23,7 @@ def get_sleep(
     db: Session,
     user: db_models.User,
     when: datetime.date,
-) -> Optional[svc_models.WeightData]:
+) -> Optional[svc_models.SleepData]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails

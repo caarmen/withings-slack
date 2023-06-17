@@ -3,12 +3,15 @@ import logging
 from threading import Timer
 from typing import Optional
 
+from sqlalchemy.orm import Session
+
 from slackhealthbot.database import models
 from slackhealthbot.database.connection import SessionLocal
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
-from slackhealthbot.services.models import SleepData
+from slackhealthbot.services.fitbit.service import save_new_sleep_data
+from slackhealthbot.services.models import SleepData, user_last_sleep_data
 from slackhealthbot.settings import settings
 
 _cache_success: dict[str, datetime.date] = {}
@@ -16,13 +19,18 @@ _cache_fail: dict[str, datetime.date] = {}
 
 
 def handle_success_poll(
+    db: Session,
     fitbit_user: models.FitbitUser,
     sleep_data: Optional[SleepData],
     when: datetime.date,
 ):
     if sleep_data:
+        last_sleep_data = user_last_sleep_data(fitbit_user)
+        save_new_sleep_data(db, fitbit_user.user, sleep_data)
         slack.post_sleep(
-            slack_alias=fitbit_user.user.slack_alias, sleep_data=sleep_data
+            slack_alias=fitbit_user.user.slack_alias,
+            new_sleep_data=sleep_data,
+            last_sleep_data=last_sleep_data,
         )
         _cache_success[fitbit_user.oauth_userid] = when
         _cache_fail.pop(fitbit_user.oauth_userid, None)
@@ -60,7 +68,10 @@ def fitbit_poll():
                         handle_fail_poll(fitbit_user=fitbit_user, when=today)
                     else:
                         handle_success_poll(
-                            fitbit_user=fitbit_user, sleep_data=sleep_data, when=today
+                            db=db,
+                            fitbit_user=fitbit_user,
+                            sleep_data=sleep_data,
+                            when=today,
                         )
     except Exception:
         logging.error("Error polling fitbit", exc_info=True)

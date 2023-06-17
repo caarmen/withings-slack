@@ -12,10 +12,12 @@ from starlette.middleware import Middleware
 from slackhealthbot import logger, scheduler
 from slackhealthbot.database import crud
 from slackhealthbot.database.connection import SessionLocal
+from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
 from slackhealthbot.services.fitbit import oauth as fitbit_oauth
+from slackhealthbot.services.fitbit.service import save_new_sleep_data
 from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
 
@@ -119,7 +121,13 @@ def fitbit_notification_webhook(
             when=notification.date,
         )
         if sleep_data:
-            slack.post_sleep(slack_alias=user.slack_alias, sleep_data=sleep_data)
+            last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
+            save_new_sleep_data(db, user, sleep_data)
+            slack.post_sleep(
+                slack_alias=user.slack_alias,
+                new_sleep_data=sleep_data,
+                last_sleep_data=last_sleep_data,
+            )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

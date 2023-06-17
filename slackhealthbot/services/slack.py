@@ -44,13 +44,58 @@ def format_time(input: datetime.datetime) -> str:
     return input.strftime("%-H:%M")
 
 
-def post_sleep(slack_alias: str, sleep_data: SleepData):
+def get_seconds_change_icon(seconds_change: int) -> str:
+    if seconds_change > 2 * 60 * 60:
+        return "⬆️"
+    if seconds_change > 45 * 60:
+        return "↗️"
+    if seconds_change < -2 * 60 * 60:
+        return "⬇️"
+    if seconds_change < -45 * 60:
+        return "↘️"
+    return "➡️"
+
+
+def get_datetime_change_icon(
+    last_datetime: datetime.datetime, new_datetime: datetime.datetime
+) -> str:
+    if last_datetime == new_datetime:
+        return "➡️"
+
+    fake_last_datetime = last_datetime + datetime.timedelta(days=1)
+    time_diff_seconds = (new_datetime - fake_last_datetime).total_seconds()
+    return get_datetime_change_icon(time_diff_seconds)
+
+
+def post_sleep(
+    slack_alias: str,
+    new_sleep_data: SleepData,
+    last_sleep_data: SleepData,
+):
+    if last_sleep_data:
+        start_time_icon = get_datetime_change_icon(
+            last_datetime=last_sleep_data.start_time,
+            new_datetime=new_sleep_data.start_time,
+        )
+        end_time_icon = get_datetime_change_icon(
+            last_datetime=last_sleep_data.end_time,
+            new_datetime=new_sleep_data.end_time,
+        )
+        sleep_minutes_icon = get_seconds_change_icon(
+            (new_sleep_data.sleep_minutes - last_sleep_data.sleep_minutes) * 60
+        )
+        wake_minutes_icon = get_seconds_change_icon(
+            (new_sleep_data.wake_minutes - last_sleep_data.wake_minutes) * 60
+        )
+    else:
+        start_time_icon = end_time_icon = sleep_minutes_icon = wake_minutes_icon = ""
+
     message = f"""
     New sleep from <@{slack_alias}>: 
-    • Went to bed at {format_time(sleep_data.start_time)}
-    • Woke up at {format_time(sleep_data.end_time)}
-    • Total sleep: {format_minutes(sleep_data.sleep_minutes)}
-    • Awake: {format_minutes(sleep_data.wake_minutes)}
+    • Went to bed at {format_time(new_sleep_data.start_time)} {start_time_icon}
+    • Woke up at {format_time(new_sleep_data.end_time)} {end_time_icon}
+    • Total sleep: {format_minutes(new_sleep_data.sleep_minutes)} {sleep_minutes_icon}
+    • Awake: {format_minutes(new_sleep_data.wake_minutes)} {wake_minutes_icon}
     """.strip()
     requests.post(
         url=settings.slack_webhook_url,
