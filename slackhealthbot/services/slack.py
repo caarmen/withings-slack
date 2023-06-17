@@ -63,8 +63,8 @@ def get_datetime_change_icon(
         return "➡️"
 
     fake_last_datetime = last_datetime + datetime.timedelta(days=1)
-    time_diff_seconds = (new_datetime - fake_last_datetime).total_seconds()
-    return get_datetime_change_icon(time_diff_seconds)
+    time_diff_seconds = int((new_datetime - fake_last_datetime).total_seconds())
+    return get_seconds_change_icon(time_diff_seconds)
 
 
 def post_sleep(
