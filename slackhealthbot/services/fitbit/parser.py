@@ -30,7 +30,6 @@ class FitbitClassicSleepItemLevels(BaseModel):
 
 class FitbitSleepItem(BaseModel):
     duration: int
-    efficiency: int
     endTime: str
     isMainSleep: bool
     startTime: str
@@ -85,7 +84,6 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
             main_sleep_item.startTime, DATETIME_FORMAT
         ),
         end_time=datetime.datetime.strptime(main_sleep_item.endTime, DATETIME_FORMAT),
-        score=main_sleep_item.efficiency,
         sleep_minutes=asleep_minutes,
         wake_minutes=wake_minutes,
         slack_alias=slack_alias,

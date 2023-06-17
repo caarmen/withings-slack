@@ -51,7 +51,6 @@ def post_sleep(sleep_data: SleepData):
     • Woke up at {format_time(sleep_data.end_time)}
     • Total sleep: {format_minutes(sleep_data.sleep_minutes)}
     • Awake: {format_minutes(sleep_data.wake_minutes)}
-    • Score: {sleep_data.score}
     """.strip()
     requests.post(
         url=settings.slack_webhook_url,
