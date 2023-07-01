@@ -56,10 +56,10 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
             # Previous sleep data exists.
             # Newer values are all higher than previous values
             {
-                "last_sleep_start_time": datetime.datetime(2023, 5, 11, 22, 39, 0),
-                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 6, 28, 0),
-                "last_sleep_sleep_minutes": 350,
-                "last_sleep_wake_minutes": 1,
+                "last_sleep_start_time": datetime.datetime(2023, 5, 11, 23, 39, 0),
+                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 8, 28, 0),
+                "last_sleep_sleep_minutes": 449,
+                "last_sleep_wake_minutes": 80,
             },
             {
                 "sleep": [
@@ -90,10 +90,10 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
             # Previous sleep data exists.
             # Newer values are all slightly higher than previous values
             {
-                "last_sleep_start_time": datetime.datetime(2023, 5, 11, 23, 40, 0),
-                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 8, 30, 0),
-                "last_sleep_sleep_minutes": 440,
-                "last_sleep_wake_minutes": 0,
+                "last_sleep_start_time": datetime.datetime(2023, 5, 12, 0, 5, 0),
+                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 9, 0, 0),
+                "last_sleep_sleep_minutes": 460,
+                "last_sleep_wake_minutes": 16,
             },
             {
                 "sleep": [
@@ -189,10 +189,10 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
             # Previous sleep data exists.
             # Newer values are all slightly lower than previous values
             {
-                "last_sleep_start_time": datetime.datetime(2023, 5, 12, 1, 40, 0),
-                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 10, 30, 0),
-                "last_sleep_sleep_minutes": 550,
-                "last_sleep_wake_minutes": 100,
+                "last_sleep_start_time": datetime.datetime(2023, 5, 12, 1, 15, 0),
+                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 10, 11, 0),
+                "last_sleep_sleep_minutes": 539,
+                "last_sleep_wake_minutes": 80,
             },
             {
                 "sleep": [
@@ -223,10 +223,10 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
             # Previous sleep data exists.
             # Newer values are all lower than previous values
             {
-                "last_sleep_start_time": datetime.datetime(2023, 5, 12, 2, 41, 0),
-                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 11, 28, 0),
-                "last_sleep_sleep_minutes": 620,
-                "last_sleep_wake_minutes": 300,
+                "last_sleep_start_time": datetime.datetime(2023, 5, 12, 1, 41, 0),
+                "last_sleep_end_time": datetime.datetime(2023, 5, 12, 10, 28, 0),
+                "last_sleep_sleep_minutes": 560,
+                "last_sleep_wake_minutes": 200,
             },
             {
                 "sleep": [

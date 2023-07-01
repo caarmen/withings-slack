@@ -45,13 +45,13 @@ def format_time(input: datetime.datetime) -> str:
 
 
 def get_seconds_change_icon(seconds_change: int) -> str:
-    if seconds_change > 2 * 60 * 60:
-        return "⬆️"
     if seconds_change > 45 * 60:
+        return "⬆️"
+    if seconds_change > 15 * 60:
         return "↗️"
-    if seconds_change < -2 * 60 * 60:
-        return "⬇️"
     if seconds_change < -45 * 60:
+        return "⬇️"
+    if seconds_change < -15 * 60:
         return "↘️"
     return "➡️"
 
