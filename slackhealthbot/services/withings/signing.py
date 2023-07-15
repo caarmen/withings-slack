@@ -2,7 +2,7 @@ import datetime
 import hashlib
 import hmac
 
-import requests
+import httpx
 
 from slackhealthbot.settings import settings
 
@@ -21,7 +21,7 @@ def get_nonce() -> str:
     action = "getnonce"
     timestamp = int(datetime.datetime.now().timestamp())
     signature = create_signature(action, timestamp)
-    response = requests.post(
+    response = httpx.post(
         f"{settings.withings_base_url}v2/signature/",
         data={
             "action": action,

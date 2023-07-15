@@ -1,6 +1,6 @@
 import datetime
 
-import requests
+import httpx
 
 from slackhealthbot.services.models import SleepData, WeightData
 from slackhealthbot.settings import settings
@@ -12,7 +12,7 @@ def post_weight(weight_data: WeightData):
         f"New weight from <@{weight_data.slack_alias}>: "
         + f"{weight_data.weight_kg:.2f} kg. {icon}"
     )
-    requests.post(
+    httpx.post(
         url=settings.slack_webhook_url,
         json={
             "text": message,
@@ -97,7 +97,7 @@ def post_sleep(
     • Total sleep: {format_minutes(new_sleep_data.sleep_minutes)} {sleep_minutes_icon}
     • Awake: {format_minutes(new_sleep_data.wake_minutes)} {wake_minutes_icon}
     """.strip()
-    requests.post(
+    httpx.post(
         url=settings.slack_webhook_url,
         json={
             "text": message,
@@ -111,7 +111,7 @@ Oh no <@{slack_alias}>, looks like you were logged out of {service}! 😳.
 You'll need to log in again to get your reports:
 {settings.server_url}v1/{service}-authorization/{slack_alias}
 """
-    requests.post(
+    httpx.post(
         url=settings.slack_webhook_url,
         json={
             "text": message,

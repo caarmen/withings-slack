@@ -7,5 +7,5 @@ pytest-cov==4.0.0
 pytest-factoryboy==2.5.1
 pytest-sqlalchemy-mock==0.1.5
 pytest==7.3.1
-requests-mock==1.11.0
+respx==0.20.1
 ruff==0.0.263
