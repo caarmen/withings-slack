@@ -1,3 +1,4 @@
+from sqlalchemy import select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 
@@ -14,23 +15,25 @@ def get_user(
     Return the user with the given withings oauth user id.
     """
     if withings_oauth_userid:
-        return (
-            db.query(models.User)
+        return db.scalars(
+            statement=select(models.User)
             .join(models.User.withings)
-            .filter(models.WithingsUser.oauth_userid == withings_oauth_userid)
-            .one()
-        )
+            .where(models.WithingsUser.oauth_userid == withings_oauth_userid)
+        ).one()
     elif fitbit_oauth_userid:
-        return (
-            db.query(models.User)
+        return db.scalars(
+            statement=select(models.User)
             .join(models.User.fitbit)
-            .filter(models.FitbitUser.oauth_userid == fitbit_oauth_userid)
-            .one()
-        )
+            .where(models.FitbitUser.oauth_userid == fitbit_oauth_userid)
+        ).one()
     else:
         return (
-            db.query(models.User).filter(models.User.slack_alias == slack_alias).one()
-        )
+            db.scalars(
+                statement=select(models.User).where(
+                    models.User.slack_alias == slack_alias
+                )
+            )
+        ).one()
 
 
 def upsert_user(
@@ -75,12 +78,16 @@ def upsert_withings_data(
     data: dict,
 ) -> models.WithingsUser:
     try:
-        withings_user = (
-            db.query(models.WithingsUser)
-            .filter(models.WithingsUser.user_id == user_id)
-            .one()
+        withings_user = db.scalars(
+            statement=select(models.WithingsUser).where(
+                models.WithingsUser.user_id == user_id
+            )
+        ).one()
+        db.execute(
+            statement=update(models.WithingsUser)
+            .where(models.WithingsUser.id == withings_user.id)
+            .values(**data)
         )
-        db.query(models.WithingsUser).filter_by(id=withings_user.id).update(data)
     except NoResultFound:
         withings_user = models.WithingsUser(user_id=user_id, **data)
         db.add(withings_user)
@@ -95,12 +102,16 @@ def upsert_fitbit_data(
     data: dict,
 ) -> models.FitbitUser:
     try:
-        fitbit_user = (
-            db.query(models.FitbitUser)
-            .filter(models.FitbitUser.user_id == user_id)
-            .one()
+        fitbit_user = db.scalars(
+            statement=select(models.FitbitUser).where(
+                models.FitbitUser.user_id == user_id
+            )
+        ).one()
+        db.execute(
+            statement=update(models.FitbitUser)
+            .where(models.FitbitUser.id == fitbit_user.id)
+            .values(**data)
         )
-        db.query(models.FitbitUser).filter_by(id=fitbit_user.id).update(data)
     except NoResultFound:
         fitbit_user = models.FitbitUser(user_id=user_id, **data)
         db.add(fitbit_user)
@@ -139,7 +150,11 @@ def update_user(
     fitbit_data: dict = None,
 ) -> models.User:
     if data:
-        db.query(models.User).filter_by(id=user.id).update(data)
+        db.execute(
+            statement=update(models.User)
+            .where(models.User.id == user.id)
+            .values(**data)
+        )
     if withings_data:
         upsert_withings_data(db, user_id=user.id, data=withings_data)
     if fitbit_data:
