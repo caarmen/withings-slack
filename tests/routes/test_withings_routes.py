@@ -29,7 +29,7 @@ from tests.factories.factories import UserFactory, WithingsUserFactory
 )
 @pytest.mark.asyncio
 async def test_first_user_weight(
-    mocked_session,
+    mocked_async_session,
     respx_mock: MockRouter,
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
@@ -52,8 +52,8 @@ async def test_first_user_weight(
         last_weight=input_initial_weight,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
-    db_user = crud.get_user(
-        mocked_session, withings_oauth_userid=withings_user.oauth_userid
+    db_user = await crud.get_user(
+        mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
     )
     db_withings_user = db_user.withings
     # The user has no previous weight logged
@@ -93,7 +93,7 @@ async def test_first_user_weight(
         userid=withings_user.oauth_userid,
         startdate=1683894606,
         enddate=1686570821,
-        db=mocked_session,
+        db=mocked_async_session,
     )
 
     # Then the last_weight is updated in the database
