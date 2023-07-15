@@ -4,7 +4,8 @@ import datetime
 import logging
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import models
 from slackhealthbot.database.connection import SessionLocal
@@ -23,7 +24,7 @@ class Cache:
 
 
 async def handle_success_poll(
-    db: Session,
+    db: AsyncSession,
     fitbit_user: models.FitbitUser,
     sleep_data: Optional[SleepData],
     when: datetime.date,
@@ -31,7 +32,7 @@ async def handle_success_poll(
 ):
     if sleep_data:
         last_sleep_data = user_last_sleep_data(fitbit_user)
-        save_new_sleep_data(db, fitbit_user.user, sleep_data)
+        await save_new_sleep_data(db, fitbit_user.user, sleep_data)
         await slack.post_sleep(
             slack_alias=fitbit_user.user.slack_alias,
             new_sleep_data=sleep_data,
@@ -59,15 +60,17 @@ async def fitbit_poll(cache: Cache):
     logging.info("fitbit poll")
     today = datetime.date.today()
     try:
-        with SessionLocal() as db:
+        async with SessionLocal() as db:
             await do_poll(db, cache, when=today)
     except Exception:
         logging.error("Error polling fitbit", exc_info=True)
     await schedule_fitbit_poll(cache=cache)
 
 
-async def do_poll(db: Session, cache: Cache, when: datetime.date):
-    fitbit_users = db.query(models.FitbitUser).all()
+async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
+    fitbit_users = await db.scalars(
+        statement=select(models.FitbitUser).join(models.FitbitUser.user),
+    )
     for fitbit_user in fitbit_users:
         latest_successful_poll = cache.cache_success.get(fitbit_user.oauth_userid)
         if not latest_successful_poll or latest_successful_poll < when:

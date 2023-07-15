@@ -1,12 +1,12 @@
 import httpx
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services.fitbit import oauth
 
 
 async def request(
-    db: Session,
+    db: AsyncSession,
     user: db_models.User,
     method: str,
     url: str,
@@ -30,7 +30,7 @@ async def request(
 
 
 async def get(
-    db: Session,
+    db: AsyncSession,
     user: db_models.User,
     url: str,
     retry_count=1,
@@ -43,7 +43,7 @@ async def get(
 
 
 async def post(
-    db: Session,
+    db: AsyncSession,
     user: db_models.User,
     url: str,
     retry_count=1,

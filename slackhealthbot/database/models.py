@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Float, ForeignKey, String, func
+from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 Base = declarative_base()
@@ -14,7 +15,7 @@ class TimestampMixin:
     )
 
 
-class User(TimestampMixin, Base):
+class User(TimestampMixin, AsyncAttrs, Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     slack_alias: Mapped[str] = mapped_column(unique=True, index=True)
@@ -26,7 +27,7 @@ class User(TimestampMixin, Base):
     )
 
 
-class WithingsUser(TimestampMixin, Base):
+class WithingsUser(TimestampMixin, AsyncAttrs, Base):
     __tablename__ = "withings_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
@@ -40,7 +41,7 @@ class WithingsUser(TimestampMixin, Base):
     last_weight: Mapped[Optional[float]] = mapped_column(Float())
 
 
-class FitbitUser(TimestampMixin, Base):
+class FitbitUser(TimestampMixin, AsyncAttrs, Base):
     __tablename__ = "fitbit_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)

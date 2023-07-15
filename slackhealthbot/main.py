@@ -6,7 +6,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, Form, Response, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
 
 from slackhealthbot import logger, scheduler
@@ -22,12 +22,12 @@ from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
 
 
-def get_db():
+async def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await db.close()
 
 
 app = FastAPI(
@@ -69,7 +69,9 @@ def validate_notification_webhook():
 
 
 @app.get("/fitbit-oauth-webhook/")
-async def fitbit_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
+async def fitbit_oauth_webhook(
+    code: str, state: str, db: AsyncSession = Depends(get_db)
+):
     user = await fitbit_oauth.fetch_token(db=db, code=code, state=state)
     await fitbit_api.subscribe(db, user)
     html_content = """
@@ -86,7 +88,9 @@ async def fitbit_oauth_webhook(code: str, state: str, db: Session = Depends(get_
 
 
 @app.get("/withings-oauth-webhook/")
-async def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
+async def withings_oauth_webhook(
+    code: str, state: str, db: AsyncSession = Depends(get_db)
+):
     user = await withings_oauth.fetch_token(db=db, state=state, code=code)
     await withings_api.subscribe(db, user)
     html_content = """
@@ -113,14 +117,14 @@ class FitbitNotification(BaseModel):
 @app.post("/fitbit-notification-webhook/")
 async def fitbit_notification_webhook(
     notifications: list[FitbitNotification],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     logging.info(f"fitbit_notification_webhook: {notifications}")
     notification = next(
         (n for n in notifications if n.collectionType == "sleep" and n.ownerId), None
     )
     if notification:
-        user = crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
+        user = await crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
         try:
             sleep_data = await fitbit_api.get_sleep(
                 db=db,
@@ -152,7 +156,7 @@ async def withings_notification_webhook(
     userid: Annotated[str, Form()],
     startdate: Annotated[int, Form()],
     enddate: Annotated[int, Form()],
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     logging.info(
         "withings_notification_webhook: "
@@ -160,7 +164,7 @@ async def withings_notification_webhook(
     )
     if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
         last_processed_notification_per_user[userid] = (startdate, enddate)
-        user = crud.get_user(db, withings_oauth_userid=userid)
+        user = await crud.get_user(db, withings_oauth_userid=userid)
         try:
             last_weight_data = await withings_api.get_last_weight(
                 db,
@@ -175,7 +179,7 @@ async def withings_notification_webhook(
             )
         else:
             if last_weight_data:
-                crud.update_user(
+                await crud.update_user(
                     db, user, withings_data={"last_weight": last_weight_data.weight_kg}
                 )
                 await slack.post_weight(last_weight_data)

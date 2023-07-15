@@ -1,12 +1,12 @@
 import httpx
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services.withings import oauth
 
 
 async def post(
-    db: Session,
+    db: AsyncSession,
     user: db_models.User,
     url: str,
     data: dict[str, str],

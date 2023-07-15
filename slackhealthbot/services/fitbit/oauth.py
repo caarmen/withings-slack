@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 
 import httpx
 from pydantic import HttpUrl
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
@@ -85,7 +85,7 @@ def create_oauth_url(slack_alias: str) -> HttpUrl:
     return f"{url}?{urlencode(query_params)}"
 
 
-async def fetch_token(db: Session, code: str, state: str) -> db_models.User:
+async def fetch_token(db: AsyncSession, code: str, state: str) -> db_models.User:
     state_value = _settings.oauth_states.pop(state, None)
     if not state_value:
         raise ValueError("Invalid state parameter")
@@ -103,7 +103,7 @@ async def fetch_token(db: Session, code: str, state: str) -> db_models.User:
     response_data = response.json()
     oauth_userid = response_data["user_id"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.upsert_user(
+    user = await crud.upsert_user(
         db,
         fitbit_oauth_userid=oauth_userid,
         data={"slack_alias": state_value.slack_alias},
@@ -112,7 +112,7 @@ async def fetch_token(db: Session, code: str, state: str) -> db_models.User:
     return user
 
 
-async def get_access_token(db: Session, user: db_models.User) -> str:
+async def get_access_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -125,7 +125,7 @@ async def get_access_token(db: Session, user: db_models.User) -> str:
     return user.fitbit.oauth_access_token
 
 
-async def refresh_token(db: Session, user: db_models.User) -> str:
+async def refresh_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -145,7 +145,7 @@ async def refresh_token(db: Session, user: db_models.User) -> str:
     if response.status_code != 200:
         raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.update_user(
+    user = await crud.update_user(
         db,
         user=user,
         fitbit_data=dataclasses.asdict(oauth_fields),

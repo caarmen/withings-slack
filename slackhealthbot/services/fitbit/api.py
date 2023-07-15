@@ -2,7 +2,7 @@ import datetime
 import logging
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services import models as svc_models
@@ -10,7 +10,7 @@ from slackhealthbot.services.fitbit import parser, requests
 from slackhealthbot.settings import settings
 
 
-async def subscribe(db: Session, user: db_models.User):
+async def subscribe(db: AsyncSession, user: db_models.User):
     response = await requests.post(
         db,
         user=user,
@@ -20,7 +20,7 @@ async def subscribe(db: Session, user: db_models.User):
 
 
 async def get_sleep(
-    db: Session,
+    db: AsyncSession,
     user: db_models.User,
     when: datetime.date,
 ) -> Optional[svc_models.SleepData]:

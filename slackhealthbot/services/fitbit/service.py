@@ -1,16 +1,16 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database.models import User
 from slackhealthbot.services.models import SleepData
 
 
-def save_new_sleep_data(
-    db: Session,
+async def save_new_sleep_data(
+    db: AsyncSession,
     user: User,
     sleep_data: SleepData,
 ):
-    crud.update_user(
+    await crud.update_user(
         db,
         user,
         fitbit_data={

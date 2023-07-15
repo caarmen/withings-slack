@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 import httpx
 from pydantic import HttpUrl
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
@@ -57,7 +57,7 @@ def create_oauth_url(slack_alias: str) -> HttpUrl:
     return f"{url}?{urlencode(query_params)}"
 
 
-async def fetch_token(db: Session, state: str, code: str) -> db_models.User:
+async def fetch_token(db: AsyncSession, state: str, code: str) -> db_models.User:
     slack_alias = _settings.oauth_state_to_slack_alias.pop(state, None)
     if not slack_alias:
         raise ValueError("Invalid state parameter")
@@ -78,7 +78,7 @@ async def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     response_data = response.json()["body"]
     oauth_userid = response_data["userid"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.upsert_user(
+    user = await crud.upsert_user(
         db,
         withings_oauth_userid=oauth_userid,
         data={"slack_alias": slack_alias},
@@ -87,7 +87,7 @@ async def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     return user
 
 
-async def get_access_token(db: Session, user: db_models.User) -> str:
+async def get_access_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -100,7 +100,7 @@ async def get_access_token(db: Session, user: db_models.User) -> str:
     return user.withings.oauth_access_token
 
 
-async def refresh_token(db: Session, user: db_models.User) -> str:
+async def refresh_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -124,7 +124,7 @@ async def refresh_token(db: Session, user: db_models.User) -> str:
     if response_data["status"] != 0:
         raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data["body"])
-    user = crud.update_user(
+    user = await crud.update_user(
         db,
         user=user,
         withings_data=dataclasses.asdict(oauth_fields),
