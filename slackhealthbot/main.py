@@ -37,7 +37,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def on_started():
-    logger.update_httpx_logger()
+    logger.update_external_loggers()
     await scheduler.schedule_fitbit_poll(delay_s=10)
 
 
