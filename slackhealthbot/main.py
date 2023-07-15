@@ -121,19 +121,26 @@ async def fitbit_notification_webhook(
     )
     if notification:
         user = crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
-        sleep_data = fitbit_api.get_sleep(
-            db=db,
-            user=user,
-            when=notification.date,
-        )
-        if sleep_data:
-            last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
-            save_new_sleep_data(db, user, sleep_data)
-            await slack.post_sleep(
-                slack_alias=user.slack_alias,
-                new_sleep_data=sleep_data,
-                last_sleep_data=last_sleep_data,
+        try:
+            sleep_data = await fitbit_api.get_sleep(
+                db=db,
+                user=user,
+                when=notification.date,
             )
+        except UserLoggedOutException:
+            await slack.post_user_logged_out(
+                slack_alias=user.slack_alias,
+                service="fitbit",
+            )
+        else:
+            if sleep_data:
+                last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
+                save_new_sleep_data(db, user, sleep_data)
+                await slack.post_sleep(
+                    slack_alias=user.slack_alias,
+                    new_sleep_data=sleep_data,
+                    last_sleep_data=last_sleep_data,
+                )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
