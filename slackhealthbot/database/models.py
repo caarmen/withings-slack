@@ -18,15 +18,21 @@ class User(TimestampMixin, Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     slack_alias: Mapped[str] = mapped_column(unique=True, index=True)
-    withings: Mapped["WithingsUser"] = relationship(back_populates="user")
-    fitbit: Mapped["FitbitUser"] = relationship(back_populates="user")
+    withings: Mapped["WithingsUser"] = relationship(
+        back_populates="user", lazy="joined", join_depth=2
+    )
+    fitbit: Mapped["FitbitUser"] = relationship(
+        back_populates="user", lazy="joined", join_depth=2
+    )
 
 
 class WithingsUser(TimestampMixin, Base):
     __tablename__ = "withings_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
-    user: Mapped["User"] = relationship(back_populates="withings")
+    user: Mapped["User"] = relationship(
+        back_populates="withings", lazy="joined", join_depth=2
+    )
     oauth_access_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_refresh_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_userid: Mapped[str] = mapped_column(String(40))
@@ -38,7 +44,9 @@ class FitbitUser(TimestampMixin, Base):
     __tablename__ = "fitbit_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
-    user: Mapped["User"] = relationship(back_populates="fitbit")
+    user: Mapped["User"] = relationship(
+        back_populates="fitbit", lazy="joined", join_depth=2
+    )
     oauth_access_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_refresh_token: Mapped[Optional[str]] = mapped_column(String(40))
     oauth_userid: Mapped[str] = mapped_column(String(40))
