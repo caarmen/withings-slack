@@ -27,7 +27,8 @@ from tests.factories.factories import UserFactory, WithingsUserFactory
         (52.3, 52300, 52.3, "➡️"),
     ],
 )
-def test_first_user_weight(
+@pytest.mark.asyncio
+async def test_first_user_weight(
     mocked_session,
     respx_mock: MockRouter,
     user_factory: UserFactory,
@@ -88,7 +89,7 @@ def test_first_user_weight(
     )
 
     # When we receive the callback from withings that a new weight is available
-    withings_notification_webhook(
+    await withings_notification_webhook(
         userid=withings_user.oauth_userid,
         startdate=1683894606,
         enddate=1686570821,

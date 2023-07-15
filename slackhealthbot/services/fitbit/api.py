@@ -10,8 +10,8 @@ from slackhealthbot.services.fitbit import parser, requests
 from slackhealthbot.settings import settings
 
 
-def subscribe(db: Session, user: db_models.User):
-    response = requests.post(
+async def subscribe(db: Session, user: db_models.User):
+    response = await requests.post(
         db,
         user=user,
         url=f"{settings.fitbit_base_url}1/user/-/sleep/apiSubscriptions/{user.fitbit.oauth_userid}.json",
@@ -19,7 +19,7 @@ def subscribe(db: Session, user: db_models.User):
     logging.info(f"Fitbit subscription response: {response.json()}")
 
 
-def get_sleep(
+async def get_sleep(
     db: Session,
     user: db_models.User,
     when: datetime.date,
@@ -30,7 +30,7 @@ def get_sleep(
     """
     logging.info(f"get_sleep for user {user.fitbit.oauth_userid}")
     when_str = when.strftime("%Y-%m-%d")
-    response = requests.get(
+    response = await requests.get(
         db,
         user=user,
         url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/{when_str}.json",

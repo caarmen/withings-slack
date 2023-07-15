@@ -36,8 +36,9 @@ app = FastAPI(
 
 
 @app.on_event("startup")
-def on_started():
+async def on_started():
     logger.update_httpx_logger()
+    await scheduler.schedule_fitbit_poll(delay_s=10)
 
 
 @app.get("/v1/withings-authorization/{slack_alias}")
@@ -68,9 +69,9 @@ def validate_notification_webhook():
 
 
 @app.get("/fitbit-oauth-webhook/")
-def fitbit_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
-    user = fitbit_oauth.fetch_token(db=db, code=code, state=state)
-    fitbit_api.subscribe(db, user)
+async def fitbit_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
+    user = await fitbit_oauth.fetch_token(db=db, code=code, state=state)
+    await fitbit_api.subscribe(db, user)
     html_content = """
     <html>
         <head>
@@ -85,9 +86,9 @@ def fitbit_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
 
 
 @app.get("/withings-oauth-webhook/")
-def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
-    user = withings_oauth.fetch_token(db=db, state=state, code=code)
-    withings_api.subscribe(db, user)
+async def withings_oauth_webhook(code: str, state: str, db: Session = Depends(get_db)):
+    user = await withings_oauth.fetch_token(db=db, state=state, code=code)
+    await withings_api.subscribe(db, user)
     html_content = """
     <html>
         <head>
@@ -110,7 +111,7 @@ class FitbitNotification(BaseModel):
 
 
 @app.post("/fitbit-notification-webhook/")
-def fitbit_notification_webhook(
+async def fitbit_notification_webhook(
     notifications: list[FitbitNotification],
     db: Session = Depends(get_db),
 ):
@@ -128,7 +129,7 @@ def fitbit_notification_webhook(
         if sleep_data:
             last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
             save_new_sleep_data(db, user, sleep_data)
-            slack.post_sleep(
+            await slack.post_sleep(
                 slack_alias=user.slack_alias,
                 new_sleep_data=sleep_data,
                 last_sleep_data=last_sleep_data,
@@ -140,7 +141,7 @@ last_processed_notification_per_user = {}
 
 
 @app.post("/withings-notification-webhook/")
-def withings_notification_webhook(
+async def withings_notification_webhook(
     userid: Annotated[str, Form()],
     startdate: Annotated[int, Form()],
     enddate: Annotated[int, Form()],
@@ -154,14 +155,14 @@ def withings_notification_webhook(
         last_processed_notification_per_user[userid] = (startdate, enddate)
         user = crud.get_user(db, withings_oauth_userid=userid)
         try:
-            last_weight_data = withings_api.get_last_weight(
+            last_weight_data = await withings_api.get_last_weight(
                 db,
                 userid=userid,
                 startdate=startdate,
                 enddate=enddate,
             )
         except UserLoggedOutException:
-            slack.post_user_logged_out(
+            await slack.post_user_logged_out(
                 slack_alias=user.slack_alias,
                 service="withings",
             )
@@ -170,13 +171,11 @@ def withings_notification_webhook(
                 crud.update_user(
                     db, user, withings_data={"last_weight": last_weight_data.weight_kg}
                 )
-                slack.post_weight(last_weight_data)
+                await slack.post_weight(last_weight_data)
     else:
         logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-
-scheduler.schedule_fitbit_poll(delay_s=10)
 
 if __name__ == "__main__":
     uvicorn.run(
