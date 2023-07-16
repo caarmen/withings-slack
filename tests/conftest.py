@@ -1,10 +1,12 @@
 import pytest
 import pytest_asyncio
+from fastapi.testclient import TestClient
 from pytest_factoryboy import register
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm.session import Session
 
 from slackhealthbot.database.models import Base
+from slackhealthbot.main import app, get_db
 from tests.factories.factories import (
     FitbitUserFactory,
     UserFactory,
@@ -29,6 +31,12 @@ async def mocked_async_session(mocked_session: Session):
     session: AsyncSession = async_sessionmaker(bind=engine)()
     yield session
     await session.close()
+
+
+@pytest.fixture
+def client(mocked_async_session) -> TestClient:
+    app.dependency_overrides[get_db] = lambda: mocked_async_session
+    return TestClient(app)
 
 
 @pytest.fixture(scope="function", autouse=True)

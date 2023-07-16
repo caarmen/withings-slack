@@ -3,12 +3,13 @@ import json
 import math
 
 import pytest
+from fastapi import status
+from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.database import crud
 from slackhealthbot.database.models import User, WithingsUser
-from slackhealthbot.main import withings_notification_webhook
 from slackhealthbot.settings import settings
 from tests.factories.factories import UserFactory, WithingsUserFactory
 
@@ -30,6 +31,7 @@ from tests.factories.factories import UserFactory, WithingsUserFactory
 @pytest.mark.asyncio
 async def test_first_user_weight(
     mocked_async_session,
+    client: TestClient,
     respx_mock: MockRouter,
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
@@ -89,12 +91,16 @@ async def test_first_user_weight(
     )
 
     # When we receive the callback from withings that a new weight is available
-    await withings_notification_webhook(
-        userid=withings_user.oauth_userid,
-        startdate=1683894606,
-        enddate=1686570821,
-        db=mocked_async_session,
+    response = client.post(
+        "/withings-notification-webhook/",
+        data={
+            "userid": withings_user.oauth_userid,
+            "startdate": 1683894606,
+            "enddate": 1686570821,
+        },
     )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last_weight is updated in the database
     assert math.isclose(db_user.withings.last_weight, expected_new_latest_weight_kg)
