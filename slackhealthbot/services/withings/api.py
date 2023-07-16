@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 from sqlalchemy.exc import NoResultFound
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
@@ -11,7 +11,7 @@ from slackhealthbot.services.withings import requests
 from slackhealthbot.settings import settings
 
 
-async def subscribe(db: Session, user: db_models.User):
+async def subscribe(db: AsyncSession, user: db_models.User):
     callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = await requests.post(
@@ -28,7 +28,7 @@ async def subscribe(db: Session, user: db_models.User):
 
 
 async def get_last_weight(
-    db: Session,
+    db: AsyncSession,
     userid: str,
     startdate: int,
     enddate: int,
@@ -39,7 +39,7 @@ async def get_last_weight(
     """
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
     try:
-        user = crud.get_user(db, withings_oauth_userid=userid)
+        user = await crud.get_user(db, withings_oauth_userid=userid)
     except NoResultFound:
         logging.info(f"get_last_weight: User {userid} unknown")
         return None

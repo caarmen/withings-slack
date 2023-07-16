@@ -57,19 +57,20 @@ def get_uvicorn_log_config() -> dict:
     )
 
 
-def update_httpx_logger():
+def update_external_loggers():
     """
-    Make the httpx module use our log handler.
+    Make the loggers in external modules to use our log handler.
     """
-    custom_logger = logging.getLogger()
-    httpx_logger = logging.getLogger("httpx")
+    for module in ["httpx", "sqlalchemy.engine"]:
+        custom_logger = logging.getLogger()
+        old_logger = logging.getLogger(module)
 
-    # Remove any existing handlers from the httpx logger
-    for handler in httpx_logger.handlers[:]:
-        httpx_logger.removeHandler(handler)
+        # Remove any existing handlers from the logger
+        for handler in old_logger.handlers[:]:
+            old_logger.removeHandler(handler)
 
-    # Add our custom logger as a handler
-    httpx_logger.addHandler(custom_logger)
+        # Add our custom logger as a handler
+        old_logger.addHandler(custom_logger)
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
