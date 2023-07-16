@@ -6,7 +6,7 @@ import string
 from typing import Self
 from urllib.parse import urlencode
 
-import requests
+import httpx
 from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 
@@ -61,7 +61,7 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     slack_alias = _settings.oauth_state_to_slack_alias.pop(state, None)
     if not slack_alias:
         raise ValueError("Invalid state parameter")
-    response = requests.post(
+    response = httpx.post(
         f"{settings.withings_base_url}v2/oauth2",
         data={
             "action": "requesttoken",
@@ -103,7 +103,7 @@ def refresh_token(db: Session, user: db_models.User) -> str:
         UserLoggedOutException if the refresh token request fails
     """
     logging.info(f"Refreshing withings access token for {user.slack_alias}")
-    response = requests.post(
+    response = httpx.post(
         f"{settings.withings_base_url}v2/oauth2",
         data={
             "action": "requesttoken",

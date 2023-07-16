@@ -1,4 +1,4 @@
-import requests
+import httpx
 from sqlalchemy.orm import Session
 
 from slackhealthbot.database import models as db_models
@@ -11,7 +11,7 @@ def post(
     url: str,
     data: dict[str, str],
     retry_count=1,
-) -> requests.Response:
+) -> httpx.Response:
     """
     Execute a request, and retry with a refreshed access token if we get a 401.
     :raises:
@@ -21,7 +21,7 @@ def post(
     headers = {
         "Authorization": f"Bearer {oauth_access_token}",
     }
-    response = requests.post(url, headers=headers, data=data)
+    response = httpx.post(url, headers=headers, data=data)
     response_body = response.json()
     if response_body["status"] == 401 and retry_count > 0:
         oauth.refresh_token(db, user)

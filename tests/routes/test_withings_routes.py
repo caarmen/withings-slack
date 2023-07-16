@@ -3,7 +3,8 @@ import json
 import math
 
 import pytest
-from requests_mock.mocker import Mocker
+from httpx import Response
+from respx import MockRouter
 
 from slackhealthbot.database import crud
 from slackhealthbot.database.models import User, WithingsUser
@@ -28,7 +29,7 @@ from tests.factories.factories import UserFactory, WithingsUserFactory
 )
 def test_first_user_weight(
     mocked_session,
-    requests_mock: Mocker,
+    respx_mock: MockRouter,
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
     input_initial_weight,
@@ -58,36 +59,32 @@ def test_first_user_weight(
     assert db_withings_user.last_weight == input_initial_weight
 
     # Mock withings endpoint to return some weight data
-    requests_mock.post(
+    respx_mock.post(
         url=f"{settings.withings_base_url}measure",
-        json={
-            "status": 0,
-            "body": {
-                "measuregrps": [
-                    {
-                        "measures": [
-                            {
-                                "value": input_new_weight_g,
-                                "unit": -3,
-                            }
-                        ],
-                    },
-                ],
+    ).mock(
+        return_value=Response(
+            status_code=200,
+            json={
+                "status": 0,
+                "body": {
+                    "measuregrps": [
+                        {
+                            "measures": [
+                                {
+                                    "value": input_new_weight_g,
+                                    "unit": -3,
+                                }
+                            ],
+                        },
+                    ],
+                },
             },
-        },
+        )
     )
 
-    # Verify we call the slack post with the expected request data
-    def slack_post_matcher(request):
-        request_data = json.loads(request.text)
-        assert expected_icon in request_data["text"]
-        return True
-
     # Mock an empty ok response from the slack webhook
-    requests_mock.post(
-        url=f"{settings.slack_webhook_url}",
-        status_code=200,
-        additional_matcher=slack_post_matcher,
+    slack_request = respx_mock.post(url=f"{settings.slack_webhook_url}").mock(
+        return_value=Response(status_code=200)
     )
 
     # When we receive the callback from withings that a new weight is available
@@ -100,3 +97,7 @@ def test_first_user_weight(
 
     # Then the last_weight is updated in the database
     assert math.isclose(db_user.withings.last_weight, expected_new_latest_weight_kg)
+
+    # And the message is sent to slack as expected
+    actual_message = json.loads(slack_request.calls[0].request.content)["text"]
+    assert expected_icon in actual_message

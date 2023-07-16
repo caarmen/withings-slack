@@ -57,6 +57,21 @@ def get_uvicorn_log_config() -> dict:
     )
 
 
+def update_httpx_logger():
+    """
+    Make the httpx module use our log handler.
+    """
+    custom_logger = logging.getLogger()
+    httpx_logger = logging.getLogger("httpx")
+
+    # Remove any existing handlers from the httpx logger
+    for handler in httpx_logger.handlers[:]:
+        httpx_logger.removeHandler(handler)
+
+    # Add our custom logger as a handler
+    httpx_logger.addHandler(custom_logger)
+
+
 class LoggerMiddleware(BaseHTTPMiddleware):
     """
     Add an X-correlation-id header to responses.

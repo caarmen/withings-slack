@@ -8,7 +8,7 @@ from base64 import urlsafe_b64encode
 from typing import Optional, Self
 from urllib.parse import urlencode
 
-import requests
+import httpx
 from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 
@@ -89,7 +89,7 @@ def fetch_token(db: Session, code: str, state: str) -> db_models.User:
     state_value = _settings.oauth_states.pop(state, None)
     if not state_value:
         raise ValueError("Invalid state parameter")
-    response = requests.post(
+    response = httpx.post(
         f"{settings.fitbit_base_url}oauth2/token",
         headers=_authorization_headers(),
         data={
@@ -130,7 +130,7 @@ def refresh_token(db: Session, user: db_models.User) -> str:
         UserLoggedOutException if the refresh token request fails
     """
     logging.info(f"Refreshing fitbit access token for {user.slack_alias}")
-    response = requests.post(
+    response = httpx.post(
         f"{settings.fitbit_base_url}oauth2/token",
         headers=_authorization_headers(),
         data={

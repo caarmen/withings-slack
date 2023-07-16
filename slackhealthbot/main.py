@@ -35,6 +35,11 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+def on_started():
+    logger.update_httpx_logger()
+
+
 @app.get("/v1/withings-authorization/{slack_alias}")
 def get_withings_authorization(slack_alias: str):
     return RedirectResponse(
