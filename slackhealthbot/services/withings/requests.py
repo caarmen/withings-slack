@@ -5,7 +5,7 @@ from slackhealthbot.database import models as db_models
 from slackhealthbot.services.withings import oauth
 
 
-def post(
+async def post(
     db: Session,
     user: db_models.User,
     url: str,
@@ -17,13 +17,14 @@ def post(
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
-    oauth_access_token = oauth.get_access_token(db, user=user)
+    oauth_access_token = await oauth.get_access_token(db, user=user)
     headers = {
         "Authorization": f"Bearer {oauth_access_token}",
     }
-    response = httpx.post(url, headers=headers, data=data)
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, data=data)
     response_body = response.json()
     if response_body["status"] == 401 and retry_count > 0:
-        oauth.refresh_token(db, user)
+        await oauth.refresh_token(db, user)
         return post(db, user, url, data, retry_count - 1)
     return response

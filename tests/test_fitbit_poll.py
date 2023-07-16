@@ -256,7 +256,8 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
         ),
     ],
 )
-def test_fitbit_poll(
+@pytest.mark.asyncio
+async def test_fitbit_poll(
     mocked_session,
     respx_mock: MockRouter,
     user_factory: UserFactory,
@@ -292,7 +293,7 @@ def test_fitbit_poll(
     )
 
     # When we poll for new sleep data
-    do_poll(db=mocked_session, cache=Cache(), when=datetime.date(2023, 1, 23))
+    await do_poll(db=mocked_session, cache=Cache(), when=datetime.date(2023, 1, 23))
 
     # Then the last sleep data is updated in the database
     actual_last_sleep_data = user_last_sleep_data(user.fitbit)
