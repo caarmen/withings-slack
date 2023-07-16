@@ -6,9 +6,9 @@ import string
 from typing import Self
 from urllib.parse import urlencode
 
-import requests
+import httpx
 from pydantic import HttpUrl
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
@@ -57,25 +57,28 @@ def create_oauth_url(slack_alias: str) -> HttpUrl:
     return f"{url}?{urlencode(query_params)}"
 
 
-def fetch_token(db: Session, state: str, code: str) -> db_models.User:
+async def fetch_token(db: AsyncSession, state: str, code: str) -> db_models.User:
     slack_alias = _settings.oauth_state_to_slack_alias.pop(state, None)
     if not slack_alias:
         raise ValueError("Invalid state parameter")
-    response = requests.post(
-        f"{settings.withings_base_url}v2/oauth2",
-        data={
-            "action": "requesttoken",
-            "client_id": settings.withings_client_id,
-            "grant_type": "authorization_code",
-            "code": code,
-            "redirect_uri": f"{settings.withings_callback_url}withings-oauth-webhook/",
-            **signing.sign_action("requesttoken"),
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.withings_base_url}v2/oauth2",
+            data={
+                "action": "requesttoken",
+                "client_id": settings.withings_client_id,
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": (
+                    f"{settings.withings_callback_url}withings-oauth-webhook/"
+                ),
+                **await signing.sign_action("requesttoken"),
+            },
+        )
     response_data = response.json()["body"]
     oauth_userid = response_data["userid"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.upsert_user(
+    user = await crud.upsert_user(
         db,
         withings_oauth_userid=oauth_userid,
         data={"slack_alias": slack_alias},
@@ -84,7 +87,7 @@ def fetch_token(db: Session, state: str, code: str) -> db_models.User:
     return user
 
 
-def get_access_token(db: Session, user: db_models.User) -> str:
+async def get_access_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -93,26 +96,27 @@ def get_access_token(db: Session, user: db_models.User) -> str:
         not user.withings.oauth_expiration_date
         or user.withings.oauth_expiration_date < datetime.datetime.utcnow()
     ):
-        refresh_token(db, user)
+        await refresh_token(db, user)
     return user.withings.oauth_access_token
 
 
-def refresh_token(db: Session, user: db_models.User) -> str:
+async def refresh_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
     logging.info(f"Refreshing withings access token for {user.slack_alias}")
-    response = requests.post(
-        f"{settings.withings_base_url}v2/oauth2",
-        data={
-            "action": "requesttoken",
-            "client_id": settings.withings_client_id,
-            "grant_type": "refresh_token",
-            "refresh_token": user.withings.oauth_refresh_token,
-            **signing.sign_action("requesttoken"),
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.withings_base_url}v2/oauth2",
+            data={
+                "action": "requesttoken",
+                "client_id": settings.withings_client_id,
+                "grant_type": "refresh_token",
+                "refresh_token": user.withings.oauth_refresh_token,
+                **await signing.sign_action("requesttoken"),
+            },
+        )
 
     response_data = response.json()
     logging.info(f"Refresh token response {response_data}")
@@ -120,7 +124,7 @@ def refresh_token(db: Session, user: db_models.User) -> str:
     if response_data["status"] != 0:
         raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data["body"])
-    user = crud.update_user(
+    user = await crud.update_user(
         db,
         user=user,
         withings_data=dataclasses.asdict(oauth_fields),

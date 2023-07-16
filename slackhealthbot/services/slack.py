@@ -1,23 +1,24 @@
 import datetime
 
-import requests
+import httpx
 
 from slackhealthbot.services.models import SleepData, WeightData
 from slackhealthbot.settings import settings
 
 
-def post_weight(weight_data: WeightData):
+async def post_weight(weight_data: WeightData):
     icon = get_weight_change_icon(weight_data)
     message = (
         f"New weight from <@{weight_data.slack_alias}>: "
         + f"{weight_data.weight_kg:.2f} kg. {icon}"
     )
-    requests.post(
-        url=settings.slack_webhook_url,
-        json={
-            "text": message,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            url=settings.slack_webhook_url,
+            json={
+                "text": message,
+            },
+        )
 
 
 def get_weight_change_icon(weight_data: WeightData) -> str:
@@ -67,7 +68,7 @@ def get_datetime_change_icon(
     return get_seconds_change_icon(time_diff_seconds)
 
 
-def post_sleep(
+async def post_sleep(
     slack_alias: str,
     new_sleep_data: SleepData,
     last_sleep_data: SleepData,
@@ -97,23 +98,25 @@ def post_sleep(
     • Total sleep: {format_minutes(new_sleep_data.sleep_minutes)} {sleep_minutes_icon}
     • Awake: {format_minutes(new_sleep_data.wake_minutes)} {wake_minutes_icon}
     """.strip()
-    requests.post(
-        url=settings.slack_webhook_url,
-        json={
-            "text": message,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            url=settings.slack_webhook_url,
+            json={
+                "text": message,
+            },
+        )
 
 
-def post_user_logged_out(slack_alias: str, service: str):
+async def post_user_logged_out(slack_alias: str, service: str):
     message = f"""
 Oh no <@{slack_alias}>, looks like you were logged out of {service}! 😳.
 You'll need to log in again to get your reports:
 {settings.server_url}v1/{service}-authorization/{slack_alias}
 """
-    requests.post(
-        url=settings.slack_webhook_url,
-        json={
-            "text": message,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            url=settings.slack_webhook_url,
+            json={
+                "text": message,
+            },
+        )

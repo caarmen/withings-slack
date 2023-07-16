@@ -57,6 +57,22 @@ def get_uvicorn_log_config() -> dict:
     )
 
 
+def update_external_loggers():
+    """
+    Make the loggers in external modules to use our log handler.
+    """
+    for module in ["httpx", "sqlalchemy.engine"]:
+        custom_logger = logging.getLogger()
+        old_logger = logging.getLogger(module)
+
+        # Remove any existing handlers from the logger
+        for handler in old_logger.handlers[:]:
+            old_logger.removeHandler(handler)
+
+        # Add our custom logger as a handler
+        old_logger.addHandler(custom_logger)
+
+
 class LoggerMiddleware(BaseHTTPMiddleware):
     """
     Add an X-correlation-id header to responses.

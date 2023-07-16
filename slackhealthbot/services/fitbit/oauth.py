@@ -8,9 +8,9 @@ from base64 import urlsafe_b64encode
 from typing import Optional, Self
 from urllib.parse import urlencode
 
-import requests
+import httpx
 from pydantic import HttpUrl
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
@@ -85,24 +85,25 @@ def create_oauth_url(slack_alias: str) -> HttpUrl:
     return f"{url}?{urlencode(query_params)}"
 
 
-def fetch_token(db: Session, code: str, state: str) -> db_models.User:
+async def fetch_token(db: AsyncSession, code: str, state: str) -> db_models.User:
     state_value = _settings.oauth_states.pop(state, None)
     if not state_value:
         raise ValueError("Invalid state parameter")
-    response = requests.post(
-        f"{settings.fitbit_base_url}oauth2/token",
-        headers=_authorization_headers(),
-        data={
-            "client_id": settings.fitbit_client_id,
-            "grant_type": "authorization_code",
-            "code": code,
-            "code_verifier": state_value.code_verifier,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.fitbit_base_url}oauth2/token",
+            headers=_authorization_headers(),
+            data={
+                "client_id": settings.fitbit_client_id,
+                "grant_type": "authorization_code",
+                "code": code,
+                "code_verifier": state_value.code_verifier,
+            },
+        )
     response_data = response.json()
     oauth_userid = response_data["user_id"]
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.upsert_user(
+    user = await crud.upsert_user(
         db,
         fitbit_oauth_userid=oauth_userid,
         data={"slack_alias": state_value.slack_alias},
@@ -111,7 +112,7 @@ def fetch_token(db: Session, code: str, state: str) -> db_models.User:
     return user
 
 
-def get_access_token(db: Session, user: db_models.User) -> str:
+async def get_access_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -120,30 +121,31 @@ def get_access_token(db: Session, user: db_models.User) -> str:
         not user.fitbit.oauth_expiration_date
         or user.fitbit.oauth_expiration_date < datetime.datetime.utcnow()
     ):
-        refresh_token(db, user)
+        await refresh_token(db, user)
     return user.fitbit.oauth_access_token
 
 
-def refresh_token(db: Session, user: db_models.User) -> str:
+async def refresh_token(db: AsyncSession, user: db_models.User) -> str:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
     logging.info(f"Refreshing fitbit access token for {user.slack_alias}")
-    response = requests.post(
-        f"{settings.fitbit_base_url}oauth2/token",
-        headers=_authorization_headers(),
-        data={
-            "client_id": settings.fitbit_client_id,
-            "grant_type": "refresh_token",
-            "refresh_token": user.fitbit.oauth_refresh_token,
-        },
-    )
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            f"{settings.fitbit_base_url}oauth2/token",
+            headers=_authorization_headers(),
+            data={
+                "client_id": settings.fitbit_client_id,
+                "grant_type": "refresh_token",
+                "refresh_token": user.fitbit.oauth_refresh_token,
+            },
+        )
     response_data = response.json()
     if response.status_code != 200:
         raise UserLoggedOutException
     oauth_fields = OauthFields.parse_response_data(response_data)
-    user = crud.update_user(
+    user = await crud.update_user(
         db,
         user=user,
         fitbit_data=dataclasses.asdict(oauth_fields),

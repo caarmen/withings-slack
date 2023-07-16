@@ -3,7 +3,8 @@ import json
 import re
 
 import pytest
-from requests_mock.mocker import Mocker
+from httpx import Response
+from respx import MockRouter
 
 from slackhealthbot.database.models import User
 from slackhealthbot.scheduler import Cache, do_poll
@@ -255,9 +256,10 @@ from tests.factories.factories import FitbitUserFactory, UserFactory
         ),
     ],
 )
-def test_fitbit_poll(
-    mocked_session,
-    requests_mock: Mocker,
+@pytest.mark.asyncio
+async def test_fitbit_poll(
+    mocked_async_session,
+    respx_mock: MockRouter,
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
     input_initial_sleep_data,
@@ -281,27 +283,26 @@ def test_fitbit_poll(
     )
 
     # Mock fitbit endpoint to return some sleep data
-    requests_mock.get(
+    respx_mock.get(
         url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/2023-01-23.json",
-        json=input_mock_fitbit_response,
-    )
-
-    # Verify we call the slack post with the expected request data
-    def slack_post_matcher(request):
-        actual_message = json.loads(request.text)["text"].replace("\n", "")
-        assert re.search(expected_icons, actual_message)
-        return True
+    ).mock(Response(status_code=200, json=input_mock_fitbit_response))
 
     # Mock an empty ok response from the slack webhook
-    requests_mock.post(
-        url=f"{settings.slack_webhook_url}",
-        status_code=200,
-        additional_matcher=slack_post_matcher,
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
     )
 
     # When we poll for new sleep data
-    do_poll(db=mocked_session, cache=Cache(), when=datetime.date(2023, 1, 23))
+    await do_poll(
+        db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
+    )
 
     # Then the last sleep data is updated in the database
     actual_last_sleep_data = user_last_sleep_data(user.fitbit)
     assert actual_last_sleep_data == expected_new_last_sleep_data
+
+    # And the message was sent to slack as expected
+    actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(
+        "\n", ""
+    )
+    assert re.search(expected_icons, actual_message)
