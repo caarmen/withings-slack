@@ -139,7 +139,7 @@ async def fitbit_notification_webhook(
         else:
             if sleep_data:
                 last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
-                save_new_sleep_data(db, user, sleep_data)
+                await save_new_sleep_data(db, user, sleep_data)
                 await slack.post_sleep(
                     slack_alias=user.slack_alias,
                     new_sleep_data=sleep_data,
