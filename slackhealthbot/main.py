@@ -120,31 +120,29 @@ async def fitbit_notification_webhook(
     db: AsyncSession = Depends(get_db),
 ):
     logging.info(f"fitbit_notification_webhook: {notifications}")
-    notification = next(
-        (n for n in notifications if n.collectionType == "sleep" and n.ownerId), None
-    )
-    if notification:
+    for notification in notifications:
         user = await crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
         try:
-            sleep_data = await fitbit_api.get_sleep(
-                db=db,
-                user=user,
-                when=notification.date,
-            )
+            if notification.collectionType == "sleep":
+                sleep_data = await fitbit_api.get_sleep(
+                    db=db,
+                    user=user,
+                    when=notification.date,
+                )
+                if sleep_data:
+                    last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
+                    await save_new_sleep_data(db, user, sleep_data)
+                    await slack.post_sleep(
+                        slack_alias=user.slack_alias,
+                        new_sleep_data=sleep_data,
+                        last_sleep_data=last_sleep_data,
+                    )
         except UserLoggedOutException:
             await slack.post_user_logged_out(
                 slack_alias=user.slack_alias,
                 service="fitbit",
             )
-        else:
-            if sleep_data:
-                last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
-                await save_new_sleep_data(db, user, sleep_data)
-                await slack.post_sleep(
-                    slack_alias=user.slack_alias,
-                    new_sleep_data=sleep_data,
-                    last_sleep_data=last_sleep_data,
-                )
+            break
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
