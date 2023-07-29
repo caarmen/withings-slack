@@ -1,9 +1,8 @@
 import asyncio
-from sqlalchemy.ext.asyncio import async_engine_from_config
-
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from slackhealthbot.database import models as db_models
@@ -56,6 +55,7 @@ async def run_async_migrations():
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
