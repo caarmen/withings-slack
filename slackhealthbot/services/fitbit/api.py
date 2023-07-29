@@ -15,7 +15,7 @@ async def subscribe(db: AsyncSession, user: db_models.User):
         response = await requests.post(
             db,
             user=user,
-            url=f"{settings.fitbit_base_url}1/user/-/{collectionPath}/apiSubscriptions/{user.fitbit.oauth_userid}.json",
+            url=f"{settings.fitbit_base_url}1/user/-/{collectionPath}/apiSubscriptions/{user.fitbit.oauth_userid}-{collectionPath}.json",
         )
         logging.info(
             f"Fitbit {collectionPath} subscription response: {response.json()}"
