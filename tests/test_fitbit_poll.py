@@ -72,10 +72,13 @@ async def test_fitbit_poll_sleep(
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data
 
     # And the message was sent to slack as expected
-    actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(
-        "\n", ""
-    )
-    assert re.search(scenario.expected_icons, actual_message)
+    if scenario.expected_icons is not None:
+        actual_message = json.loads(slack_request.calls[0].request.content)[
+            "text"
+        ].replace("\n", "")
+        assert re.search(scenario.expected_icons, actual_message)
+    else:
+        assert not slack_request.calls
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from typing import Annotated, Literal, Optional, Self, Union
 
 from pydantic import BaseModel, Field
@@ -88,7 +89,11 @@ DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
-    fitbit_sleep = FitbitSleep.parse(input)
+    try:
+        fitbit_sleep = FitbitSleep.parse(input)
+    except Exception as e:
+        logging.warning(f"Error parsing sleep: error {e}, input: {input}", exc_info=e)
+        return None
     main_sleep_item = next(
         (item for item in fitbit_sleep.sleep if item.isMainSleep), None
     )
@@ -117,7 +122,13 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
 
 
 def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
-    fitbit_activities = FitbitActivities.parse(input)
+    try:
+        fitbit_activities = FitbitActivities.parse(input)
+    except Exception as e:
+        logging.warning(
+            f"Error parsing activity: error {e}, input: {input}", exc_info=e
+        )
+        return None
     if not fitbit_activities.activities:
         return None
     fitbit_activity = fitbit_activities.activities[0]
