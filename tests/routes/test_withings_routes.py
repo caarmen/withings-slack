@@ -29,7 +29,7 @@ from tests.factories.factories import UserFactory, WithingsUserFactory
     ],
 )
 @pytest.mark.asyncio
-async def test_first_user_weight(
+async def test_weight_notification(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
@@ -58,7 +58,7 @@ async def test_first_user_weight(
         mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
     )
     db_withings_user = db_user.withings
-    # The user has no previous weight logged
+    # The user has the previous weight logged
     assert db_withings_user.last_weight == input_initial_weight
 
     # Mock withings endpoint to return some weight data
