@@ -58,6 +58,32 @@ class FitbitSleep(BaseModel):
         return cls(**json.loads(input))
 
 
+class FitbitMinutesInHeartRateZone(BaseModel):
+    minutes: int
+    zoneName: str
+
+
+class FitBitActiveZoneMinutes(BaseModel):
+    minutesInHeartRateZones: list[FitbitMinutesInHeartRateZone]
+
+
+class FitbitActivity(BaseModel):
+    logId: int
+    activeZoneMinutes: FitBitActiveZoneMinutes
+    activityName: str
+    activityTypeId: int
+    calories: int
+    duration: int
+
+
+class FitbitActivities(BaseModel):
+    activities: list[FitbitActivity]
+
+    @classmethod
+    def parse(cls, input: str) -> Self:
+        return cls(**json.loads(input))
+
+
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
@@ -87,4 +113,23 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
         sleep_minutes=asleep_minutes,
         wake_minutes=wake_minutes,
         slack_alias=slack_alias,
+    )
+
+
+def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
+    fitbit_activities = FitbitActivities.parse(input)
+    if not fitbit_activities.activities:
+        return None
+    fitbit_activity = fitbit_activities.activities[0]
+    return svc_models.ActivityData(
+        log_id=fitbit_activity.logId,
+        type_id=fitbit_activity.activityTypeId,
+        name=fitbit_activity.activityName,
+        calories=fitbit_activity.calories,
+        total_minutes=fitbit_activity.duration / 60000,
+        zone_minutes=[
+            svc_models.ActivityZoneMinutes(name=x.zoneName, minutes=x.minutes)
+            for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
+            if x.minutes > 0
+        ],
     )

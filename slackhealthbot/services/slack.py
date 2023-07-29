@@ -2,7 +2,7 @@ import datetime
 
 import httpx
 
-from slackhealthbot.services.models import SleepData, WeightData
+from slackhealthbot.services.models import ActivityData, SleepData, WeightData
 from slackhealthbot.settings import settings
 
 
@@ -103,6 +103,30 @@ async def post_sleep(
             url=settings.slack_webhook_url,
             json={
                 "text": message,
+            },
+        )
+
+
+async def post_activity(
+    slack_alias: str,
+    activity_data: ActivityData,
+):
+    message = f"""
+New {activity_data.name} activity from <@{slack_alias}>:
+    • Duration: {activity_data.total_minutes} minutes.
+    • Calories: {activity_data.calories}.
+"""
+    message += "\n".join(
+        [
+            f"    • {zone_minutes.name} minutes: {zone_minutes.minutes}."
+            for zone_minutes in activity_data.zone_minutes
+        ]
+    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            url=settings.slack_webhook_url,
+            json={
+                "text": message.strip(),
             },
         )
 

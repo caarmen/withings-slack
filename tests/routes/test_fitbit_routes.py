@@ -13,13 +13,18 @@ from slackhealthbot.database.models import FitbitUser, User
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
 from tests.factories.factories import FitbitUserFactory, UserFactory
-from tests.fixtures.fitbit_scenarios import FitbitTestScenario, scenarios
+from tests.fixtures.fitbit_scenarios import (
+    FitbitActivityScenario,
+    FitbitSleepScenario,
+    activity_scenarios,
+    sleep_scenarios,
+)
 
 
 @pytest.mark.parametrize(
-    ids=scenarios.keys(),
+    ids=sleep_scenarios.keys(),
     argnames="scenario",
-    argvalues=scenarios.values(),
+    argvalues=sleep_scenarios.values(),
 )
 @pytest.mark.asyncio
 async def test_sleep_notification(
@@ -28,7 +33,7 @@ async def test_sleep_notification(
     respx_mock: MockRouter,
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    scenario: FitbitTestScenario,
+    scenario: FitbitSleepScenario,
 ):
     """
     Given a user with a given previous sleep logged
@@ -65,7 +70,7 @@ async def test_sleep_notification(
         return_value=Response(200)
     )
 
-    # When we receive the callback from fitbit that a new weight is available
+    # When we receive the callback from fitbit that a new sleep is available
     response = client.post(
         "/fitbit-notification-webhook/",
         content=json.dumps(
@@ -90,3 +95,81 @@ async def test_sleep_notification(
         "\n", ""
     )
     assert re.search(scenario.expected_icons, actual_message)
+
+
+@pytest.mark.parametrize(
+    ids=activity_scenarios.keys(),
+    argnames="scenario",
+    argvalues=activity_scenarios.values(),
+)
+@pytest.mark.asyncio
+async def test_activity_notification(
+    mocked_async_session,
+    client: TestClient,
+    respx_mock: MockRouter,
+    user_factory: UserFactory,
+    fitbit_user_factory: FitbitUserFactory,
+    scenario: FitbitActivityScenario,
+):
+    """
+    Given a user with a given previous activity logged
+    When we receive the callback from fitbit that a new activity is available
+    Then the last activity is updated in the database
+    And the message is posted to slack with the correct pattern.
+    """
+
+    # Given a user with the given previous activity data
+    user: User = user_factory(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory(
+        user_id=user.id,
+        last_activity_log_id=scenario.input_last_activity_log_id,
+        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+    )
+
+    db_user = await crud.get_user(
+        mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    )
+    db_fitbit_user = db_user.fitbit
+    # The user has the previous activity logged
+    assert db_fitbit_user.last_activity_log_id == scenario.input_last_activity_log_id
+
+    # Mock fitbit endpoint to return some activity data
+    respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(Response(status_code=200, json=scenario.input_mock_fitbit_response))
+
+    # Mock an empty ok response from the slack webhook
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
+    )
+
+    # When we receive the callback from fitbit that a new activity is available
+    response = client.post(
+        "/fitbit-notification-webhook/",
+        content=json.dumps(
+            [
+                {
+                    "ownerId": user.fitbit.oauth_userid,
+                    "date": 1683894606,
+                    "collectionType": "activities",
+                }
+            ]
+        ),
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    # Then the last activity data is updated in the database
+    assert (
+        db_user.fitbit.last_activity_log_id
+        == scenario.expected_new_last_activity_log_id
+    )
+
+    # And the message was sent to slack as expected
+    if scenario.expected_message_pattern:
+        actual_message = json.loads(slack_request.calls[0].request.content)[
+            "text"
+        ].replace("\n", "")
+        assert re.search(scenario.expected_message_pattern, actual_message)
+    else:
+        assert not slack_request.calls

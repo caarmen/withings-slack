@@ -6,15 +6,15 @@ from slackhealthbot.services.models import SleepData
 
 
 @dataclasses.dataclass
-class FitbitTestScenario:
+class FitbitSleepScenario:
     input_initial_sleep_data: dict[str, int]
     input_mock_fitbit_response: dict[str, Any]
     expected_new_last_sleep_data: SleepData
     expected_icons: str
 
 
-scenarios: dict[str, FitbitTestScenario] = {
-    "No previous sleep data": FitbitTestScenario(
+sleep_scenarios: dict[str, FitbitSleepScenario] = {
+    "No previous sleep data": FitbitSleepScenario(
         # No previous sleep data
         input_initial_sleep_data={
             "last_sleep_start_time": None,
@@ -44,7 +44,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="",
     ),
-    "New sleep data higher": FitbitTestScenario(
+    "New sleep data higher": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all higher than previous values
         input_initial_sleep_data={
@@ -78,7 +78,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="⬆️.*⬆️.*⬆️.*⬆️",
     ),
-    "New sleep data slightly higher": FitbitTestScenario(
+    "New sleep data slightly higher": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all slightly higher than previous values
         input_initial_sleep_data={
@@ -109,7 +109,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="↗️.*↗️.*↗️.*↗️",
     ),
-    "New sleep data barely higher": FitbitTestScenario(
+    "New sleep data barely higher": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all barely higher than previous values
         input_initial_sleep_data={
@@ -143,7 +143,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="➡️.*➡️.*➡️.*➡️",
     ),
-    "New sleep data barely lower": FitbitTestScenario(
+    "New sleep data barely lower": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all barely lower than previous values
         input_initial_sleep_data={
@@ -177,7 +177,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="➡️.*➡️.*➡️.*➡️",
     ),
-    "New sleep data slightly lower": FitbitTestScenario(
+    "New sleep data slightly lower": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all slightly lower than previous values
         input_initial_sleep_data={
@@ -211,7 +211,7 @@ scenarios: dict[str, FitbitTestScenario] = {
         ),
         expected_icons="↘️.*↘️.*↘️.*↘️",
     ),
-    "New sleep data lower": FitbitTestScenario(
+    "New sleep data lower": FitbitSleepScenario(
         # Previous sleep data exists.
         # Newer values are all lower than previous values
         input_initial_sleep_data={
@@ -244,5 +244,162 @@ scenarios: dict[str, FitbitTestScenario] = {
             wake_minutes=130,
         ),
         expected_icons="⬇️.*⬇️.*⬇️.*⬇️",
+    ),
+}
+
+
+@dataclasses.dataclass
+class FitbitActivityScenario:
+    input_last_activity_log_id: int | None
+    input_mock_fitbit_response: dict[str, Any]
+    expected_new_last_activity_log_id: int
+    expected_message_pattern: str
+
+
+activity_scenarios: dict[str, FitbitActivityScenario] = {
+    "No previous activity data, new Spinning activity": FitbitActivityScenario(
+        input_last_activity_log_id=None,
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "zoneName": "Fat Burn",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Cardio",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Out of Range",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Peak",
+                            },
+                        ]
+                    },
+                    "activityName": "Spinning",
+                    "activityTypeId": 55001,
+                    "logId": 1234,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1234,
+        expected_message_pattern="New Spinning activity.*Fat Burn.*8",
+    ),
+    "New Spinning activity, partial zones": FitbitActivityScenario(
+        input_last_activity_log_id=1234,
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "zoneName": "Fat Burn",
+                            },
+                            {
+                                "minutes": 9,
+                                "zoneName": "Cardio",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Out of Range",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Peak",
+                            },
+                        ]
+                    },
+                    "activityName": "Spinning",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_message_pattern="New Spinning activity.*Fat Burn.*8.*Cardio.*9",
+    ),
+    "New Spinning activity, full zones": FitbitActivityScenario(
+        input_last_activity_log_id=1234,
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "zoneName": "Fat Burn",
+                            },
+                            {
+                                "minutes": 9,
+                                "zoneName": "Cardio",
+                            },
+                            {
+                                "minutes": 10,
+                                "zoneName": "Out of Range",
+                            },
+                            {
+                                "minutes": 11,
+                                "zoneName": "Peak",
+                            },
+                        ]
+                    },
+                    "activityName": "Spinning",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_message_pattern="New Spinning activity.*"
+        + "Fat Burn.*8.*Cardio.*9.*Out of Range.*10.*Peak.*11",
+    ),
+    "New unrecognized activity": FitbitActivityScenario(
+        input_last_activity_log_id=1234,
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "zoneName": "Fat Burn",
+                            },
+                            {
+                                "minutes": 9,
+                                "zoneName": "Cardio",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Out of Range",
+                            },
+                            {
+                                "minutes": 0,
+                                "zoneName": "Peak",
+                            },
+                        ]
+                    },
+                    "activityName": "Glandating",
+                    "activityTypeId": 4242,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1234,
+        expected_message_pattern=None,
     ),
 }

@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +12,7 @@ async def request(
     user: db_models.User,
     method: str,
     url: str,
+    params: dict[str, Any] = None,
     retry_count=1,
 ) -> httpx.Response:
     """
@@ -22,10 +25,16 @@ async def request(
         "Authorization": f"Bearer {oauth_access_token}",
     }
     async with httpx.AsyncClient() as client:
-        response = await client.request(method, url, headers=headers)
+        response = await client.request(method, url, headers=headers, params=params)
     if response.status_code == 401 and retry_count > 0:
         await oauth.refresh_token(db, user)
-        return await request(db, user, method, url, retry_count - 1)
+        return await request(
+            db=db,
+            user=user,
+            method=method,
+            url=url,
+            retry_count=retry_count - 1,
+        )
     return response
 
 
@@ -33,13 +42,21 @@ async def get(
     db: AsyncSession,
     user: db_models.User,
     url: str,
+    params: dict[str, Any] = None,
     retry_count=1,
 ) -> httpx.Response:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
-    return await request(db, user, "get", url, retry_count)
+    return await request(
+        db=db,
+        user=user,
+        method="get",
+        url=url,
+        params=params,
+        retry_count=retry_count,
+    )
 
 
 async def post(
@@ -52,4 +69,10 @@ async def post(
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
-    return await request(db, user, "post", url, retry_count)
+    return await request(
+        db=db,
+        user=user,
+        method="post",
+        url=url,
+        retry_count=retry_count,
+    )
