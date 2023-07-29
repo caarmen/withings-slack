@@ -11,7 +11,12 @@ from slackhealthbot.scheduler import Cache, do_poll
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
 from tests.factories.factories import FitbitUserFactory, UserFactory
-from tests.fixtures.fitbit_scenarios import FitbitSleepScenario, sleep_scenarios
+from tests.fixtures.fitbit_scenarios import (
+    FitbitActivityScenario,
+    FitbitSleepScenario,
+    activity_scenarios,
+    sleep_scenarios,
+)
 
 
 @pytest.mark.parametrize(
@@ -71,3 +76,66 @@ async def test_fitbit_poll_sleep(
         "\n", ""
     )
     assert re.search(scenario.expected_icons, actual_message)
+
+
+@pytest.mark.parametrize(
+    ids=activity_scenarios.keys(),
+    argnames="scenario",
+    argvalues=activity_scenarios.values(),
+)
+@pytest.mark.asyncio
+async def test_fitbit_poll_activity(
+    mocked_async_session,
+    respx_mock: MockRouter,
+    user_factory: UserFactory,
+    fitbit_user_factory: FitbitUserFactory,
+    scenario: FitbitActivityScenario,
+):
+    """
+    Given a user with given previous activity data logged
+    When we poll fitbit to get new activity data
+    Then the last activity is updated in the database
+    And the message is posted to slack with the correct pattern.
+    """
+
+    # Given a user with the given previous activity data
+    user: User = user_factory(fitbit=None)
+    fitbit_user_factory(
+        user_id=user.id,
+        last_activity_log_id=scenario.input_last_activity_log_id,
+        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+    )
+
+    # Mock fitbit endpoint to return no sleep data
+    respx_mock.get(
+        url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/2023-01-23.json",
+    ).mock(Response(status_code=200, json={"sleep": []}))
+
+    # Mock fitbit endpoint to return some activity data
+    respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(Response(status_code=200, json=scenario.input_mock_fitbit_response))
+
+    # Mock an empty ok response from the slack webhook
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
+    )
+
+    # When we poll for new sleep data
+    await do_poll(
+        db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
+    )
+
+    # Then the last activity data is updated in the database
+    assert (
+        user.fitbit.last_activity_log_id == scenario.expected_new_last_activity_log_id
+    )
+
+    # And the message was sent to slack as expected
+    if scenario.expected_message_pattern:
+        actual_message = json.loads(slack_request.calls[0].request.content)[
+            "text"
+        ].replace("\n", "")
+        assert re.search(scenario.expected_message_pattern, actual_message)
+    else:
+        assert not slack_request.calls
