@@ -11,13 +11,13 @@ from slackhealthbot.scheduler import Cache, do_poll
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
 from tests.factories.factories import FitbitUserFactory, UserFactory
-from tests.fixtures.fitbit_scenarios import FitbitTestScenario, scenarios
+from tests.fixtures.fitbit_scenarios import FitbitSleepScenario, sleep_scenarios
 
 
 @pytest.mark.parametrize(
-    ids=scenarios.keys(),
+    ids=sleep_scenarios.keys(),
     argnames="scenario",
-    argvalues=scenarios.values(),
+    argvalues=sleep_scenarios.values(),
 )
 @pytest.mark.asyncio
 async def test_fitbit_poll_sleep(
@@ -25,7 +25,7 @@ async def test_fitbit_poll_sleep(
     respx_mock: MockRouter,
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    scenario: FitbitTestScenario,
+    scenario: FitbitSleepScenario,
 ):
     """
     Given a user with given previous sleep data logged
