@@ -12,14 +12,16 @@ from slackhealthbot.database.connection import SessionLocal
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
-from slackhealthbot.services.fitbit.service import save_new_sleep_data
+from slackhealthbot.services.fitbit import service
 from slackhealthbot.services.models import SleepData, user_last_sleep_data
 from slackhealthbot.settings import settings
 
 
 @dataclasses.dataclass
 class Cache:
-    cache_success: dict[str, datetime.date] = dataclasses.field(default_factory=dict)
+    cache_sleep_success: dict[str, datetime.date] = dataclasses.field(
+        default_factory=dict
+    )
     cache_fail: dict[str, datetime.date] = dataclasses.field(default_factory=dict)
 
 
@@ -32,13 +34,13 @@ async def handle_success_poll(
 ):
     if sleep_data:
         last_sleep_data = user_last_sleep_data(fitbit_user)
-        await save_new_sleep_data(db, fitbit_user.user, sleep_data)
+        await service.save_new_sleep_data(db, fitbit_user.user, sleep_data)
         await slack.post_sleep(
             slack_alias=fitbit_user.user.slack_alias,
             new_sleep_data=sleep_data,
             last_sleep_data=last_sleep_data,
         )
-        cache.cache_success[fitbit_user.oauth_userid] = when
+        cache.cache_sleep_success[fitbit_user.oauth_userid] = when
         cache.cache_fail.pop(fitbit_user.oauth_userid, None)
 
 
@@ -72,28 +74,64 @@ async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
         statement=select(models.FitbitUser).join(models.FitbitUser.user),
     )
     for fitbit_user in fitbit_users:
-        latest_successful_poll = cache.cache_success.get(fitbit_user.oauth_userid)
-        if not latest_successful_poll or latest_successful_poll < when:
-            try:
-                sleep_data = await fitbit_api.get_sleep(
-                    db,
-                    user=fitbit_user.user,
-                    when=when,
-                )
-            except UserLoggedOutException:
-                await handle_fail_poll(
-                    fitbit_user=fitbit_user,
-                    when=when,
-                    cache=cache,
-                )
-            else:
-                await handle_success_poll(
-                    db=db,
-                    fitbit_user=fitbit_user,
-                    sleep_data=sleep_data,
-                    when=when,
-                    cache=cache,
-                )
+        await fitbit_poll_sleep(db, cache, when, fitbit_user)
+        await fitbit_poll_activity(db, cache, when, fitbit_user)
+
+
+async def fitbit_poll_activity(
+    db: AsyncSession,
+    cache: Cache,
+    when: datetime.date,
+    fitbit_user: models.FitbitUser,
+):
+    try:
+        activity_data = await service.get_activity(
+            db,
+            user=fitbit_user.user,
+            when=datetime.datetime.now(),
+        )
+        if activity_data:
+            await slack.post_activity(
+                slack_alias=fitbit_user.user.slack_alias,
+                activity_data=activity_data,
+            )
+
+    except UserLoggedOutException:
+        await handle_fail_poll(
+            fitbit_user=fitbit_user,
+            when=when,
+            cache=cache,
+        )
+
+
+async def fitbit_poll_sleep(
+    db: AsyncSession,
+    cache: Cache,
+    when: datetime.date,
+    fitbit_user: models.FitbitUser,
+):
+    latest_successful_poll = cache.cache_sleep_success.get(fitbit_user.oauth_userid)
+    if not latest_successful_poll or latest_successful_poll < when:
+        try:
+            sleep_data = await fitbit_api.get_sleep(
+                db,
+                user=fitbit_user.user,
+                when=when,
+            )
+        except UserLoggedOutException:
+            await handle_fail_poll(
+                fitbit_user=fitbit_user,
+                when=when,
+                cache=cache,
+            )
+        else:
+            await handle_success_poll(
+                db=db,
+                fitbit_user=fitbit_user,
+                sleep_data=sleep_data,
+                when=when,
+                cache=cache,
+            )
 
 
 async def schedule_fitbit_poll(

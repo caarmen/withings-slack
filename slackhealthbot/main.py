@@ -17,7 +17,7 @@ from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
 from slackhealthbot.services.fitbit import oauth as fitbit_oauth
-from slackhealthbot.services.fitbit.service import save_new_sleep_data
+from slackhealthbot.services.fitbit import service as fitbit_service
 from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
 
@@ -131,11 +131,22 @@ async def fitbit_notification_webhook(
                 )
                 if sleep_data:
                     last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
-                    await save_new_sleep_data(db, user, sleep_data)
+                    await fitbit_service.save_new_sleep_data(db, user, sleep_data)
                     await slack.post_sleep(
                         slack_alias=user.slack_alias,
                         new_sleep_data=sleep_data,
                         last_sleep_data=last_sleep_data,
+                    )
+            elif notification.collectionType == "activities":
+                activity_data = await fitbit_service.get_activity(
+                    db=db,
+                    user=user,
+                    when=datetime.datetime.now(),
+                )
+                if activity_data:
+                    await slack.post_activity(
+                        slack_alias=user.slack_alias,
+                        activity_data=activity_data,
                     )
         except UserLoggedOutException:
             await slack.post_user_logged_out(

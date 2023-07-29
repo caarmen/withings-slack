@@ -20,7 +20,7 @@ from tests.fixtures.fitbit_scenarios import FitbitTestScenario, scenarios
     argvalues=scenarios.values(),
 )
 @pytest.mark.asyncio
-async def test_fitbit_poll(
+async def test_fitbit_poll_sleep(
     mocked_async_session,
     respx_mock: MockRouter,
     user_factory: UserFactory,
@@ -41,6 +41,11 @@ async def test_fitbit_poll(
         **scenario.input_initial_sleep_data,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
+
+    # Mock fitbit endpoint to return no activity data
+    respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(Response(status_code=200, json={"activities": []}))
 
     # Mock fitbit endpoint to return some sleep data
     respx_mock.get(

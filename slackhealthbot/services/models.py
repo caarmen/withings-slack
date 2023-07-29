@@ -21,6 +21,20 @@ class SleepData(BaseModel):
     wake_minutes: NonNegativeInt
 
 
+class ActivityZoneMinutes(BaseModel):
+    name: str
+    minutes: int
+
+
+class ActivityData(BaseModel):
+    log_id: int
+    type_id: int
+    name: str
+    total_minutes: int
+    calories: int
+    zone_minutes: list[ActivityZoneMinutes]
+
+
 def user_last_sleep_data(user: FitbitUser) -> Optional[SleepData]:
     return (
         SleepData(

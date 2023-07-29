@@ -56,3 +56,4 @@ class FitbitUser(TimestampMixin, AsyncAttrs, Base):
     last_sleep_end_time: Mapped[Optional[datetime]] = mapped_column()
     last_sleep_sleep_minutes: Mapped[Optional[int]] = mapped_column()
     last_sleep_wake_minutes: Mapped[Optional[int]] = mapped_column()
+    last_activity_log_id: Mapped[Optional[int]] = mapped_column()
