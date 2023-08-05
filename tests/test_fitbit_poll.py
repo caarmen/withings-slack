@@ -97,7 +97,7 @@ async def test_fitbit_poll_activity(
     """
     Given a user with given previous activity data logged
     When we poll fitbit to get new activity data
-    Then the last activity is updated in the database
+    Then the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
 
@@ -129,7 +129,7 @@ async def test_fitbit_poll_activity(
         db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
     )
 
-    # Then the last activity data is updated in the database
+    # Then the latest activity data is updated in the database
     assert (
         user.fitbit.last_activity_log_id == scenario.expected_new_last_activity_log_id
     )

@@ -112,7 +112,7 @@ async def test_activity_notification(
     """
     Given a user with a given previous activity logged
     When we receive the callback from fitbit that a new activity is available
-    Then the last activity is updated in the database
+    Then the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
 
@@ -150,7 +150,7 @@ async def test_activity_notification(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    # Then the last activity data is updated in the database
+    # Then the latest activity data is updated in the database
     db_user = await crud.get_user(
         db=mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
     )

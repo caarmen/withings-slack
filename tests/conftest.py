@@ -8,6 +8,7 @@ from sqlalchemy.orm.session import Session
 from slackhealthbot.database.models import Base
 from slackhealthbot.main import app, get_db
 from tests.factories.factories import (
+    FitbitLatestActivityFactory,
     FitbitUserFactory,
     UserFactory,
     WithingsUserFactory,
@@ -41,10 +42,20 @@ def client(mocked_async_session) -> TestClient:
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_factories(mocked_session):
-    for factory in [UserFactory, WithingsUserFactory, FitbitUserFactory]:
+    for factory in [
+        UserFactory,
+        WithingsUserFactory,
+        FitbitUserFactory,
+        FitbitLatestActivityFactory,
+    ]:
         factory._meta.sqlalchemy_session = mocked_session
         factory._meta.sqlalchemy_session_persistence = "commit"
 
 
-for factory in [UserFactory, WithingsUserFactory, FitbitUserFactory]:
+for factory in [
+    UserFactory,
+    WithingsUserFactory,
+    FitbitUserFactory,
+    FitbitLatestActivityFactory,
+]:
     register(factory)
