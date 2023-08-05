@@ -10,10 +10,14 @@ from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.database.models import FitbitUser, User
+from slackhealthbot.database.models import FitbitLatestActivity, FitbitUser, User
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
-from tests.factories.factories import FitbitUserFactory, UserFactory
+from tests.factories.factories import (
+    FitbitLatestActivityFactory,
+    FitbitUserFactory,
+    UserFactory,
+)
 from tests.fixtures.fitbit_scenarios import (
     FitbitActivityScenario,
     FitbitSleepScenario,
@@ -107,6 +111,7 @@ async def test_activity_notification(
     respx_mock: MockRouter,
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
+    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
     scenario: FitbitActivityScenario,
 ):
     """
@@ -123,6 +128,13 @@ async def test_activity_notification(
         last_activity_log_id=scenario.input_last_activity_log_id,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
+
+    if scenario.input_last_activity_log_id:
+        fitbit_latest_activity_factory(
+            fitbit_user_id=fitbit_user.id,
+            log_id=scenario.input_last_activity_log_id,
+            type_id=55001,
+        )
 
     # Mock fitbit endpoint to return some activity data
     respx_mock.get(
@@ -154,10 +166,15 @@ async def test_activity_notification(
     db_user = await crud.get_user(
         db=mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
     )
-    assert (
-        db_user.fitbit.last_activity_log_id
-        == scenario.expected_new_last_activity_log_id
-    )
+    latest_activities: list[
+        FitbitLatestActivity
+    ] = await db_user.fitbit.awaitable_attrs.latest_activities
+    if scenario.is_new_log_expected:
+        assert latest_activities[0].log_id == scenario.expected_new_last_activity_log_id
+    elif scenario.input_last_activity_log_id:
+        assert latest_activities[0].log_id == scenario.input_last_activity_log_id
+    else:
+        assert not latest_activities
 
     # And the message was sent to slack as expected
     if scenario.expected_message_pattern:

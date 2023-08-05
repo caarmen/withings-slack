@@ -271,6 +271,10 @@ class FitbitActivityScenario:
     expected_new_last_activity_log_id: int
     expected_message_pattern: str
 
+    @property
+    def is_new_log_expected(self) -> bool:
+        return bool(self.expected_message_pattern)
+
 
 activity_scenarios: dict[str, FitbitActivityScenario] = {
     "No previous activity data, new Spinning activity": FitbitActivityScenario(
