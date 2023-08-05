@@ -282,19 +282,19 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                         "minutesInHeartRateZones": [
                             {
                                 "minutes": 8,
-                                "zoneName": "Fat Burn",
+                                "type": "FAT_BURN",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Cardio",
+                                "type": "CARDIO",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Out of Range",
+                                "type": "OUT_OF_RANGE",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Peak",
+                                "type": "PEAK",
                             },
                         ]
                     },
@@ -307,7 +307,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1234,
-        expected_message_pattern="New Spinning activity.*Fat Burn.*8",
+        expected_message_pattern="New Spinning activity.*Fat burn.*8",
     ),
     "New Spinning activity, partial zones": FitbitActivityScenario(
         input_last_activity_log_id=1234,
@@ -318,19 +318,19 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                         "minutesInHeartRateZones": [
                             {
                                 "minutes": 8,
-                                "zoneName": "Fat Burn",
+                                "type": "FAT_BURN",
                             },
                             {
                                 "minutes": 9,
-                                "zoneName": "Cardio",
+                                "type": "CARDIO",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Out of Range",
+                                "type": "OUT_OF_RANGE",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Peak",
+                                "type": "PEAK",
                             },
                         ]
                     },
@@ -343,7 +343,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
-        expected_message_pattern="New Spinning activity.*Fat Burn.*8.*Cardio.*9",
+        expected_message_pattern="New Spinning activity.*Fat burn.*8.*Cardio.*9",
     ),
     "New Spinning activity, full zones": FitbitActivityScenario(
         input_last_activity_log_id=1234,
@@ -354,19 +354,19 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                         "minutesInHeartRateZones": [
                             {
                                 "minutes": 8,
-                                "zoneName": "Fat Burn",
+                                "type": "FAT_BURN",
                             },
                             {
                                 "minutes": 9,
-                                "zoneName": "Cardio",
+                                "type": "CARDIO",
                             },
                             {
                                 "minutes": 10,
-                                "zoneName": "Out of Range",
+                                "type": "OUT_OF_RANGE",
                             },
                             {
                                 "minutes": 11,
-                                "zoneName": "Peak",
+                                "type": "PEAK",
                             },
                         ]
                     },
@@ -380,7 +380,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern="New Spinning activity.*"
-        + "Fat Burn.*8.*Cardio.*9.*Out of Range.*10.*Peak.*11",
+        + "Fat burn.*8.*Cardio.*9.*Out of range.*10.*Peak.*11",
     ),
     "New unrecognized activity": FitbitActivityScenario(
         input_last_activity_log_id=1234,
@@ -391,19 +391,19 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                         "minutesInHeartRateZones": [
                             {
                                 "minutes": 8,
-                                "zoneName": "Fat Burn",
+                                "type": "FAT_BURN",
                             },
                             {
                                 "minutes": 9,
-                                "zoneName": "Cardio",
+                                "type": "CARDIO",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Out of Range",
+                                "type": "OUT_OF_RANGE",
                             },
                             {
                                 "minutes": 0,
-                                "zoneName": "Peak",
+                                "type": "PEAK",
                             },
                         ]
                     },
