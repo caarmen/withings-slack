@@ -43,6 +43,12 @@ class ActivityData(BaseModel):
     zone_minutes: list[ActivityZoneMinutes]
 
 
+@dataclasses.dataclass
+class ActivityHistory:
+    latest_activity_data: ActivityData | None
+    new_activity_data: ActivityData
+
+
 def user_last_sleep_data(user: FitbitUser) -> Optional[SleepData]:
     return (
         SleepData(

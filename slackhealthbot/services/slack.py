@@ -3,7 +3,7 @@ import datetime
 import httpx
 
 from slackhealthbot.services.models import (
-    ActivityData,
+    ActivityHistory,
     ActivityZone,
     SleepData,
     WeightData,
@@ -118,18 +118,18 @@ async def post_sleep(
 
 async def post_activity(
     slack_alias: str,
-    activity_data: ActivityData,
+    activity_history: ActivityHistory,
 ):
     message = f"""
-New {activity_data.name} activity from <@{slack_alias}>:
-    • Duration: {activity_data.total_minutes} minutes.
-    • Calories: {activity_data.calories}.
+New {activity_history.new_activity_data.name} activity from <@{slack_alias}>:
+    • Duration: {activity_history.new_activity_data.total_minutes} minutes.
+    • Calories: {activity_history.new_activity_data.calories}.
 """
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
             + f" minutes: {zone_minutes.minutes}."
-            for zone_minutes in activity_data.zone_minutes
+            for zone_minutes in activity_history.new_activity_data.zone_minutes
         ]
     )
     async with httpx.AsyncClient() as client:

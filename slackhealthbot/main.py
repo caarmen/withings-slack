@@ -171,15 +171,15 @@ async def fitbit_notification_webhook(
                         last_sleep_data=last_sleep_data,
                     )
             elif notification.collectionType == "activities":
-                activity_data = await fitbit_service.get_activity(
+                activity_history = await fitbit_service.get_activity(
                     db=db,
                     user=user,
                     when=datetime.datetime.now(),
                 )
-                if activity_data:
+                if activity_history:
                     await slack.post_activity(
                         slack_alias=user.slack_alias,
-                        activity_data=activity_data,
+                        activity_history=activity_history,
                     )
         except UserLoggedOutException:
             await slack.post_user_logged_out(
