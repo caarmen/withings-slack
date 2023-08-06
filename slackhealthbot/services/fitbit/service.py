@@ -40,7 +40,7 @@ async def save_new_activity_data(
     )
 
 
-def _is_new_valid_activity(user: User, activity: ActivityData | None):
+def _is_new_valid_activity(user: User, activity: ActivityData | None) -> bool:
     return (
         activity
         and activity.log_id != user.fitbit.last_activity_log_id
