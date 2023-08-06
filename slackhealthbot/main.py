@@ -20,6 +20,7 @@ from slackhealthbot.services.fitbit import oauth as fitbit_oauth
 from slackhealthbot.services.fitbit import service as fitbit_service
 from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
+from slackhealthbot.settings import settings
 
 
 async def get_db():
@@ -59,13 +60,22 @@ def validate_root():
 
 
 @app.head("/withings-oauth-webhook/")
-def validate_oauth_webhook():
+def validate_withings_oauth_webhook():
     return Response()
 
 
 @app.head("/withings-notification-webhook/")
-def validate_notification_webhook():
+def validate_withings_notification_webhook():
     return Response()
+
+
+@app.get("/fitbit-notification-webhook/")
+def validate_fitbit_notification_webhook(verify: str | None = None):
+    # See the fitbit verification doc:
+    # https://dev.fitbit.com/build/reference/web-api/developer-guide/using-subscriptions/#Verifying-a-Subscriber
+    if verify == settings.fitbit_client_subscriber_verification_code:
+        return Response(status_code=204)
+    return Response(status_code=404)
 
 
 @app.get("/fitbit-oauth-webhook/")
