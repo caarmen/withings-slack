@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     fitbit_client_secret: str
     fitbit_client_subscriber_verification_code: str
     fitbit_poll_interval_s: int = 3600
+    fitbit_poll_enabled: bool = True
     fitbit_activity_type_ids: list[int] = [
         # See https://dev.fitbit.com/build/reference/web-api/activity/get-all-activity-types/
         # for the list of all supported activity types and their ids
