@@ -124,6 +124,24 @@ class FitbitNotification(BaseModel):
     subscriptionId: Optional[str]
 
 
+last_processed_fitbit_notification_per_user: dict[str, datetime.datetime] = {}
+
+
+def _is_fitbit_notification_processed(notification: FitbitNotification):
+    # Fitbit often calls multiple times for the same event.
+    # Ignore this notification if we just processed one recently.
+    now = datetime.datetime.now()
+    last_fitbit_notification_datetime = last_processed_fitbit_notification_per_user.get(
+        notification.ownerId
+    )
+    already_processed = (
+        last_fitbit_notification_datetime
+        and (now - last_fitbit_notification_datetime).seconds < 10
+    )
+    last_processed_fitbit_notification_per_user[notification.ownerId] = now
+    return already_processed
+
+
 @app.post("/fitbit-notification-webhook/")
 async def fitbit_notification_webhook(
     notifications: list[FitbitNotification],
@@ -131,6 +149,10 @@ async def fitbit_notification_webhook(
 ):
     logging.info(f"fitbit_notification_webhook: {notifications}")
     for notification in notifications:
+        if _is_fitbit_notification_processed(notification):
+            logging.info("fitbit_notificaiton_webhook: skipping duplicate notification")
+            continue
+
         user = await crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
         try:
             if notification.collectionType == "sleep":
@@ -167,7 +189,7 @@ async def fitbit_notification_webhook(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-last_processed_notification_per_user = {}
+last_processed_withings_notification_per_user = {}
 
 
 @app.post("/withings-notification-webhook/")
@@ -181,8 +203,11 @@ async def withings_notification_webhook(
         "withings_notification_webhook: "
         + f"userid={userid}, startdate={startdate}, enddate={enddate}"
     )
-    if last_processed_notification_per_user.get(userid, None) != (startdate, enddate):
-        last_processed_notification_per_user[userid] = (startdate, enddate)
+    if last_processed_withings_notification_per_user.get(userid, None) != (
+        startdate,
+        enddate,
+    ):
+        last_processed_withings_notification_per_user[userid] = (startdate, enddate)
         user = await crud.get_user(db, withings_oauth_userid=userid)
         try:
             last_weight_data = await withings_api.get_last_weight(
