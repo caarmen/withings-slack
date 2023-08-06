@@ -39,7 +39,8 @@ app = FastAPI(
 @app.on_event("startup")
 async def on_started():
     logger.update_external_loggers()
-    await scheduler.schedule_fitbit_poll(delay_s=10)
+    if settings.fitbit_poll_enabled:
+        await scheduler.schedule_fitbit_poll(delay_s=10)
 
 
 @app.get("/v1/withings-authorization/{slack_alias}")
