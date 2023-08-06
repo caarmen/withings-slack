@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     fitbit_oauth_scopes: list[str] = ["sleep", "activity"]
     fitbit_client_id: str
     fitbit_client_secret: str
+    fitbit_client_subscriber_verification_code: str
     fitbit_poll_interval_s: int = 3600
     fitbit_activity_type_ids: list[int] = [
         # See https://dev.fitbit.com/build/reference/web-api/activity/get-all-activity-types/
