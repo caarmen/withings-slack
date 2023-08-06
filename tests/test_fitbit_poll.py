@@ -111,14 +111,13 @@ async def test_fitbit_poll_activity(
     user: User = user_factory(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
-        last_activity_log_id=scenario.input_last_activity_log_id,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
-    if scenario.input_last_activity_log_id:
+    if scenario.input_initial_activity_data:
         fitbit_latest_activity_factory(
             fitbit_user_id=fitbit_user.id,
-            log_id=scenario.input_last_activity_log_id,
             type_id=55001,
+            **scenario.input_initial_activity_data,
         )
 
     # Mock fitbit endpoint to return no sleep data
@@ -150,8 +149,11 @@ async def test_fitbit_poll_activity(
     ] = await db_user.fitbit.awaitable_attrs.latest_activities
     if scenario.is_new_log_expected:
         assert latest_activities[0].log_id == scenario.expected_new_last_activity_log_id
-    elif scenario.input_last_activity_log_id:
-        assert latest_activities[0].log_id == scenario.input_last_activity_log_id
+    elif scenario.input_initial_activity_data:
+        assert (
+            latest_activities[0].log_id
+            == scenario.input_initial_activity_data["log_id"]
+        )
     else:
         assert not latest_activities
 

@@ -66,6 +66,30 @@ def get_seconds_change_icon(seconds_change: int) -> str:
     return "➡️"
 
 
+def get_activity_minutes_change_icon(minutes_change: int) -> str:
+    if minutes_change > 10:
+        return "⬆️"
+    if minutes_change > 2:
+        return "↗️"
+    if minutes_change < -10:
+        return "⬇️"
+    if minutes_change < -2:
+        return "↘️"
+    return "➡️"
+
+
+def get_activity_calories_change_icon(calories_change: int) -> str:
+    if calories_change > 50:
+        return "⬆️"
+    if calories_change > 25:
+        return "↗️"
+    if calories_change < -50:
+        return "⬇️"
+    if calories_change < -25:
+        return "↘️"
+    return "➡️"
+
+
 def get_datetime_change_icon(
     last_datetime: datetime.datetime, new_datetime: datetime.datetime
 ) -> str:
@@ -120,16 +144,41 @@ async def post_activity(
     slack_alias: str,
     activity_history: ActivityHistory,
 ):
+    activity = activity_history.new_activity_data
+    zone_icons = {}
+    if activity_history.latest_activity_data:
+        duration_icon = get_activity_minutes_change_icon(
+            activity.total_minutes
+            - activity_history.latest_activity_data.total_minutes,
+        )
+        calories_icon = get_activity_calories_change_icon(
+            activity.calories - activity_history.latest_activity_data.calories,
+        )
+        for zone_minutes in activity.zone_minutes:
+            last_zone_minutes = next(
+                (
+                    x.minutes
+                    for x in activity_history.latest_activity_data.zone_minutes
+                    if x.zone == zone_minutes.zone
+                ),
+                0,
+            )
+            zone_icons[zone_minutes.zone] = get_activity_minutes_change_icon(
+                zone_minutes.minutes - last_zone_minutes
+            )
+
+    else:
+        duration_icon = calories_icon = ""
     message = f"""
-New {activity_history.new_activity_data.name} activity from <@{slack_alias}>:
-    • Duration: {activity_history.new_activity_data.total_minutes} minutes.
-    • Calories: {activity_history.new_activity_data.calories}.
+New {activity.name} activity from <@{slack_alias}>:
+    • Duration: {activity.total_minutes} minutes {duration_icon}
+    • Calories: {activity.calories} {calories_icon}
 """
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
-            + f" minutes: {zone_minutes.minutes}."
-            for zone_minutes in activity_history.new_activity_data.zone_minutes
+            + f" minutes: {zone_minutes.minutes} {zone_icons.get(zone_minutes.zone)}"
+            for zone_minutes in activity.zone_minutes
         ]
     )
     async with httpx.AsyncClient() as client:
