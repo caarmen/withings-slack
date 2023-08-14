@@ -168,6 +168,7 @@ async def create_user(
 ) -> models.User:
     db.add(user)
     await db.commit()
+    await db.refresh(user)
     if withings_data:
         withings_user = models.WithingsUser(
             user_id=user.id,
