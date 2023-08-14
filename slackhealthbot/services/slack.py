@@ -177,7 +177,8 @@ New {activity.name} activity from <@{slack_alias}>:
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
-            + f" minutes: {zone_minutes.minutes} {zone_icons.get(zone_minutes.zone)}"
+            + f" minutes: {zone_minutes.minutes} "
+            + zone_icons.get(zone_minutes.zone, "")
             for zone_minutes in activity.zone_minutes
         ]
     )
