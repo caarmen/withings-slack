@@ -7,6 +7,7 @@ from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database.models import FitbitUser, User
@@ -52,12 +53,6 @@ async def test_sleep_notification(
 
     db_user = await crud.get_user(
         mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
-    )
-    db_fitbit_user = db_user.fitbit
-    # The user has the previous sleep logged
-    assert (
-        db_fitbit_user.last_sleep_sleep_minutes
-        == scenario.input_initial_sleep_data["last_sleep_sleep_minutes"]
     )
 
     # Mock fitbit endpoint to return some sleep data
@@ -107,7 +102,7 @@ async def test_sleep_notification(
 )
 @pytest.mark.asyncio
 async def test_activity_notification(
-    mocked_async_session,
+    mocked_async_session: AsyncSession,
     client: TestClient,
     respx_mock: MockRouter,
     user_factory: UserFactory,
@@ -128,13 +123,6 @@ async def test_activity_notification(
         last_activity_log_id=scenario.input_last_activity_log_id,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
-
-    db_user = await crud.get_user(
-        mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
-    )
-    db_fitbit_user = db_user.fitbit
-    # The user has the previous activity logged
-    assert db_fitbit_user.last_activity_log_id == scenario.input_last_activity_log_id
 
     # Mock fitbit endpoint to return some activity data
     respx_mock.get(
@@ -163,6 +151,9 @@ async def test_activity_notification(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last activity data is updated in the database
+    db_user = await crud.get_user(
+        db=mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    )
     assert (
         db_user.fitbit.last_activity_log_id
         == scenario.expected_new_last_activity_log_id

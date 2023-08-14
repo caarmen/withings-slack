@@ -61,7 +61,7 @@ class FitbitSleep(BaseModel):
 
 class FitbitMinutesInHeartRateZone(BaseModel):
     minutes: int
-    zoneName: str
+    type: str
 
 
 class FitBitActiveZoneMinutes(BaseModel):
@@ -139,7 +139,7 @@ def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
         calories=fitbit_activity.calories,
         total_minutes=fitbit_activity.duration / 60000,
         zone_minutes=[
-            svc_models.ActivityZoneMinutes(name=x.zoneName, minutes=x.minutes)
+            svc_models.ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
             for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
             if x.minutes > 0
         ],

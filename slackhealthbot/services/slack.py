@@ -2,7 +2,12 @@ import datetime
 
 import httpx
 
-from slackhealthbot.services.models import ActivityData, SleepData, WeightData
+from slackhealthbot.services.models import (
+    ActivityData,
+    ActivityZone,
+    SleepData,
+    WeightData,
+)
 from slackhealthbot.settings import settings
 
 
@@ -43,6 +48,10 @@ def format_minutes(total_minutes: int) -> str:
 
 def format_time(input: datetime.datetime) -> str:
     return input.strftime("%-H:%M")
+
+
+def format_activity_zone(activity_zone: ActivityZone) -> str:
+    return activity_zone.name.capitalize().replace("_", " ")
 
 
 def get_seconds_change_icon(seconds_change: int) -> str:
@@ -118,7 +127,8 @@ New {activity_data.name} activity from <@{slack_alias}>:
 """
     message += "\n".join(
         [
-            f"    • {zone_minutes.name} minutes: {zone_minutes.minutes}."
+            f"    • {format_activity_zone(zone_minutes.zone)}"
+            + f" minutes: {zone_minutes.minutes}."
             for zone_minutes in activity_data.zone_minutes
         ]
     )

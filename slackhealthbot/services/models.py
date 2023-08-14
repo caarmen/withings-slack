@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+from enum import StrEnum, auto
 from typing import Optional
 
 from pydantic import BaseModel, NonNegativeInt
@@ -21,8 +22,15 @@ class SleepData(BaseModel):
     wake_minutes: NonNegativeInt
 
 
+class ActivityZone(StrEnum):
+    PEAK = auto()
+    CARDIO = auto()
+    FAT_BURN = auto()
+    OUT_OF_RANGE = auto()
+
+
 class ActivityZoneMinutes(BaseModel):
-    name: str
+    zone: ActivityZone
     minutes: int
 
 
