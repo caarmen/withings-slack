@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Float, ForeignKey, String, func
+from sqlalchemy import Float, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
@@ -56,4 +56,26 @@ class FitbitUser(TimestampMixin, AsyncAttrs, Base):
     last_sleep_end_time: Mapped[Optional[datetime]] = mapped_column()
     last_sleep_sleep_minutes: Mapped[Optional[int]] = mapped_column()
     last_sleep_wake_minutes: Mapped[Optional[int]] = mapped_column()
-    last_activity_log_id: Mapped[Optional[int]] = mapped_column()
+    latest_activities: Mapped[list["FitbitLatestActivity"]] = relationship(
+        back_populates="fitbit_user", lazy="select", cascade="all, delete-orphan"
+    )
+
+
+class FitbitLatestActivity(TimestampMixin, AsyncAttrs, Base):
+    __tablename__ = "fitbit_latest_activities"
+    __table_args__ = (UniqueConstraint("fitbit_user_id", "type_id"),)
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    log_id: Mapped[int] = mapped_column(unique=True)
+    type_id: Mapped[int] = mapped_column()
+    total_minutes: Mapped[int] = mapped_column()
+    calories: Mapped[int] = mapped_column()
+    fat_burn_minutes: Mapped[Optional[int]] = mapped_column()
+    cardio_minutes: Mapped[Optional[int]] = mapped_column()
+    peak_minutes: Mapped[Optional[int]] = mapped_column()
+    out_of_range_minutes: Mapped[Optional[int]] = mapped_column()
+    fitbit_user: Mapped[FitbitUser] = relationship(
+        back_populates="latest_activities", lazy="joined"
+    )
+    fitbit_user_id: Mapped[int] = mapped_column(
+        ForeignKey("fitbit_users.id", ondelete="CASCADE")
+    )

@@ -6,11 +6,16 @@ import pytest
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.database.models import User
+from slackhealthbot.database import crud
+from slackhealthbot.database.models import FitbitLatestActivity, FitbitUser, User
 from slackhealthbot.scheduler import Cache, do_poll
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
-from tests.factories.factories import FitbitUserFactory, UserFactory
+from tests.factories.factories import (
+    FitbitLatestActivityFactory,
+    FitbitUserFactory,
+    UserFactory,
+)
 from tests.fixtures.fitbit_scenarios import (
     FitbitActivityScenario,
     FitbitSleepScenario,
@@ -92,22 +97,28 @@ async def test_fitbit_poll_activity(
     respx_mock: MockRouter,
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
+    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
     scenario: FitbitActivityScenario,
 ):
     """
     Given a user with given previous activity data logged
     When we poll fitbit to get new activity data
-    Then the last activity is updated in the database
+    Then the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
 
     # Given a user with the given previous activity data
     user: User = user_factory(fitbit=None)
-    fitbit_user_factory(
+    fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
-        last_activity_log_id=scenario.input_last_activity_log_id,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
+    if scenario.input_initial_activity_data:
+        fitbit_latest_activity_factory(
+            fitbit_user_id=fitbit_user.id,
+            type_id=55001,
+            **scenario.input_initial_activity_data,
+        )
 
     # Mock fitbit endpoint to return no sleep data
     respx_mock.get(
@@ -129,10 +140,22 @@ async def test_fitbit_poll_activity(
         db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
     )
 
-    # Then the last activity data is updated in the database
-    assert (
-        user.fitbit.last_activity_log_id == scenario.expected_new_last_activity_log_id
+    # Then the latest activity data is updated in the database
+    db_user = await crud.get_user(
+        db=mocked_async_session, fitbit_oauth_userid=user.fitbit.oauth_userid
     )
+    latest_activities: list[
+        FitbitLatestActivity
+    ] = await db_user.fitbit.awaitable_attrs.latest_activities
+    if scenario.is_new_log_expected:
+        assert latest_activities[0].log_id == scenario.expected_new_last_activity_log_id
+    elif scenario.input_initial_activity_data:
+        assert (
+            latest_activities[0].log_id
+            == scenario.input_initial_activity_data["log_id"]
+        )
+    else:
+        assert not latest_activities
 
     # And the message was sent to slack as expected
     if scenario.expected_message_pattern:

@@ -128,6 +128,38 @@ async def upsert_fitbit_data(
     return fitbit_user
 
 
+async def upsert_fitbit_activity_data(
+    db: AsyncSession,
+    fitbit_user_id: str,
+    type_id: int,
+    data: dict,
+):
+    try:
+        fitbit_activity = (
+            await db.scalars(
+                statement=select(models.FitbitLatestActivity).where(
+                    models.FitbitLatestActivity.fitbit_user_id == fitbit_user_id
+                    and models.FitbitLatestActivity.type_id == type_id
+                )
+            )
+        ).one()
+        await db.execute(
+            statement=update(models.FitbitLatestActivity)
+            .where(
+                models.FitbitLatestActivity.fitbit_user_id == fitbit_user_id
+                and models.FitbitLatestActivity.type_id == type_id
+            )
+            .values(**data)
+        )
+    except NoResultFound:
+        fitbit_activity = models.FitbitLatestActivity(
+            fitbit_user_id=fitbit_user_id, type_id=type_id, **data
+        )
+        db.add(fitbit_activity)
+
+    await db.commit()
+
+
 async def create_user(
     db: AsyncSession,
     user: models.User,
@@ -136,6 +168,7 @@ async def create_user(
 ) -> models.User:
     db.add(user)
     await db.commit()
+    await db.refresh(user)
     if withings_data:
         withings_user = models.WithingsUser(
             user_id=user.id,

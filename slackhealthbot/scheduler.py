@@ -85,15 +85,15 @@ async def fitbit_poll_activity(
     fitbit_user: models.FitbitUser,
 ):
     try:
-        activity_data = await service.get_activity(
+        activity_history = await service.get_activity(
             db,
             user=fitbit_user.user,
             when=datetime.datetime.now(),
         )
-        if activity_data:
+        if activity_history:
             await slack.post_activity(
                 slack_alias=fitbit_user.user.slack_alias,
-                activity_data=activity_data,
+                activity_history=activity_history,
             )
 
     except UserLoggedOutException:
