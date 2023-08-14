@@ -184,5 +184,6 @@ async def test_activity_notification(
             "text"
         ].replace("\n", "")
         assert re.search(scenario.expected_message_pattern, actual_message)
+        assert "None" not in actual_message
     else:
         assert not slack_request.calls
