@@ -56,6 +56,7 @@ class FitbitSleep(BaseModel):
 
     @classmethod
     def parse(cls, input: str) -> Self:
+        logging.info(f"parse sleep input: {input}")
         return cls(**json.loads(input))
 
 
@@ -98,6 +99,7 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
         (item for item in fitbit_sleep.sleep if item.isMainSleep), None
     )
     if not main_sleep_item:
+        logging.warning("No main sleep found")
         return None
 
     wake_minutes = (
