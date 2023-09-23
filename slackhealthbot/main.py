@@ -139,8 +139,12 @@ def _is_fitbit_notification_processed(notification: FitbitNotification):
         last_fitbit_notification_datetime
         and (now - last_fitbit_notification_datetime).seconds < 10
     )
-    last_processed_fitbit_notification_per_user[notification.ownerId] = now
     return already_processed
+
+
+def _mark_fitbit_notification_processed(notification: FitbitNotification):
+    now = datetime.datetime.now()
+    last_processed_fitbit_notification_per_user[notification.ownerId] = now
 
 
 @app.post("/fitbit-notification-webhook/")
@@ -163,6 +167,7 @@ async def fitbit_notification_webhook(
                     when=notification.date,
                 )
                 if sleep_data:
+                    _mark_fitbit_notification_processed(notification)
                     last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
                     await fitbit_service.save_new_sleep_data(db, user, sleep_data)
                     await slack.post_sleep(
@@ -177,6 +182,7 @@ async def fitbit_notification_webhook(
                     when=datetime.datetime.now(),
                 )
                 if activity_history:
+                    _mark_fitbit_notification_processed(notification)
                     await slack.post_activity(
                         slack_alias=user.slack_alias,
                         activity_history=activity_history,
@@ -208,7 +214,6 @@ async def withings_notification_webhook(
         startdate,
         enddate,
     ):
-        last_processed_withings_notification_per_user[userid] = (startdate, enddate)
         user = await crud.get_user(db, withings_oauth_userid=userid)
         try:
             last_weight_data = await withings_api.get_last_weight(
@@ -224,6 +229,10 @@ async def withings_notification_webhook(
             )
         else:
             if last_weight_data:
+                last_processed_withings_notification_per_user[userid] = (
+                    startdate,
+                    enddate,
+                )
                 await crud.update_user(
                     db, user, withings_data={"last_weight": last_weight_data.weight_kg}
                 )
