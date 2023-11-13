@@ -187,3 +187,101 @@ async def test_activity_notification(
         assert "None" not in actual_message
     else:
         assert not slack_request.calls
+
+
+@pytest.mark.asyncio
+async def test_retry_authentication(
+    mocked_async_session,
+    client: TestClient,
+    respx_mock: MockRouter,
+    user_factory: UserFactory,
+    fitbit_user_factory: FitbitUserFactory,
+):
+    """
+    Given a user whose access token is no longer valid
+    When we receive the callback from fitbit that a new activity is available
+    Then the access token is refreshed
+    And the latest activity is updated in the database
+    And the message is posted to slack with the correct pattern.
+    """
+
+    scenario = activity_scenarios["No previous activity data, new Spinning activity"]
+
+    # Given a user
+    user: User = user_factory(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory(
+        user_id=user.id,
+        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+    )
+
+    # Given the user's access token is no longer valid:
+
+    fitbit_activity_request = respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(
+        side_effect=[
+            # Mock fitbit endpoint to return an unauthorized error
+            Response(status_code=401),
+            # Mock fitbit endpoint to return some activity data
+            Response(status_code=200, json=scenario.input_mock_fitbit_response),
+        ]
+    )
+
+    # Mock fitbit oauth refresh token success
+    oauth_token_refresh_request = respx_mock.post(
+        url=f"{settings.fitbit_base_url}oauth2/token",
+    ).mock(
+        Response(
+            status_code=200,
+            json={
+                "user_id": user.fitbit.oauth_userid,
+                "access_token": "some new access token",
+                "refresh_token": "some new refresh token",
+                "expires_in": 600,
+            },
+        )
+    )
+
+    # Mock an empty ok response from the slack webhook
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
+    )
+
+    # When we receive the callback from fitbit that a new activity is available
+    response = client.post(
+        "/fitbit-notification-webhook/",
+        content=json.dumps(
+            [
+                {
+                    "ownerId": user.fitbit.oauth_userid,
+                    "date": 1683894606,
+                    "collectionType": "activities",
+                }
+            ]
+        ),
+    )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    db_user = await crud.get_user(
+        db=mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    )
+
+    # Then the access token is refreshed.
+    assert fitbit_activity_request.call_count == 2
+    assert oauth_token_refresh_request.call_count == 1
+    assert db_user.fitbit.oauth_access_token == "some new access token"
+    assert db_user.fitbit.oauth_refresh_token == "some new refresh token"
+
+    # And the latest activity data is updated in the database
+    latest_activities: list[
+        FitbitLatestActivity
+    ] = await db_user.fitbit.awaitable_attrs.latest_activities
+    assert latest_activities[0].log_id == scenario.expected_new_last_activity_log_id
+
+    # And the message was sent to slack as expected
+    actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(
+        "\n", ""
+    )
+    assert re.search(scenario.expected_message_pattern, actual_message)
+    assert "None" not in actual_message

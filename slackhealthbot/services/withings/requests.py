@@ -26,5 +26,5 @@ async def post(
     response_body = response.json()
     if response_body["status"] == 401 and retry_count > 0:
         await oauth.refresh_token(db, user)
-        return post(db, user, url, data, retry_count - 1)
+        return await post(db, user, url, data, retry_count - 1)
     return response

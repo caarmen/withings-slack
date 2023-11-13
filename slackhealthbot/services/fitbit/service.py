@@ -95,9 +95,9 @@ async def get_activity(
     user: User,
     when: datetime.datetime,
 ) -> ActivityHistory | None:
+    activity = await api.get_activity(db, user, when)
     # lazy load activity data
     await user.fitbit.awaitable_attrs.latest_activities
-    activity = await api.get_activity(db, user, when)
     if not _is_new_valid_activity(user, activity):
         return None
     latest_activity = await get_latest_activity(
