@@ -211,6 +211,7 @@ async def test_retry_authentication(
     user: User = user_factory(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
+        oauth_access_token="some old access token",
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
 
@@ -269,6 +270,14 @@ async def test_retry_authentication(
 
     # Then the access token is refreshed.
     assert fitbit_activity_request.call_count == 2
+    assert (
+        fitbit_activity_request.calls[0].request.headers["authorization"]
+        == "Bearer some old access token"
+    )
+    assert (
+        fitbit_activity_request.calls[1].request.headers["authorization"]
+        == "Bearer some new access token"
+    )
     assert oauth_token_refresh_request.call_count == 1
     assert db_user.fitbit.oauth_access_token == "some new access token"
     assert db_user.fitbit.oauth_refresh_token == "some new refresh token"
