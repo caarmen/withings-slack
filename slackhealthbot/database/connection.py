@@ -1,3 +1,4 @@
+from contextvars import ContextVar
 from pathlib import Path
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -13,3 +14,5 @@ engine = create_async_engine(
 SessionLocal = async_sessionmaker(
     autocommit=False, autoflush=False, bind=engine, future=True
 )
+
+ctx_db = ContextVar("ctx_db")

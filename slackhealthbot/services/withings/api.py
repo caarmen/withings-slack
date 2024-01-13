@@ -11,11 +11,10 @@ from slackhealthbot.services.withings import requests
 from slackhealthbot.settings import settings
 
 
-async def subscribe(db: AsyncSession, user: db_models.User):
+async def subscribe(user: db_models.User):
     callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = await requests.post(
-        db,
         user=user,
         url=f"{settings.withings_base_url}notify",
         data={
@@ -44,7 +43,6 @@ async def get_last_weight(
         logging.info(f"get_last_weight: User {userid} unknown")
         return None
     response = await requests.post(
-        db,
         user=user,
         url=f"{settings.withings_base_url}measure",
         data={

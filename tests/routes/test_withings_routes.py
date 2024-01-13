@@ -9,6 +9,7 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.database import crud
+from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.database.models import User, WithingsUser
 from slackhealthbot.settings import settings
 from tests.factories.factories import UserFactory, WithingsUserFactory
@@ -111,7 +112,7 @@ async def test_weight_notification(
 
 
 @pytest.mark.asyncio
-async def test_retry_authentication(
+async def test_refresh_token(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
@@ -119,69 +120,23 @@ async def test_retry_authentication(
     withings_user_factory: WithingsUserFactory,
 ):
     """
-    Given a user whose access token is no longer valid
+    Given a user whose access token is expired
     When we receive the callback from withings that a new weight is available
     Then the access token is refreshed
     And the latest weight is updated in the database
     And the message is posted to slack with the correct pattern.
     """
+    ctx_db.set(mocked_async_session)
     # Given a user
     user: User = user_factory(withings=None)
     withings_user: WithingsUser = withings_user_factory(
         user_id=user.id,
         last_weight=50.2,
         oauth_access_token="some old access token",
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
-    )
-
-    # Given the user's access token is no longer valid:
-    withings_weight_request = respx_mock.post(
-        url=f"{settings.withings_base_url}measure",
-    ).mock(
-        side_effect=[
-            # Mock withings endpoint to return an unauthorized error
-            Response(
-                status_code=200,
-                json={
-                    "status": 401,
-                },
-            ),
-            # Mock withings endpoint to return some weight data
-            Response(
-                status_code=200,
-                json={
-                    "status": 0,
-                    "body": {
-                        "measuregrps": [
-                            {
-                                "measures": [
-                                    {
-                                        "value": 50050,
-                                        "unit": -3,
-                                    }
-                                ],
-                            },
-                        ],
-                    },
-                },
-            ),
-        ]
+        oauth_expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1),
     )
 
     # Mock withings oauth refresh token success
-    respx_mock.post(
-        url=f"{settings.withings_base_url}v2/signature/",
-    ).mock(
-        Response(
-            status_code=200,
-            json={
-                "status": 0,
-                "body": {
-                    "nonce": "some nonce",
-                },
-            },
-        )
-    )
     oauth_token_refresh_request = respx_mock.post(
         url=f"{settings.withings_base_url}v2/oauth2",
     ).mock(
@@ -197,6 +152,30 @@ async def test_retry_authentication(
                 },
             },
         )
+    )
+
+    # Mock withings endpoint to return some weight data
+    withings_weight_request = respx_mock.post(
+        url=f"{settings.withings_base_url}measure",
+    ).mock(
+        Response(
+            status_code=200,
+            json={
+                "status": 0,
+                "body": {
+                    "measuregrps": [
+                        {
+                            "measures": [
+                                {
+                                    "value": 50050,
+                                    "unit": -3,
+                                }
+                            ],
+                        },
+                    ],
+                },
+            },
+        ),
     )
 
     # Mock an empty ok response from the slack webhook
@@ -220,13 +199,9 @@ async def test_retry_authentication(
         db=mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
     )
     # Then the access token is refreshed.
-    assert withings_weight_request.call_count == 2
+    assert withings_weight_request.call_count == 1
     assert (
         withings_weight_request.calls[0].request.headers["authorization"]
-        == "Bearer some old access token"
-    )
-    assert (
-        withings_weight_request.calls[1].request.headers["authorization"]
         == "Bearer some new access token"
     )
     assert oauth_token_refresh_request.call_count == 1
