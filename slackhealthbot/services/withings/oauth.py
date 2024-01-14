@@ -3,7 +3,6 @@ import datetime
 import logging
 from typing import Self
 
-from authlib.common.urls import add_params_to_qs
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
@@ -16,6 +15,7 @@ from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
 from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.services.withings import signing
 from slackhealthbot.settings import settings
 
 
@@ -29,16 +29,7 @@ async def update_token(token: dict, refresh_token=None, access_token=None):
     )
 
 
-ACCESS_TOKEN_EXTRA_PARAMS = {
-    "action": "requesttoken",
-}
-
-
 def withings_compliance_fix(session: AsyncOAuth2Client):
-    def _fix_refresh_token_request(url, headers, body):
-        body = add_params_to_qs(body, ACCESS_TOKEN_EXTRA_PARAMS)
-        return url, headers, body
-
     def _fix_access_token_response(resp):
         data = resp.json()
         logging.info(f"Token response {data}")
@@ -49,9 +40,6 @@ def withings_compliance_fix(session: AsyncOAuth2Client):
         resp.json = lambda: data["body"]
         return resp
 
-    session.register_compliance_hook(
-        "refresh_token_request", _fix_refresh_token_request
-    )
     session.register_compliance_hook(
         "refresh_token_response", _fix_access_token_response
     )
@@ -67,11 +55,9 @@ oauth.register(
     api_base_url=settings.withings_base_url,
     authorize_url="https://account.withings.com/oauth2_user/authorize2",
     access_token_url=f"{settings.withings_base_url}v2/oauth2",
-    access_token_params=ACCESS_TOKEN_EXTRA_PARAMS,
     authorize_params={"scope": ",".join(settings.withings_oauth_scopes)},
     compliance_fix=withings_compliance_fix,
     update_token=update_token,
-    token_endpoint_auth_method="client_secret_post",
 )
 
 
@@ -105,7 +91,10 @@ async def create_oauth_url(request: Request, slack_alias: str) -> RedirectRespon
 
 async def fetch_token(db: AsyncSession, request: Request) -> db_models.User:
     withings: StarletteOAuth2App = oauth.create_client("withings")
-    response = await withings.authorize_access_token(request)
+    response = await withings.authorize_access_token(
+        request,
+        auth=signing.SignatureAuth(),
+    )
     oauth_fields = OauthFields.parse_response_data(response)
     user = await crud.upsert_user(
         db,
