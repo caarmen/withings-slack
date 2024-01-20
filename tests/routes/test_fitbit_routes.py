@@ -77,7 +77,7 @@ async def test_sleep_notification(
             [
                 {
                     "ownerId": user.fitbit.oauth_userid,
-                    "date": 1683894606,
+                    "date": "2023-05-12",
                     "collectionType": "sleep",
                 }
             ]
@@ -153,7 +153,7 @@ async def test_activity_notification(
             [
                 {
                     "ownerId": user.fitbit.oauth_userid,
-                    "date": 1683894606,
+                    "date": "2023-05-12",
                     "collectionType": "activities",
                 }
             ]
@@ -253,7 +253,7 @@ async def test_refresh_token(
             [
                 {
                     "ownerId": user.fitbit.oauth_userid,
-                    "date": 1683894606,
+                    "date": "2023-05-12",
                     "collectionType": "activities",
                 }
             ]

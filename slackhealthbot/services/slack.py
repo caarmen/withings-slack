@@ -19,7 +19,7 @@ async def post_weight(weight_data: WeightData):
     )
     async with httpx.AsyncClient() as client:
         await client.post(
-            url=settings.slack_webhook_url,
+            url=str(settings.slack_webhook_url),
             json={
                 "text": message,
             },
@@ -133,7 +133,7 @@ async def post_sleep(
     """.strip()
     async with httpx.AsyncClient() as client:
         await client.post(
-            url=settings.slack_webhook_url,
+            url=str(settings.slack_webhook_url),
             json={
                 "text": message,
             },
@@ -184,7 +184,7 @@ New {activity.name} activity from <@{slack_alias}>:
     )
     async with httpx.AsyncClient() as client:
         await client.post(
-            url=settings.slack_webhook_url,
+            url=str(settings.slack_webhook_url),
             json={
                 "text": message.strip(),
             },
@@ -199,7 +199,7 @@ You'll need to log in again to get your reports:
 """
     async with httpx.AsyncClient() as client:
         await client.post(
-            url=settings.slack_webhook_url,
+            url=str(settings.slack_webhook_url),
             json={
                 "text": message,
             },

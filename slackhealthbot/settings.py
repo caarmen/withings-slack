@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from pydantic import AnyHttpUrl, BaseSettings, HttpUrl
+from pydantic import AnyHttpUrl, HttpUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -27,9 +28,7 @@ class Settings(BaseSettings):
         # 1071,   # Outdoor Bike
     ]
     slack_webhook_url: HttpUrl
-
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 settings = Settings()
