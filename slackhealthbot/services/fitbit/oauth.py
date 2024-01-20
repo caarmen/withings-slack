@@ -1,30 +1,35 @@
 import dataclasses
-import datetime
 import logging
-from typing import Self
 
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
-from authlib.integrations.starlette_client import OAuth
-from authlib.integrations.starlette_client.apps import StarletteOAuth2App
-from fastapi import Request, status
-from pydantic import HttpUrl
+from fastapi import status
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.config import Config
 
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
 from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.services.oauth.oauth import OAuthFields, oauth
 from slackhealthbot.settings import settings
 
+PROVIDER = "fitbit"
 
-async def update_token(token: dict, refresh_token=None, access_token=None):
-    oauth_fields = OauthFields.parse_response_data(token)
-    db = ctx_db.get()
-    await crud.upsert_user(
+
+async def update_token(
+    token: dict,
+    refresh_token=None,
+    access_token=None,
+    db: AsyncSession = None,
+    **kwargs,
+) -> db_models.User:
+    if not db:
+        db = ctx_db.get()
+    oauth_fields = OAuthFields.parse_response_data(token)
+    return await crud.upsert_user(
         db,
         crud.UserUpsert(
             fitbit_oauth_userid=oauth_fields.oauth_userid,
+            data=kwargs,
             fitbit_data=dataclasses.asdict(oauth_fields),
         ),
     )
@@ -48,10 +53,8 @@ def fitbit_compliance_fix(session: AsyncOAuth2Client):
     )
 
 
-config = Config(".env")
-oauth = OAuth(config)
 oauth.register(
-    name="fitbit",
+    name=PROVIDER,
     api_base_url=settings.fitbit_base_url,
     authorize_url="https://www.fitbit.com/oauth2/authorize",
     access_token_url=f"{settings.fitbit_base_url}oauth2/token",
@@ -61,45 +64,3 @@ oauth.register(
     token_endpoint_auth_method="client_secret_basic",
     client_kwargs={"code_challenge_method": "S256"},
 )
-
-
-@dataclasses.dataclass
-class OauthFields:
-    oauth_userid: str
-    oauth_access_token: str
-    oauth_refresh_token: str
-    oauth_expiration_date: datetime
-
-    @classmethod
-    def parse_response_data(cls, response_data: dict) -> Self:
-        return cls(
-            oauth_userid=response_data["user_id"],
-            oauth_access_token=response_data["access_token"],
-            oauth_refresh_token=response_data["refresh_token"],
-            oauth_expiration_date=datetime.datetime.utcnow()
-            + datetime.timedelta(seconds=response_data["expires_in"])
-            - datetime.timedelta(minutes=5),
-        )
-
-
-async def create_oauth_url(request: Request, slack_alias: str) -> HttpUrl:
-    request.session["slack_alias"] = slack_alias
-    fitbit: StarletteOAuth2App = oauth.create_client("fitbit")
-    return await fitbit.authorize_redirect(
-        request,
-    )
-
-
-async def fetch_token(db: AsyncSession, request: Request) -> db_models.User:
-    fitbit: StarletteOAuth2App = oauth.create_client("fitbit")
-    response = await fitbit.authorize_access_token(request)
-    oauth_fields = OauthFields.parse_response_data(response)
-    user = await crud.upsert_user(
-        db,
-        crud.UserUpsert(
-            fitbit_oauth_userid=response["userid"],
-            data={"slack_alias": request.session.pop("slack_alias")},
-            fitbit_data=dataclasses.asdict(oauth_fields),
-        ),
-    )
-    return user

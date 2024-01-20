@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services import models as svc_models
-from slackhealthbot.services.withings import requests
+from slackhealthbot.services.oauth import requests
+from slackhealthbot.services.withings.oauth import PROVIDER
 from slackhealthbot.settings import settings
 
 
@@ -15,7 +16,8 @@ async def subscribe(user: db_models.User):
     callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = await requests.post(
-        user=user,
+        provider=PROVIDER,
+        token=user.withings,
         url=f"{settings.withings_base_url}notify",
         data={
             "action": "subscribe",
@@ -43,7 +45,8 @@ async def get_last_weight(
         logging.info(f"get_last_weight: User {userid} unknown")
         return None
     response = await requests.post(
-        user=user,
+        provider=PROVIDER,
+        token=user.withings,
         url=f"{settings.withings_base_url}measure",
         data={
             "action": "getmeas",
