@@ -2,6 +2,7 @@ import datetime
 import logging
 import random
 import string
+from contextlib import asynccontextmanager
 from typing import Annotated, Optional
 
 import uvicorn
@@ -40,6 +41,14 @@ async def get_db():
         ctx_db.set(None)
 
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    logger.update_external_loggers()
+    if settings.fitbit_poll_enabled:
+        await scheduler.schedule_fitbit_poll(delay_s=10)
+    yield
+
+
 app = FastAPI(
     middleware=[
         Middleware(logger.LoggerMiddleware),
@@ -50,14 +59,8 @@ app = FastAPI(
             ),
         ),
     ],
+    lifespan=lifespan,
 )
-
-
-@app.on_event("startup")
-async def on_started():
-    logger.update_external_loggers()
-    if settings.fitbit_poll_enabled:
-        await scheduler.schedule_fitbit_poll(delay_s=10)
 
 
 @app.get("/v1/withings-authorization/{slack_alias}")
