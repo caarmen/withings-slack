@@ -22,9 +22,21 @@ from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
 from slackhealthbot.services.fitbit import oauth as fitbit_oauth
 from slackhealthbot.services.fitbit import service as fitbit_service
+from slackhealthbot.services.oauth import oauth
 from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
 from slackhealthbot.settings import settings
+
+LOGIN_COMPLETE_CONTENT = """
+    <html>
+        <head>
+            <title>Login complete</title>
+        </head>
+        <body>
+            <h1>Congrats, Login complete</h1>
+        </body>
+    </html>
+    """
 
 
 async def get_db():
@@ -65,12 +77,19 @@ app = FastAPI(
 
 @app.get("/v1/withings-authorization/{slack_alias}")
 async def get_withings_authorization(slack_alias: str, request: Request):
-    return await withings_oauth.create_oauth_url(request, slack_alias=slack_alias)
+    return await oauth.create_oauth_url(
+        provider=withings_oauth.PROVIDER,
+        request=request,
+        slack_alias=slack_alias,
+        redirect_uri=settings.withings_redirect_uri,
+    )
 
 
 @app.get("/v1/fitbit-authorization/{slack_alias}")
 async def get_fitbit_authorization(slack_alias: str, request: Request):
-    return await fitbit_oauth.create_oauth_url(request, slack_alias=slack_alias)
+    return await oauth.create_oauth_url(
+        provider=fitbit_oauth.PROVIDER, request=request, slack_alias=slack_alias
+    )
 
 
 @app.head("/")
@@ -99,36 +118,22 @@ def validate_fitbit_notification_webhook(verify: str | None = None):
 
 @app.get("/fitbit-oauth-webhook/")
 async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    user = await fitbit_oauth.fetch_token(db=db, request=request)
+    token: dict = await oauth.fetch_token(fitbit_oauth.PROVIDER, request)
+    user = await fitbit_oauth.update_token(
+        db=db, token=token, slack_alias=request.session.pop("slack_alias")
+    )
     await fitbit_api.subscribe(user)
-    html_content = """
-    <html>
-        <head>
-            <title>Fitbit login complete</title>
-        </head>
-        <body>
-            <h1>Congrats, Fitbit login complete</h1>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=status.HTTP_200_OK)
+    return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
 
 
 @app.get("/withings-oauth-webhook/")
 async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    user = await withings_oauth.fetch_token(db=db, request=request)
+    token: dict = await oauth.fetch_token(withings_oauth.PROVIDER, request)
+    user = await withings_oauth.update_token(
+        db=db, token=token, slack_alias=request.session.pop("slack_alias")
+    )
     await withings_api.subscribe(user)
-    html_content = """
-    <html>
-        <head>
-            <title>Login complete</title>
-        </head>
-        <body>
-            <h1>Congrats, login complete</h1>
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=status.HTTP_200_OK)
+    return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
 
 
 class FitbitNotification(BaseModel):

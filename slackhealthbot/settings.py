@@ -30,5 +30,9 @@ class Settings(BaseSettings):
     slack_webhook_url: HttpUrl
     model_config = SettingsConfigDict(env_file=".env")
 
+    @property
+    def withings_redirect_uri(self) -> str:
+        return f"{self.withings_callback_url}withings-oauth-webhook/"
+
 
 settings = Settings()
