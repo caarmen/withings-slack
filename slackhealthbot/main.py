@@ -1,17 +1,20 @@
 import datetime
 import logging
+import random
+import string
 from typing import Annotated, Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, Form, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Depends, FastAPI, Form, Request, Response, status
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from slackhealthbot import logger, scheduler
 from slackhealthbot.database import crud
-from slackhealthbot.database.connection import SessionLocal
+from slackhealthbot.database.connection import SessionLocal, ctx_db
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
@@ -26,13 +29,27 @@ from slackhealthbot.settings import settings
 async def get_db():
     db = SessionLocal()
     try:
+        # We need to access the db session without having access to
+        # fastapi's dependency injection. This happens when our update_token()
+        # authlib function is called.
+        # Set the db in a ContextVar to allow accessing it outside of a fastapi route.
+        ctx_db.set(db)
         yield db
     finally:
         await db.close()
+        ctx_db.set(None)
 
 
 app = FastAPI(
-    middleware=[Middleware(logger.LoggerMiddleware)],
+    middleware=[
+        Middleware(logger.LoggerMiddleware),
+        Middleware(
+            SessionMiddleware,
+            secret_key="".join(
+                random.choice(string.ascii_lowercase) for i in range(32)
+            ),
+        ),
+    ],
 )
 
 
@@ -44,15 +61,13 @@ async def on_started():
 
 
 @app.get("/v1/withings-authorization/{slack_alias}")
-def get_withings_authorization(slack_alias: str):
-    return RedirectResponse(
-        url=withings_oauth.create_oauth_url(slack_alias=slack_alias)
-    )
+async def get_withings_authorization(slack_alias: str, request: Request):
+    return await withings_oauth.create_oauth_url(request, slack_alias=slack_alias)
 
 
 @app.get("/v1/fitbit-authorization/{slack_alias}")
-def get_fitbit_authorization(slack_alias: str):
-    return RedirectResponse(url=fitbit_oauth.create_oauth_url(slack_alias=slack_alias))
+async def get_fitbit_authorization(slack_alias: str, request: Request):
+    return await fitbit_oauth.create_oauth_url(request, slack_alias=slack_alias)
 
 
 @app.head("/")
@@ -80,11 +95,9 @@ def validate_fitbit_notification_webhook(verify: str | None = None):
 
 
 @app.get("/fitbit-oauth-webhook/")
-async def fitbit_oauth_webhook(
-    code: str, state: str, db: AsyncSession = Depends(get_db)
-):
-    user = await fitbit_oauth.fetch_token(db=db, code=code, state=state)
-    await fitbit_api.subscribe(db, user)
+async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    user = await fitbit_oauth.fetch_token(db=db, request=request)
+    await fitbit_api.subscribe(user)
     html_content = """
     <html>
         <head>
@@ -99,11 +112,9 @@ async def fitbit_oauth_webhook(
 
 
 @app.get("/withings-oauth-webhook/")
-async def withings_oauth_webhook(
-    code: str, state: str, db: AsyncSession = Depends(get_db)
-):
-    user = await withings_oauth.fetch_token(db=db, state=state, code=code)
-    await withings_api.subscribe(db, user)
+async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    user = await withings_oauth.fetch_token(db=db, request=request)
+    await withings_api.subscribe(user)
     html_content = """
     <html>
         <head>
@@ -162,7 +173,6 @@ async def fitbit_notification_webhook(
         try:
             if notification.collectionType == "sleep":
                 sleep_data = await fitbit_api.get_sleep(
-                    db=db,
                     user=user,
                     when=notification.date,
                 )

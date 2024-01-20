@@ -10,6 +10,7 @@ from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
+from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.database.models import FitbitLatestActivity, FitbitUser, User
 from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
@@ -190,7 +191,7 @@ async def test_activity_notification(
 
 
 @pytest.mark.asyncio
-async def test_retry_authentication(
+async def test_refresh_token(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
@@ -198,13 +199,14 @@ async def test_retry_authentication(
     fitbit_user_factory: FitbitUserFactory,
 ):
     """
-    Given a user whose access token is no longer valid
+    Given a user whose access token is expired
     When we receive the callback from fitbit that a new activity is available
     Then the access token is refreshed
     And the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
 
+    ctx_db.set(mocked_async_session)
     scenario = activity_scenarios["No previous activity data, new Spinning activity"]
 
     # Given a user
@@ -212,20 +214,7 @@ async def test_retry_authentication(
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
         oauth_access_token="some old access token",
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
-    )
-
-    # Given the user's access token is no longer valid:
-
-    fitbit_activity_request = respx_mock.get(
-        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
-    ).mock(
-        side_effect=[
-            # Mock fitbit endpoint to return an unauthorized error
-            Response(status_code=401),
-            # Mock fitbit endpoint to return some activity data
-            Response(status_code=200, json=scenario.input_mock_fitbit_response),
-        ]
+        oauth_expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1),
     )
 
     # Mock fitbit oauth refresh token success
@@ -241,6 +230,15 @@ async def test_retry_authentication(
                 "expires_in": 600,
             },
         )
+    )
+
+    # Mock fitbit endpoint to return some activity data
+    fitbit_activity_request = respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(
+        side_effect=[
+            Response(status_code=200, json=scenario.input_mock_fitbit_response),
+        ]
     )
 
     # Mock an empty ok response from the slack webhook
@@ -269,13 +267,9 @@ async def test_retry_authentication(
     )
 
     # Then the access token is refreshed.
-    assert fitbit_activity_request.call_count == 2
+    assert fitbit_activity_request.call_count == 1
     assert (
         fitbit_activity_request.calls[0].request.headers["authorization"]
-        == "Bearer some old access token"
-    )
-    assert (
-        fitbit_activity_request.calls[1].request.headers["authorization"]
         == "Bearer some new access token"
     )
     assert oauth_token_refresh_request.call_count == 1
