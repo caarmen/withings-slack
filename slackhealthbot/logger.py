@@ -8,7 +8,7 @@ from contextvars import ContextVar
 from uuid import uuid4
 
 from fastapi import Request, Response
-from pydantic.utils import deep_update
+from pydantic.v1.utils import deep_update
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from uvicorn.config import LOGGING_CONFIG

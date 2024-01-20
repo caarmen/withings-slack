@@ -139,7 +139,7 @@ def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
         type_id=fitbit_activity.activityTypeId,
         name=fitbit_activity.activityName,
         calories=fitbit_activity.calories,
-        total_minutes=fitbit_activity.duration / 60000,
+        total_minutes=fitbit_activity.duration // 60000,
         zone_minutes=[
             svc_models.ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
             for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones

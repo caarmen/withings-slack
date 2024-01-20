@@ -129,11 +129,11 @@ async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(ge
 
 
 class FitbitNotification(BaseModel):
-    collectionType: Optional[str]
-    date: Optional[datetime.date]
-    ownerId: Optional[str]
-    ownerType: Optional[str]
-    subscriptionId: Optional[str]
+    collectionType: Optional[str] = None
+    date: Optional[datetime.date] = None
+    ownerId: Optional[str] = None
+    ownerType: Optional[str] = None
+    subscriptionId: Optional[str] = None
 
 
 last_processed_fitbit_notification_per_user: dict[str, datetime.datetime] = {}

@@ -42,7 +42,7 @@ async def save_new_activity_data(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_data.type_id,
         data={
-            **activity_data.dict(include={"log_id", "total_minutes", "calories"}),
+            **activity_data.model_dump(include={"log_id", "total_minutes", "calories"}),
             **{f"{x.zone}_minutes": x.minutes for x in activity_data.zone_minutes},
         },
     )
