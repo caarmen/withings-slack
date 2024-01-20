@@ -33,8 +33,7 @@ from tests.fixtures.fitbit_scenarios import (
 async def test_fitbit_poll_sleep(
     mocked_async_session,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    fitbit_user_factory: FitbitUserFactory,
+    fitbit_factories: tuple[UserFactory, FitbitUserFactory],
     scenario: FitbitSleepScenario,
 ):
     """
@@ -43,6 +42,7 @@ async def test_fitbit_poll_sleep(
     Then the last sleep is updated in the database
     And the message is posted to slack with the correct icon.
     """
+    user_factory, fitbit_user_factory, _ = fitbit_factories
 
     # Given a user with the given previous sleep data
     user: User = user_factory(fitbit=None)
@@ -95,9 +95,9 @@ async def test_fitbit_poll_sleep(
 async def test_fitbit_poll_activity(
     mocked_async_session,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    fitbit_user_factory: FitbitUserFactory,
-    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
+    fitbit_factories: tuple[
+        UserFactory, FitbitUserFactory, FitbitLatestActivityFactory
+    ],
     scenario: FitbitActivityScenario,
 ):
     """
@@ -106,6 +106,8 @@ async def test_fitbit_poll_activity(
     Then the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
+
+    user_factory, fitbit_user_factory, fitbit_latest_activity_factory = fitbit_factories
 
     # Given a user with the given previous activity data
     user: User = user_factory(fitbit=None)

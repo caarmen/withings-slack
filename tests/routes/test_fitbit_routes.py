@@ -37,8 +37,9 @@ async def test_sleep_notification(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    fitbit_user_factory: FitbitUserFactory,
+    fitbit_factories: tuple[
+        UserFactory, FitbitUserFactory, FitbitLatestActivityFactory
+    ],
     scenario: FitbitSleepScenario,
 ):
     """
@@ -47,6 +48,8 @@ async def test_sleep_notification(
     Then the last sleep is updated in the database
     And the message is posted to slack with the correct icons.
     """
+
+    user_factory, fitbit_user_factory, _ = fitbit_factories
 
     # Given a user with the given previous sleep data
     user: User = user_factory(fitbit=None)
@@ -110,9 +113,9 @@ async def test_activity_notification(
     mocked_async_session: AsyncSession,
     client: TestClient,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    fitbit_user_factory: FitbitUserFactory,
-    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
+    fitbit_factories: tuple[
+        UserFactory, FitbitUserFactory, FitbitLatestActivityFactory
+    ],
     scenario: FitbitActivityScenario,
 ):
     """
@@ -121,6 +124,8 @@ async def test_activity_notification(
     Then the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
+
+    user_factory, fitbit_user_factory, fitbit_latest_activity_factory = fitbit_factories
 
     # Given a user with the given previous activity data
     user: User = user_factory(fitbit=None)
@@ -195,8 +200,9 @@ async def test_refresh_token(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    fitbit_user_factory: FitbitUserFactory,
+    fitbit_factories: tuple[
+        UserFactory, FitbitUserFactory, FitbitLatestActivityFactory
+    ],
 ):
     """
     Given a user whose access token is expired
@@ -205,6 +211,8 @@ async def test_refresh_token(
     And the latest activity is updated in the database
     And the message is posted to slack with the correct pattern.
     """
+
+    user_factory, fitbit_user_factory, _ = fitbit_factories
 
     ctx_db.set(mocked_async_session)
     scenario = activity_scenarios["No previous activity data, new Spinning activity"]

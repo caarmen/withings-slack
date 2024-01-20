@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import json
 import math
@@ -15,18 +16,23 @@ from slackhealthbot.settings import settings
 from tests.factories.factories import UserFactory, WithingsUserFactory
 
 
+@dataclasses.dataclass
+class WeightNotificationScenario:
+    input_initial_weight: float | None
+    input_new_weight_g: int
+    expected_new_latest_weight_kg: float
+    expected_icon: str
+
+
 @pytest.mark.parametrize(
-    argnames="input_initial_weight, "
-    "input_new_weight_g, "
-    "expected_new_latest_weight_kg, "
-    "expected_icon",
+    argnames=["scenario"],
     argvalues=[
-        (None, 52100, 52.1, ""),
-        (52.1, 52200, 52.2, "↗️"),
-        (52.1, 53200, 53.2, "⬆️"),
-        (53.1, 53000, 53.0, "↘️"),
-        (53.0, 51900, 51.9, "⬇️"),
-        (52.3, 52300, 52.3, "➡️"),
+        (WeightNotificationScenario(None, 52100, 52.1, ""),),
+        (WeightNotificationScenario(52.1, 52200, 52.2, "↗️"),),
+        (WeightNotificationScenario(52.1, 53200, 53.2, "⬆️"),),
+        (WeightNotificationScenario(53.1, 53000, 53.0, "↘️"),),
+        (WeightNotificationScenario(53.0, 51900, 51.9, "⬇️"),),
+        (WeightNotificationScenario(52.3, 52300, 52.3, "➡️"),),
     ],
 )
 @pytest.mark.asyncio
@@ -34,12 +40,8 @@ async def test_weight_notification(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    withings_user_factory: WithingsUserFactory,
-    input_initial_weight,
-    input_new_weight_g,
-    expected_new_latest_weight_kg,
-    expected_icon,
+    withings_factories: tuple[UserFactory, WithingsUserFactory],
+    scenario: WeightNotificationScenario,
 ):
     """
     Given a user with a given previous weight logged
@@ -48,11 +50,13 @@ async def test_weight_notification(
     And the message is posted to slack with the correct icon.
     """
 
+    user_factory, withings_user_factory = withings_factories
+
     # Given a user
     user: User = user_factory(withings=None)
     withings_user: WithingsUser = withings_user_factory(
         user_id=user.id,
-        last_weight=input_initial_weight,
+        last_weight=scenario.input_initial_weight,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
     db_user = await crud.get_user(
@@ -60,7 +64,7 @@ async def test_weight_notification(
     )
     db_withings_user = db_user.withings
     # The user has the previous weight logged
-    assert db_withings_user.last_weight == input_initial_weight
+    assert db_withings_user.last_weight == scenario.input_initial_weight
 
     # Mock withings endpoint to return some weight data
     respx_mock.post(
@@ -75,7 +79,7 @@ async def test_weight_notification(
                         {
                             "measures": [
                                 {
-                                    "value": input_new_weight_g,
+                                    "value": scenario.input_new_weight_g,
                                     "unit": -3,
                                 }
                             ],
@@ -104,11 +108,13 @@ async def test_weight_notification(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last_weight is updated in the database
-    assert math.isclose(db_user.withings.last_weight, expected_new_latest_weight_kg)
+    assert math.isclose(
+        db_user.withings.last_weight, scenario.expected_new_latest_weight_kg
+    )
 
     # And the message is sent to slack as expected
     actual_message = json.loads(slack_request.calls[0].request.content)["text"]
-    assert expected_icon in actual_message
+    assert scenario.expected_icon in actual_message
 
 
 @pytest.mark.asyncio
@@ -116,8 +122,7 @@ async def test_refresh_token(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
-    user_factory: UserFactory,
-    withings_user_factory: WithingsUserFactory,
+    withings_factories: tuple[UserFactory, WithingsUserFactory],
 ):
     """
     Given a user whose access token is expired
@@ -126,6 +131,8 @@ async def test_refresh_token(
     And the latest weight is updated in the database
     And the message is posted to slack with the correct pattern.
     """
+    user_factory, withings_user_factory = withings_factories
+
     ctx_db.set(mocked_async_session)
     # Given a user
     user: User = user_factory(withings=None)
