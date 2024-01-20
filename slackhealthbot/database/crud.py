@@ -1,3 +1,5 @@
+import dataclasses
+
 from sqlalchemy import select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,39 +42,52 @@ async def get_user(
         ).one()
 
 
+@dataclasses.dataclass
+class UserUpsert:
+    withings_oauth_userid: str = None
+    fitbit_oauth_userid: str = None
+    data: dict = None
+    withings_data: dict = None
+    fitbit_data: dict = None
+
+
 async def upsert_user(
     db: AsyncSession,
-    withings_oauth_userid: str = None,
-    fitbit_oauth_userid: str = None,
-    data: dict = None,
-    withings_data: dict = None,
-    fitbit_data=None,
+    user_upsert: UserUpsert,
 ) -> models.User:
     try:
-        if withings_oauth_userid:
-            user = await get_user(db, withings_oauth_userid=withings_oauth_userid)
+        if user_upsert.withings_oauth_userid:
+            user = await get_user(
+                db, withings_oauth_userid=user_upsert.withings_oauth_userid
+            )
         else:
-            user = await get_user(db, fitbit_oauth_userid=fitbit_oauth_userid)
+            user = await get_user(
+                db, fitbit_oauth_userid=user_upsert.fitbit_oauth_userid
+            )
         return await update_user(
-            db, user, data=data, withings_data=withings_data, fitbit_data=fitbit_data
+            db,
+            user,
+            data=user_upsert.data,
+            withings_data=user_upsert.withings_data,
+            fitbit_data=user_upsert.fitbit_data,
         )
     except NoResultFound:
         # TODO simplify this
         try:
-            user = await get_user(db, slack_alias=data["slack_alias"])
+            user = await get_user(db, slack_alias=user_upsert.data["slack_alias"])
             return await update_user(
                 db,
                 user,
-                data=data,
-                withings_data=withings_data,
-                fitbit_data=fitbit_data,
+                data=user_upsert.data,
+                withings_data=user_upsert.withings_data,
+                fitbit_data=user_upsert.fitbit_data,
             )
         except NoResultFound:
             return await create_user(
                 db,
-                models.User(**data),
-                withings_data=withings_data,
-                fitbit_data=fitbit_data,
+                models.User(**user_upsert.data),
+                withings_data=user_upsert.withings_data,
+                fitbit_data=user_upsert.fitbit_data,
             )
 
 
