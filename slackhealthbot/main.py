@@ -6,7 +6,7 @@ from typing import Annotated, Optional
 
 import uvicorn
 from fastapi import Depends, FastAPI, Form, Request, Response, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.middleware import Middleware
@@ -66,8 +66,8 @@ async def get_withings_authorization(slack_alias: str, request: Request):
 
 
 @app.get("/v1/fitbit-authorization/{slack_alias}")
-def get_fitbit_authorization(slack_alias: str):
-    return RedirectResponse(url=fitbit_oauth.create_oauth_url(slack_alias=slack_alias))
+async def get_fitbit_authorization(slack_alias: str, request: Request):
+    return await fitbit_oauth.create_oauth_url(request, slack_alias=slack_alias)
 
 
 @app.head("/")
@@ -95,11 +95,9 @@ def validate_fitbit_notification_webhook(verify: str | None = None):
 
 
 @app.get("/fitbit-oauth-webhook/")
-async def fitbit_oauth_webhook(
-    code: str, state: str, db: AsyncSession = Depends(get_db)
-):
-    user = await fitbit_oauth.fetch_token(db=db, code=code, state=state)
-    await fitbit_api.subscribe(db, user)
+async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    user = await fitbit_oauth.fetch_token(db=db, request=request)
+    await fitbit_api.subscribe(user)
     html_content = """
     <html>
         <head>
@@ -175,7 +173,6 @@ async def fitbit_notification_webhook(
         try:
             if notification.collectionType == "sleep":
                 sleep_data = await fitbit_api.get_sleep(
-                    db=db,
                     user=user,
                     when=notification.date,
                 )
