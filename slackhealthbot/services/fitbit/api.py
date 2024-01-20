@@ -2,18 +2,15 @@ import datetime
 import logging
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services.fitbit import parser, requests
 from slackhealthbot.settings import settings
 
 
-async def subscribe(db: AsyncSession, user: db_models.User):
+async def subscribe(user: db_models.User):
     for collectionPath in ["sleep", "activities"]:
         response = await requests.post(
-            db,
             user=user,
             url=f"{settings.fitbit_base_url}1/user/-/{collectionPath}/apiSubscriptions/{user.fitbit.oauth_userid}-{collectionPath}.json",
         )
@@ -23,7 +20,6 @@ async def subscribe(db: AsyncSession, user: db_models.User):
 
 
 async def get_sleep(
-    db: AsyncSession,
     user: db_models.User,
     when: datetime.date,
 ) -> Optional[svc_models.SleepData]:
@@ -34,7 +30,6 @@ async def get_sleep(
     logging.info(f"get_sleep for user {user.fitbit.oauth_userid}")
     when_str = when.strftime("%Y-%m-%d")
     response = await requests.get(
-        db,
         user=user,
         url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/{when_str}.json",
     )
@@ -42,7 +37,7 @@ async def get_sleep(
 
 
 async def get_activity(
-    db: AsyncSession, user: db_models.User, when: datetime.datetime
+    user: db_models.User, when: datetime.datetime
 ) -> Optional[svc_models.ActivityData]:
     """
     :raises:
@@ -51,7 +46,6 @@ async def get_activity(
     logging.info(f"get_activity for user {user.fitbit.oauth_userid}")
     when_str = when.strftime("%Y-%m-%dT%H:%M:%S")
     response = await requests.get(
-        db,
         user=user,
         url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
         params={

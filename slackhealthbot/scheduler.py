@@ -114,7 +114,6 @@ async def fitbit_poll_sleep(
     if not latest_successful_poll or latest_successful_poll < when:
         try:
             sleep_data = await fitbit_api.get_sleep(
-                db,
                 user=fitbit_user.user,
                 when=when,
             )
