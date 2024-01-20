@@ -40,6 +40,23 @@ def client(mocked_async_session) -> TestClient:
     return TestClient(app)
 
 
+@pytest.fixture
+def withings_factories(
+    user_factory: UserFactory,
+    withings_user_factory: WithingsUserFactory,
+) -> tuple[UserFactory, WithingsUserFactory]:
+    return user_factory, withings_user_factory
+
+
+@pytest.fixture
+def fitbit_factories(
+    user_factory: UserFactory,
+    fitbit_user_factory: FitbitUserFactory,
+    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
+) -> tuple[UserFactory, FitbitUserFactory, FitbitLatestActivityFactory]:
+    return user_factory, fitbit_user_factory, fitbit_latest_activity_factory
+
+
 @pytest.fixture(scope="function", autouse=True)
 def setup_factories(mocked_session):
     for factory in [

@@ -108,7 +108,7 @@ async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_
         </body>
     </html>
     """
-    return HTMLResponse(content=html_content, status_code=200)
+    return HTMLResponse(content=html_content, status_code=status.HTTP_200_OK)
 
 
 @app.get("/withings-oauth-webhook/")
@@ -125,7 +125,7 @@ async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(ge
         </body>
     </html>
     """
-    return HTMLResponse(content=html_content, status_code=200)
+    return HTMLResponse(content=html_content, status_code=status.HTTP_200_OK)
 
 
 class FitbitNotification(BaseModel):
@@ -138,6 +138,8 @@ class FitbitNotification(BaseModel):
 
 last_processed_fitbit_notification_per_user: dict[str, datetime.datetime] = {}
 
+DEBOUNCE_NOTIFICATION_DELAY_S = 10
+
 
 def _is_fitbit_notification_processed(notification: FitbitNotification):
     # Fitbit often calls multiple times for the same event.
@@ -148,7 +150,8 @@ def _is_fitbit_notification_processed(notification: FitbitNotification):
     )
     already_processed = (
         last_fitbit_notification_datetime
-        and (now - last_fitbit_notification_datetime).seconds < 10
+        and (now - last_fitbit_notification_datetime).seconds
+        < DEBOUNCE_NOTIFICATION_DELAY_S
     )
     return already_processed
 

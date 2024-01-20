@@ -24,8 +24,10 @@ async def update_token(token: dict, refresh_token=None, access_token=None):
     db = ctx_db.get()
     await crud.upsert_user(
         db,
-        withings_oauth_userid=oauth_fields.oauth_userid,
-        withings_data=dataclasses.asdict(oauth_fields),
+        crud.UserUpsert(
+            withings_oauth_userid=oauth_fields.oauth_userid,
+            withings_data=dataclasses.asdict(oauth_fields),
+        ),
     )
 
 
@@ -109,8 +111,10 @@ async def fetch_token(db: AsyncSession, request: Request) -> db_models.User:
     oauth_fields = OauthFields.parse_response_data(response)
     user = await crud.upsert_user(
         db,
-        withings_oauth_userid=response["userid"],
-        data={"slack_alias": request.session.pop("slack_alias")},
-        withings_data=dataclasses.asdict(oauth_fields),
+        crud.UserUpsert(
+            withings_oauth_userid=response["userid"],
+            data={"slack_alias": request.session.pop("slack_alias")},
+            withings_data=dataclasses.asdict(oauth_fields),
+        ),
     )
     return user

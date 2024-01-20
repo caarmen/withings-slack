@@ -6,7 +6,7 @@ from typing import Self
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
-from fastapi import Request
+from fastapi import Request, status
 from pydantic import HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.config import Config
@@ -23,8 +23,10 @@ async def update_token(token: dict, refresh_token=None, access_token=None):
     db = ctx_db.get()
     await crud.upsert_user(
         db,
-        fitbit_oauth_userid=oauth_fields.oauth_userid,
-        fitbit_data=dataclasses.asdict(oauth_fields),
+        crud.UserUpsert(
+            fitbit_oauth_userid=oauth_fields.oauth_userid,
+            fitbit_data=dataclasses.asdict(oauth_fields),
+        ),
     )
 
 
@@ -32,7 +34,7 @@ def fitbit_compliance_fix(session: AsyncOAuth2Client):
     def _fix_access_token_response(resp):
         data = resp.json()
         logging.info(f"Token response {data}")
-        if resp.status_code != 200:
+        if resp.status_code != status.HTTP_200_OK:
             raise UserLoggedOutException
         data["userid"] = data["user_id"]
         resp.json = lambda: data
@@ -94,8 +96,10 @@ async def fetch_token(db: AsyncSession, request: Request) -> db_models.User:
     oauth_fields = OauthFields.parse_response_data(response)
     user = await crud.upsert_user(
         db,
-        fitbit_oauth_userid=response["userid"],
-        data={"slack_alias": request.session.pop("slack_alias")},
-        fitbit_data=dataclasses.asdict(oauth_fields),
+        crud.UserUpsert(
+            fitbit_oauth_userid=response["userid"],
+            data={"slack_alias": request.session.pop("slack_alias")},
+            fitbit_data=dataclasses.asdict(oauth_fields),
+        ),
     )
     return user
