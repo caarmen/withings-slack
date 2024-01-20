@@ -6,7 +6,7 @@ from typing import Self
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
-from fastapi import Request
+from fastapi import Request, status
 from pydantic import HttpUrl
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.config import Config
@@ -32,7 +32,7 @@ def fitbit_compliance_fix(session: AsyncOAuth2Client):
     def _fix_access_token_response(resp):
         data = resp.json()
         logging.info(f"Token response {data}")
-        if resp.status_code != 200:
+        if resp.status_code != status.HTTP_200_OK:
             raise UserLoggedOutException
         data["userid"] = data["user_id"]
         resp.json = lambda: data

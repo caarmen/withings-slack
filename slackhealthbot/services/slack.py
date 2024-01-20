@@ -26,17 +26,21 @@ async def post_weight(weight_data: WeightData):
         )
 
 
+WEIGHT_CHANGE_KG_SMALL = 0.1
+WEIGHT_CHANGE_KG_LARGE = 1
+
+
 def get_weight_change_icon(weight_data: WeightData) -> str:
     if not weight_data.last_weight_kg:
         return ""
     weight_change = weight_data.weight_kg - weight_data.last_weight_kg
-    if weight_change > 1:
+    if weight_change > WEIGHT_CHANGE_KG_LARGE:
         return "⬆️"
-    if weight_change > 0.1:
+    if weight_change > WEIGHT_CHANGE_KG_SMALL:
         return "↗️"
-    if weight_change < -1:
+    if weight_change < -WEIGHT_CHANGE_KG_LARGE:
         return "⬇️"
-    if weight_change < -0.1:
+    if weight_change < -WEIGHT_CHANGE_KG_SMALL:
         return "↘️"
     return "➡️"
 
@@ -54,38 +58,50 @@ def format_activity_zone(activity_zone: ActivityZone) -> str:
     return activity_zone.name.capitalize().replace("_", " ")
 
 
+SLEEP_TIME_SECONDS_CHANGE_SMALL = 15 * 60
+SLEEP_TIME_SECONDS_CHANGE_LARGE = 45 * 60
+
+
 def get_seconds_change_icon(seconds_change: int) -> str:
-    if seconds_change > 45 * 60:
+    if seconds_change > SLEEP_TIME_SECONDS_CHANGE_LARGE:
         return "⬆️"
-    if seconds_change > 15 * 60:
+    if seconds_change > SLEEP_TIME_SECONDS_CHANGE_SMALL:
         return "↗️"
-    if seconds_change < -45 * 60:
+    if seconds_change < -SLEEP_TIME_SECONDS_CHANGE_LARGE:
         return "⬇️"
-    if seconds_change < -15 * 60:
+    if seconds_change < -SLEEP_TIME_SECONDS_CHANGE_SMALL:
         return "↘️"
     return "➡️"
+
+
+ACTIVITY_DURATION_MINUTES_CHANGE_SMALL = 2
+ACTIVITY_DURATION_MINUTES_CHANGE_LARGE = 10
 
 
 def get_activity_minutes_change_icon(minutes_change: int) -> str:
-    if minutes_change > 10:
+    if minutes_change > ACTIVITY_DURATION_MINUTES_CHANGE_LARGE:
         return "⬆️"
-    if minutes_change > 2:
+    if minutes_change > ACTIVITY_DURATION_MINUTES_CHANGE_SMALL:
         return "↗️"
-    if minutes_change < -10:
+    if minutes_change < -ACTIVITY_DURATION_MINUTES_CHANGE_LARGE:
         return "⬇️"
-    if minutes_change < -2:
+    if minutes_change < -ACTIVITY_DURATION_MINUTES_CHANGE_SMALL:
         return "↘️"
     return "➡️"
 
 
+CALORIES_CHANGE_SMALL = 25
+CALORIES_CHANGE_LARGE = 50
+
+
 def get_activity_calories_change_icon(calories_change: int) -> str:
-    if calories_change > 50:
+    if calories_change > CALORIES_CHANGE_LARGE:
         return "⬆️"
-    if calories_change > 25:
+    if calories_change > CALORIES_CHANGE_SMALL:
         return "↗️"
-    if calories_change < -50:
+    if calories_change < -CALORIES_CHANGE_LARGE:
         return "⬇️"
-    if calories_change < -25:
+    if calories_change < -CALORIES_CHANGE_SMALL:
         return "↘️"
     return "➡️"
 
