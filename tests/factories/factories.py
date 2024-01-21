@@ -2,7 +2,7 @@ from factory import Faker, RelatedFactoryList, SelfAttribute, Sequence, SubFacto
 from factory.alchemy import SQLAlchemyModelFactory
 
 from slackhealthbot.database.models import (
-    FitbitLatestActivity,
+    FitbitActivity,
     FitbitUser,
     User,
     WithingsUser,
@@ -21,9 +21,9 @@ class WithingsUserFactory(SQLAlchemyModelFactory):
     last_weight = Faker("pyfloat")
 
 
-class FitbitLatestActivityFactory(SQLAlchemyModelFactory):
+class FitbitActivityFactory(SQLAlchemyModelFactory):
     class Meta:
-        model = FitbitLatestActivity
+        model = FitbitActivity
 
     log_id = Faker("pyint")
     type_id = Faker("pyint")
@@ -46,9 +46,7 @@ class FitbitUserFactory(SQLAlchemyModelFactory):
     oauth_refresh_token = Faker("pystr")
     oauth_userid = Faker("pystr")
     oauth_expiration_date = Faker("date_time")
-    latest_activities = RelatedFactoryList(
-        FitbitLatestActivityFactory, "fitbit_user", size=0
-    )
+    latest_activities = RelatedFactoryList(FitbitActivityFactory, "fitbit_user", size=0)
 
 
 class UserFactory(SQLAlchemyModelFactory):

@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.database.models import User
+from slackhealthbot.database.models import FitbitActivity, User
 from slackhealthbot.services.fitbit import api
 from slackhealthbot.services.models import (
     ActivityData,
@@ -49,23 +49,28 @@ async def save_new_activity_data(
     await db.refresh(user)
 
 
-def _is_new_valid_activity(user: User, activity: ActivityData | None) -> bool:
+async def _is_new_valid_activity(
+    db: AsyncSession, user: User, activity: ActivityData | None
+) -> bool:
     return (
         activity
         and activity.type_id in settings.fitbit_activity_type_ids
-        and not any(
-            x for x in user.fitbit.latest_activities if x.log_id == activity.log_id
+        and not await crud.get_activity_by_user_and_log_id(
+            db=db, fitbit_user_id=user.fitbit.id, log_id=activity.log_id
         )
     )
 
 
 async def get_latest_activity(
+    db: AsyncSession,
     user: User,
     type_id: int,
     name: str,
 ) -> ActivityData | None:
-    latest_activity = next(
-        (x for x in user.fitbit.latest_activities if x.type_id == type_id), None
+    latest_activity: FitbitActivity = await crud.get_latest_activity_by_user_and_type(
+        db=db,
+        fitbit_user_id=user.fitbit.id,
+        type_id=type_id,
     )
     if not latest_activity:
         return None
@@ -96,12 +101,10 @@ async def get_activity(
     when: datetime.datetime,
 ) -> ActivityHistory | None:
     activity = await api.get_activity(user, when)
-    # lazy load activity data
-    await user.fitbit.awaitable_attrs.latest_activities
-    if not _is_new_valid_activity(user, activity):
+    if not await _is_new_valid_activity(db, user, activity):
         return None
     latest_activity = await get_latest_activity(
-        user=user, type_id=activity.type_id, name=activity.name
+        db=db, user=user, type_id=activity.type_id, name=activity.name
     )
     await save_new_activity_data(db, user, activity)
     return ActivityHistory(

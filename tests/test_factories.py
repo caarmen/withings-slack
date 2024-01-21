@@ -5,13 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
 from slackhealthbot.database.models import (
-    FitbitLatestActivity,
+    FitbitActivity,
     FitbitUser,
     User,
     WithingsUser,
 )
 from tests.factories.factories import (
-    FitbitLatestActivityFactory,
+    FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
     WithingsUserFactory,
@@ -88,41 +88,31 @@ async def test_fitbit_user_factory(
 
 
 @pytest.mark.asyncio
-async def test_fitbit_latest_activity_factory(
+async def test_fitbit_activity_factory(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
+    fitbit_activity_factory: FitbitActivityFactory,
     mocked_async_session: AsyncSession,
 ):
     user: User = user_factory(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory(user_id=user.id)
-    fitbit_latest_activity: FitbitLatestActivity = fitbit_latest_activity_factory(
+    fitbit_activity: FitbitActivity = fitbit_activity_factory(
         fitbit_user_id=fitbit_user.id
     )
-    db_user = await crud.get_user(
-        mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    db_fitbit_activity: FitbitActivity = (
+        await crud.get_latest_activity_by_user_and_type(
+            mocked_async_session,
+            fitbit_user_id=fitbit_user.id,
+            type_id=fitbit_activity.type_id,
+        )
     )
-    db_fitbit_latest_activities: list[
-        FitbitLatestActivity
-    ] = await db_user.fitbit.awaitable_attrs.latest_activities
-    assert len(db_fitbit_latest_activities) == 1
-    db_fitbit_latest_activity = db_fitbit_latest_activities[0]
-    assert db_fitbit_latest_activity.log_id == fitbit_latest_activity.log_id
-    assert db_fitbit_latest_activity.type_id == fitbit_latest_activity.type_id
+    assert db_fitbit_activity.log_id == fitbit_activity.log_id
+    assert db_fitbit_activity.type_id == fitbit_activity.type_id
+    assert db_fitbit_activity.total_minutes == fitbit_activity.total_minutes
+    assert db_fitbit_activity.calories == fitbit_activity.calories
+    assert db_fitbit_activity.fat_burn_minutes == fitbit_activity.fat_burn_minutes
+    assert db_fitbit_activity.cardio_minutes == fitbit_activity.cardio_minutes
+    assert db_fitbit_activity.peak_minutes == fitbit_activity.peak_minutes
     assert (
-        db_fitbit_latest_activity.total_minutes == fitbit_latest_activity.total_minutes
-    )
-    assert db_fitbit_latest_activity.calories == fitbit_latest_activity.calories
-    assert (
-        db_fitbit_latest_activity.fat_burn_minutes
-        == fitbit_latest_activity.fat_burn_minutes
-    )
-    assert (
-        db_fitbit_latest_activity.cardio_minutes
-        == fitbit_latest_activity.cardio_minutes
-    )
-    assert db_fitbit_latest_activity.peak_minutes == fitbit_latest_activity.peak_minutes
-    assert (
-        db_fitbit_latest_activity.out_of_range_minutes
-        == fitbit_latest_activity.out_of_range_minutes
+        db_fitbit_activity.out_of_range_minutes == fitbit_activity.out_of_range_minutes
     )

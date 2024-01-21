@@ -1,6 +1,6 @@
 import dataclasses
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, desc, select, update
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -152,27 +152,58 @@ async def upsert_fitbit_activity_data(
     try:
         fitbit_activity = (
             await db.scalars(
-                statement=select(models.FitbitLatestActivity).where(
-                    models.FitbitLatestActivity.fitbit_user_id == fitbit_user_id
-                    and models.FitbitLatestActivity.type_id == type_id
+                statement=select(models.FitbitActivity).where(
+                    models.FitbitActivity.log_id == data["log_id"]
                 )
             )
         ).one()
         await db.execute(
-            statement=update(models.FitbitLatestActivity)
-            .where(
-                models.FitbitLatestActivity.fitbit_user_id == fitbit_user_id
-                and models.FitbitLatestActivity.type_id == type_id
-            )
+            statement=update(models.FitbitActivity)
+            .where(models.FitbitActivity.log_id == data["log_id"])
             .values(**data)
         )
     except NoResultFound:
-        fitbit_activity = models.FitbitLatestActivity(
+        fitbit_activity = models.FitbitActivity(
             fitbit_user_id=fitbit_user_id, type_id=type_id, **data
         )
         db.add(fitbit_activity)
 
     await db.commit()
+
+
+async def get_latest_activity_by_user_and_type(
+    db: AsyncSession,
+    fitbit_user_id: str,
+    type_id: int,
+) -> models.FitbitActivity | None:
+    return await db.scalar(
+        statement=select(models.FitbitActivity)
+        .where(
+            and_(
+                models.FitbitActivity.fitbit_user_id == fitbit_user_id,
+                models.FitbitActivity.type_id == type_id,
+            )
+        )
+        .order_by(desc(models.FitbitActivity.updated_at))
+        .limit(1)
+    )
+
+
+async def get_activity_by_user_and_log_id(
+    db: AsyncSession,
+    fitbit_user_id: str,
+    log_id: int,
+) -> models.FitbitActivity | None:
+    return (
+        await db.scalars(
+            statement=select(models.FitbitActivity).where(
+                and_(
+                    models.FitbitActivity.fitbit_user_id == fitbit_user_id,
+                    models.FitbitActivity.log_id == log_id,
+                )
+            )
+        )
+    ).one_or_none()
 
 
 async def create_user(
