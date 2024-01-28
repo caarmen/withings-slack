@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import Session
 from slackhealthbot.database.models import Base
 from slackhealthbot.main import app, get_db
 from tests.factories.factories import (
-    FitbitLatestActivityFactory,
+    FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
     WithingsUserFactory,
@@ -52,9 +52,9 @@ def withings_factories(
 def fitbit_factories(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    fitbit_latest_activity_factory: FitbitLatestActivityFactory,
-) -> tuple[UserFactory, FitbitUserFactory, FitbitLatestActivityFactory]:
-    return user_factory, fitbit_user_factory, fitbit_latest_activity_factory
+    fitbit_activity_factory: FitbitActivityFactory,
+) -> tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory]:
+    return user_factory, fitbit_user_factory, fitbit_activity_factory
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -63,7 +63,7 @@ def setup_factories(mocked_session):
         UserFactory,
         WithingsUserFactory,
         FitbitUserFactory,
-        FitbitLatestActivityFactory,
+        FitbitActivityFactory,
     ]:
         factory._meta.sqlalchemy_session = mocked_session
         factory._meta.sqlalchemy_session_persistence = "commit"
@@ -73,6 +73,6 @@ for factory in [
     UserFactory,
     WithingsUserFactory,
     FitbitUserFactory,
-    FitbitLatestActivityFactory,
+    FitbitActivityFactory,
 ]:
     register(factory)

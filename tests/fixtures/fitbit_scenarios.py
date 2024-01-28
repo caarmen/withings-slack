@@ -320,6 +320,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "calories": 10,
             "fat_burn_minutes": 7,
             "cardio_minutes": 13,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
         },
         input_mock_fitbit_response={
             "activities": [
@@ -366,6 +368,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "cardio_minutes": 20,
             "out_of_range_minutes": None,
             "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
         },
         input_mock_fitbit_response={
             "activities": [
@@ -410,6 +414,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "cardio_minutes": 20,
             "out_of_range_minutes": None,
             "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
         },
         input_mock_fitbit_response={
             "activities": [
@@ -453,6 +459,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "cardio_minutes": 20,
             "out_of_range_minutes": None,
             "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
         },
         input_mock_fitbit_response={"foo": "bar"},
         expected_new_last_activity_log_id=1234,
