@@ -3,10 +3,10 @@ import logging
 import random
 import string
 from contextlib import asynccontextmanager
-from typing import Annotated, Optional
+from typing import Optional
 
 import uvicorn
-from fastapi import Depends, FastAPI, Form, Request, Response, status
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +16,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from slackhealthbot import logger, scheduler
 from slackhealthbot.database import crud
 from slackhealthbot.dependencies import get_db
+from slackhealthbot.routers.withings import router as withings_router
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
@@ -23,8 +24,6 @@ from slackhealthbot.services.fitbit import api as fitbit_api
 from slackhealthbot.services.fitbit import oauth as fitbit_oauth
 from slackhealthbot.services.fitbit import service as fitbit_service
 from slackhealthbot.services.oauth import oauth
-from slackhealthbot.services.withings import api as withings_api
-from slackhealthbot.services.withings import oauth as withings_oauth
 from slackhealthbot.settings import settings
 
 LOGIN_COMPLETE_CONTENT = """
@@ -60,15 +59,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
-@app.get("/v1/withings-authorization/{slack_alias}")
-async def get_withings_authorization(slack_alias: str, request: Request):
-    return await oauth.create_oauth_url(
-        provider=withings_oauth.PROVIDER,
-        request=request,
-        slack_alias=slack_alias,
-        redirect_uri=settings.withings_redirect_uri,
-    )
+app.include_router(withings_router)
 
 
 @app.get("/v1/fitbit-authorization/{slack_alias}")
@@ -80,16 +71,6 @@ async def get_fitbit_authorization(slack_alias: str, request: Request):
 
 @app.head("/")
 def validate_root():
-    return Response()
-
-
-@app.head("/withings-oauth-webhook/")
-def validate_withings_oauth_webhook():
-    return Response()
-
-
-@app.head("/withings-notification-webhook/")
-def validate_withings_notification_webhook():
     return Response()
 
 
@@ -109,16 +90,6 @@ async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_
         db=db, token=token, slack_alias=request.session.pop("slack_alias")
     )
     await fitbit_api.subscribe(user)
-    return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
-
-
-@app.get("/withings-oauth-webhook/")
-async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    token: dict = await oauth.fetch_token(withings_oauth.PROVIDER, request)
-    user = await withings_oauth.update_token(
-        db=db, token=token, slack_alias=request.session.pop("slack_alias")
-    )
-    await withings_api.subscribe(user)
     return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
 
 
@@ -200,52 +171,6 @@ async def fitbit_notification_webhook(
                 service="fitbit",
             )
             break
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-last_processed_withings_notification_per_user = {}
-
-
-@app.post("/withings-notification-webhook/")
-async def withings_notification_webhook(
-    userid: Annotated[str, Form()],
-    startdate: Annotated[int, Form()],
-    enddate: Annotated[int, Form()],
-    db: AsyncSession = Depends(get_db),
-):
-    logging.info(
-        "withings_notification_webhook: "
-        + f"userid={userid}, startdate={startdate}, enddate={enddate}"
-    )
-    if last_processed_withings_notification_per_user.get(userid, None) != (
-        startdate,
-        enddate,
-    ):
-        user = await crud.get_user(db, withings_oauth_userid=userid)
-        try:
-            last_weight_data = await withings_api.get_last_weight(
-                db,
-                userid=userid,
-                startdate=startdate,
-                enddate=enddate,
-            )
-        except UserLoggedOutException:
-            await slack.post_user_logged_out(
-                slack_alias=user.slack_alias,
-                service="withings",
-            )
-        else:
-            if last_weight_data:
-                last_processed_withings_notification_per_user[userid] = (
-                    startdate,
-                    enddate,
-                )
-                await crud.update_user(
-                    db, user, withings_data={"last_weight": last_weight_data.weight_kg}
-                )
-                await slack.post_weight(last_weight_data)
-    else:
-        logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
