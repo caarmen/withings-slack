@@ -10,6 +10,7 @@ from slackhealthbot.database.models import (
     User,
     WithingsUser,
 )
+from slackhealthbot.repositories import withingsrepository
 from tests.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -50,16 +51,17 @@ async def test_withings_user_factory(
     assert isinstance(withings_user.last_weight, float)
     assert isinstance(user, User)
 
-    db_user = await crud.get_user(
-        mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
+    repo_user = await withingsrepository.get_user_by_withings_userid(
+        mocked_async_session, withings_userid=withings_user.oauth_userid
     )
-    db_withings_user = db_user.withings
-    assert db_withings_user.oauth_access_token == withings_user.oauth_access_token
-    assert db_withings_user.oauth_refresh_token == withings_user.oauth_refresh_token
-    assert db_withings_user.oauth_userid == withings_user.oauth_userid
-    assert db_withings_user.oauth_expiration_date == withings_user.oauth_expiration_date
-    assert db_withings_user.last_weight == withings_user.last_weight
-    assert db_withings_user.user.id == user.id
+    assert repo_user.identity.withings_userid == withings_user.oauth_userid
+    assert repo_user.oauth_data.oauth_access_token == withings_user.oauth_access_token
+    assert repo_user.oauth_data.oauth_refresh_token == withings_user.oauth_refresh_token
+    assert (
+        repo_user.oauth_data.oauth_expiration_date
+        == withings_user.oauth_expiration_date
+    )
+    assert repo_user.fitness_data.last_weight_kg == withings_user.last_weight
 
 
 @pytest.mark.asyncio

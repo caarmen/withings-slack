@@ -1,11 +1,6 @@
 import logging
 from typing import Optional
 
-from sqlalchemy.exc import NoResultFound
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from slackhealthbot.core.models import WeightData
-from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
 from slackhealthbot.services.oauth import requests
 from slackhealthbot.services.withings.oauth import PROVIDER
@@ -28,25 +23,19 @@ async def subscribe(user: db_models.User):
     logging.info(f"Withings subscription response: {response.json()}")
 
 
-async def get_last_weight(
-    db: AsyncSession,
-    userid: str,
+async def get_last_weight_kg(
+    oauth_token: requests.OAuthToken,
     startdate: int,
     enddate: int,
-) -> Optional[WeightData]:
+) -> Optional[float]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
     """
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
-    try:
-        user = await crud.get_user(db, withings_oauth_userid=userid)
-    except NoResultFound:
-        logging.info(f"get_last_weight: User {userid} unknown")
-        return None
     response = await requests.post(
         provider=PROVIDER,
-        token=user.withings,
+        token=oauth_token,
         url=f"{settings.withings_base_url}measure",
         data={
             "action": "getmeas",
@@ -64,9 +53,5 @@ async def get_last_weight(
         if measures:
             last_measure = measures[0]
             weight_kg = last_measure["value"] * pow(10, last_measure["unit"])
-            return WeightData(
-                weight_kg=weight_kg,
-                slack_alias=user.slack_alias,
-                last_weight_kg=user.withings.last_weight,
-            )
+            return weight_kg
     return None

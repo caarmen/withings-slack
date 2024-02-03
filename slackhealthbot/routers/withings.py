@@ -4,7 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import crud
+from slackhealthbot.core.models import WeightData
+from slackhealthbot.repositories import withingsrepository
 from slackhealthbot.routers.dependencies import get_db, templates
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
@@ -66,29 +67,41 @@ async def withings_notification_webhook(
         startdate,
         enddate,
     ):
-        user = await crud.get_user(db, withings_oauth_userid=userid)
-        try:
-            last_weight_data = await withings_api.get_last_weight(
+        user: withingsrepository.User = (
+            await withingsrepository.get_user_by_withings_userid(
                 db,
-                userid=userid,
+                withings_userid=userid,
+            )
+        )
+        try:
+            last_weight_kg = await withings_api.get_last_weight_kg(
+                oauth_token=user.oauth_data,
                 startdate=startdate,
                 enddate=enddate,
             )
         except UserLoggedOutException:
             await slack.post_user_logged_out(
-                slack_alias=user.slack_alias,
+                slack_alias=user.identity.slack_alias,
                 service="withings",
             )
         else:
-            if last_weight_data:
+            if last_weight_kg:
                 last_processed_withings_notification_per_user[userid] = (
                     startdate,
                     enddate,
                 )
-                await crud.update_user(
-                    db, user, withings_data={"last_weight": last_weight_data.weight_kg}
+                await withingsrepository.update_user_weight(
+                    db=db,
+                    withings_userid=userid,
+                    last_weight_kg=last_weight_kg,
                 )
-                await slack.post_weight(last_weight_data)
+                await slack.post_weight(
+                    WeightData(
+                        weight_kg=last_weight_kg,
+                        slack_alias=user.identity.slack_alias,
+                        last_weight_kg=user.fitness_data.last_weight_kg,
+                    )
+                )
     else:
         logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
