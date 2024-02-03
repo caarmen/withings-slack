@@ -1,3 +1,5 @@
+from fastapi.templating import Jinja2Templates
+
 from slackhealthbot.database.connection import SessionLocal, ctx_db
 
 
@@ -13,3 +15,6 @@ async def get_db():
     finally:
         await db.close()
         ctx_db.set(None)
+
+
+templates = Jinja2Templates(directory="templates")

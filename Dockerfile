@@ -7,6 +7,7 @@ COPY requirements/prod.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY slackhealthbot slackhealthbot
+COPY templates templates
 COPY alembic.ini alembic.ini
 COPY alembic alembic
 

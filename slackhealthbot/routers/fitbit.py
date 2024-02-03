@@ -2,12 +2,11 @@ import datetime
 import logging
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.dependencies import get_db
+from slackhealthbot.dependencies import get_db, templates
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
@@ -16,17 +15,6 @@ from slackhealthbot.services.fitbit import oauth as fitbit_oauth
 from slackhealthbot.services.fitbit import service as fitbit_service
 from slackhealthbot.services.oauth import oauth
 from slackhealthbot.settings import settings
-
-LOGIN_COMPLETE_CONTENT = """
-    <html>
-        <head>
-            <title>Login complete</title>
-        </head>
-        <body>
-            <h1>Congrats, Login complete</h1>
-        </body>
-    </html>
-    """
 
 router = APIRouter()
 
@@ -54,7 +42,9 @@ async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_
         db=db, token=token, slack_alias=request.session.pop("slack_alias")
     )
     await fitbit_api.subscribe(user)
-    return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
+    return templates.TemplateResponse(
+        request=request, name="login_complete.html", context={"provider": "fitbit"}
+    )
 
 
 class FitbitNotification(BaseModel):

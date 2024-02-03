@@ -2,28 +2,16 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request, Response, status
-from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.dependencies import get_db
+from slackhealthbot.dependencies import get_db, templates
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth import oauth
 from slackhealthbot.services.withings import api as withings_api
 from slackhealthbot.services.withings import oauth as withings_oauth
 from slackhealthbot.settings import settings
-
-LOGIN_COMPLETE_CONTENT = """
-    <html>
-        <head>
-            <title>Login complete</title>
-        </head>
-        <body>
-            <h1>Congrats, Login complete</h1>
-        </body>
-    </html>
-    """
 
 router = APIRouter()
 
@@ -45,7 +33,9 @@ async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(ge
         db=db, token=token, slack_alias=request.session.pop("slack_alias")
     )
     await withings_api.subscribe(user)
-    return HTMLResponse(content=LOGIN_COMPLETE_CONTENT, status_code=status.HTTP_200_OK)
+    return templates.TemplateResponse(
+        request=request, name="login_complete.html", context={"provider": "withings"}
+    )
 
 
 @router.get("/v1/withings-authorization/{slack_alias}")
