@@ -2,8 +2,8 @@ import datetime
 import logging
 from typing import Optional
 
+from slackhealthbot.core.models import ActivityData, SleepData
 from slackhealthbot.database import models as db_models
-from slackhealthbot.services import models as svc_models
 from slackhealthbot.services.fitbit import parser
 from slackhealthbot.services.fitbit.oauth import PROVIDER
 from slackhealthbot.services.oauth import requests
@@ -25,7 +25,7 @@ async def subscribe(user: db_models.User):
 async def get_sleep(
     user: db_models.User,
     when: datetime.date,
-) -> Optional[svc_models.SleepData]:
+) -> Optional[SleepData]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -42,7 +42,7 @@ async def get_sleep(
 
 async def get_activity(
     user: db_models.User, when: datetime.datetime
-) -> Optional[svc_models.ActivityData]:
+) -> Optional[ActivityData]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails

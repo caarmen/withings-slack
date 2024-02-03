@@ -2,16 +2,16 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import crud
-from slackhealthbot.database.models import FitbitActivity, User
-from slackhealthbot.services.fitbit import api
-from slackhealthbot.services.models import (
+from slackhealthbot.core.models import (
     ActivityData,
     ActivityHistory,
     ActivityZone,
     ActivityZoneMinutes,
     SleepData,
 )
+from slackhealthbot.database import crud
+from slackhealthbot.database.models import FitbitActivity, User
+from slackhealthbot.services.fitbit import api
 from slackhealthbot.settings import settings
 
 

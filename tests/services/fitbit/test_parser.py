@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from slackhealthbot.core.models import SleepData
 from slackhealthbot.services.fitbit.parser import parse_sleep
-from slackhealthbot.services.models import SleepData
 
 
 @pytest.mark.parametrize(

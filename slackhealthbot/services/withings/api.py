@@ -4,9 +4,9 @@ from typing import Optional
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.models import WeightData
 from slackhealthbot.database import crud
 from slackhealthbot.database import models as db_models
-from slackhealthbot.services import models as svc_models
 from slackhealthbot.services.oauth import requests
 from slackhealthbot.services.withings.oauth import PROVIDER
 from slackhealthbot.settings import settings
@@ -33,7 +33,7 @@ async def get_last_weight(
     userid: str,
     startdate: int,
     enddate: int,
-) -> Optional[svc_models.WeightData]:
+) -> Optional[WeightData]:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -64,7 +64,7 @@ async def get_last_weight(
         if measures:
             last_measure = measures[0]
             weight_kg = last_measure["value"] * pow(10, last_measure["unit"])
-            return svc_models.WeightData(
+            return WeightData(
                 weight_kg=weight_kg,
                 slack_alias=user.slack_alias,
                 last_weight_kg=user.withings.last_weight,

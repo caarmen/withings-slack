@@ -1,52 +1,7 @@
-import dataclasses
-import datetime
-from enum import StrEnum, auto
 from typing import Optional
 
-from pydantic import BaseModel, NonNegativeInt
-
+from slackhealthbot.core.models import SleepData
 from slackhealthbot.database.models import FitbitUser
-
-
-@dataclasses.dataclass
-class WeightData:
-    weight_kg: float
-    slack_alias: str
-    last_weight_kg: Optional[float]
-
-
-class SleepData(BaseModel):
-    start_time: datetime.datetime
-    end_time: datetime.datetime
-    sleep_minutes: NonNegativeInt
-    wake_minutes: NonNegativeInt
-
-
-class ActivityZone(StrEnum):
-    PEAK = auto()
-    CARDIO = auto()
-    FAT_BURN = auto()
-    OUT_OF_RANGE = auto()
-
-
-class ActivityZoneMinutes(BaseModel):
-    zone: ActivityZone
-    minutes: int
-
-
-class ActivityData(BaseModel):
-    log_id: int
-    type_id: int
-    name: str
-    total_minutes: int
-    calories: int
-    zone_minutes: list[ActivityZoneMinutes]
-
-
-@dataclasses.dataclass
-class ActivityHistory:
-    latest_activity_data: ActivityData | None
-    new_activity_data: ActivityData
 
 
 def user_last_sleep_data(user: FitbitUser) -> Optional[SleepData]:

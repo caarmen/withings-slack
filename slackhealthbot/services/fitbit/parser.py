@@ -5,7 +5,7 @@ from typing import Annotated, Literal, Optional, Self, Union
 
 from pydantic import BaseModel, Field
 
-from slackhealthbot.services import models as svc_models
+from slackhealthbot.core.models import ActivityData, ActivityZoneMinutes, SleepData
 
 
 class FitbitSleepItemSummaryItem(BaseModel):
@@ -89,7 +89,7 @@ class FitbitActivities(BaseModel):
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
-def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
+def parse_sleep(input: str, slack_alias: str) -> Optional[SleepData]:
     try:
         fitbit_sleep = FitbitSleep.parse(input)
     except Exception as e:
@@ -112,7 +112,7 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
         if main_sleep_item.type == "classic"
         else main_sleep_item.duration / 60000 - wake_minutes
     )
-    return svc_models.SleepData(
+    return SleepData(
         start_time=datetime.datetime.strptime(
             main_sleep_item.startTime, DATETIME_FORMAT
         ),
@@ -123,7 +123,7 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[svc_models.SleepData]:
     )
 
 
-def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
+def parse_activity(input: str) -> Optional[ActivityData]:
     try:
         fitbit_activities = FitbitActivities.parse(input)
     except Exception as e:
@@ -134,14 +134,14 @@ def parse_activity(input: str) -> Optional[svc_models.ActivityData]:
     if not fitbit_activities.activities:
         return None
     fitbit_activity = fitbit_activities.activities[0]
-    return svc_models.ActivityData(
+    return ActivityData(
         log_id=fitbit_activity.logId,
         type_id=fitbit_activity.activityTypeId,
         name=fitbit_activity.activityName,
         calories=fitbit_activity.calories,
         total_minutes=fitbit_activity.duration // 60000,
         zone_minutes=[
-            svc_models.ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
+            ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
             for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
             if x.minutes > 0
         ],

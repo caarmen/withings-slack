@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 from typing import Any
 
-from slackhealthbot.services.models import SleepData
+from slackhealthbot.core.models import SleepData
 
 
 @dataclasses.dataclass

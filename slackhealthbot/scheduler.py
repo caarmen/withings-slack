@@ -7,13 +7,14 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.models import SleepData
 from slackhealthbot.database import models
 from slackhealthbot.database.connection import SessionLocal
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.fitbit import api as fitbit_api
 from slackhealthbot.services.fitbit import service
-from slackhealthbot.services.models import SleepData, user_last_sleep_data
+from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
 
 

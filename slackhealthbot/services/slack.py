@@ -2,7 +2,7 @@ import datetime
 
 import httpx
 
-from slackhealthbot.services.models import (
+from slackhealthbot.core.models import (
     ActivityHistory,
     ActivityZone,
     SleepData,
