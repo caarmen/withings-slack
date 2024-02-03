@@ -1,18 +1,19 @@
 import logging
 from typing import Optional
 
-from slackhealthbot.database import models as db_models
 from slackhealthbot.services.oauth import requests
 from slackhealthbot.services.withings.oauth import PROVIDER
 from slackhealthbot.settings import settings
 
 
-async def subscribe(user: db_models.User):
+async def subscribe(
+    oauth_token: requests.OAuthToken,
+):
     callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = await requests.post(
         provider=PROVIDER,
-        token=user.withings,
+        token=oauth_token,
         url=f"{settings.withings_base_url}notify",
         data={
             "action": "subscribe",

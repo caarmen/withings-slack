@@ -93,14 +93,17 @@ async def test_weight_notification(
     )
 
     # When we receive the callback from withings that a new weight is available
-    response = client.post(
-        "/withings-notification-webhook/",
-        data={
-            "userid": db_withings_user.oauth_userid,
-            "startdate": 1683894606,
-            "enddate": 1686570821,
-        },
-    )
+    # Use the client as a context manager so the app can have its lfespan events triggered.
+    # https://fastapi.tiangolo.com/advanced/testing-events/
+    with client:
+        response = client.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -194,14 +197,15 @@ async def test_refresh_token(
     )
 
     # When we receive the callback from withings that a new weight is available
-    response = client.post(
-        "/withings-notification-webhook/",
-        data={
-            "userid": db_withings_user.oauth_userid,
-            "startdate": 1683894606,
-            "enddate": 1686570821,
-        },
-    )
+    with client as client_ctx:
+        response = client_ctx.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 

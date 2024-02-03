@@ -32,17 +32,52 @@ class User:
     fitness_data: FitnessData
 
 
+async def create_user(
+    db: AsyncSession,
+    slack_alias: str,
+    withings_userid: str,
+    oauth_data: OAuthData,
+) -> User:
+    user = models.User(slack_alias=slack_alias)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    withings_user = models.WithingsUser(
+        user_id=user.id,
+        oauth_userid=withings_userid,
+        oauth_access_token=oauth_data.oauth_access_token,
+        oauth_refresh_token=oauth_data.oauth_refresh_token,
+        oauth_expiration_date=oauth_data.oauth_expiration_date,
+    )
+    db.add(withings_user)
+    await db.commit()
+
+    return User(
+        identity=UserIdentity(
+            withings_userid=withings_user,
+            slack_alias=slack_alias,
+        ),
+        oauth_data=OAuthData(
+            oauth_access_token=withings_user.oauth_access_token,
+            oauth_refresh_token=withings_user.oauth_refresh_token,
+            oauth_expiration_date=withings_user.oauth_expiration_date,
+        ),
+        fitness_data=FitnessData(),
+    )
+
+
 async def get_user_identity_by_withings_userid(
     db: AsyncSession,
     withings_userid: str,
-) -> UserIdentity:
+) -> UserIdentity | None:
     user: models.User = (
         await db.scalars(
             statement=select(models.User)
             .join(models.User.withings)
             .where(models.WithingsUser.oauth_userid == withings_userid)
         )
-    ).one()
+    ).one_or_none()
     return UserIdentity(
         withings_userid=user.withings.oauth_userid,
         slack_alias=user.slack_alias,
@@ -119,5 +154,22 @@ async def update_user_weight(
         statement=update(models.WithingsUser)
         .where(models.WithingsUser.oauth_userid == withings_userid)
         .values(last_weight=last_weight_kg)
+    )
+    await db.commit()
+
+
+async def update_oauth_data(
+    db: AsyncSession,
+    withings_userid: str,
+    oauth_data: OAuthData,
+):
+    await db.execute(
+        statement=update(models.WithingsUser)
+        .where(models.WithingsUser.oauth_userid == withings_userid)
+        .values(
+            oauth_access_token=oauth_data.oauth_access_token,
+            oauth_refresh_token=oauth_data.oauth_refresh_token,
+            oauth_expiration_date=oauth_data.oauth_expiration_date,
+        )
     )
     await db.commit()
