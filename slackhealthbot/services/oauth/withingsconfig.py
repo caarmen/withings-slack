@@ -8,19 +8,6 @@ from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import withings_oauth_settings as settings
 
-
-def update_token_wrapper(callback: Callable[[dict[str, Any]], None]):
-    async def update_token(
-        token: dict,
-        refresh_token=None,
-        access_token=None,
-        **kwargs,
-    ):
-        await callback(token)
-
-    return update_token
-
-
 ACCESS_TOKEN_EXTRA_PARAMS = {
     "action": "requesttoken",
 }
@@ -61,6 +48,6 @@ def configure(update_token_callback: Callable[[dict[str, Any]], None]):
         access_token_params=ACCESS_TOKEN_EXTRA_PARAMS,
         authorize_params={"scope": ",".join(settings.oauth_scopes)},
         compliance_fix=withings_compliance_fix,
-        update_token=update_token_wrapper(update_token_callback),
+        update_token=update_token_callback,
         token_endpoint_auth_method="client_secret_post",
     )

@@ -10,6 +10,7 @@ from slackhealthbot.repositories import withingsrepository
 
 async def do(
     token: dict[str, Any],
+    **_kwargs,
 ):
     db: AsyncSession = ctx_db.get()
     oauth_fields: OAuthFields = usecase_parse_oauth.do(token)
