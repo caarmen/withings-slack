@@ -15,7 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from slackhealthbot import logger, scheduler
 from slackhealthbot.database import crud
-from slackhealthbot.database.connection import SessionLocal, ctx_db
+from slackhealthbot.dependencies import get_db
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
@@ -37,20 +37,6 @@ LOGIN_COMPLETE_CONTENT = """
         </body>
     </html>
     """
-
-
-async def get_db():
-    db = SessionLocal()
-    try:
-        # We need to access the db session without having access to
-        # fastapi's dependency injection. This happens when our update_token()
-        # authlib function is called.
-        # Set the db in a ContextVar to allow accessing it outside of a fastapi route.
-        ctx_db.set(db)
-        yield db
-    finally:
-        await db.close()
-        ctx_db.set(None)
 
 
 @asynccontextmanager
