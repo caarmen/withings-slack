@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.dependencies import get_db, templates
+from slackhealthbot.routers.dependencies import get_db, templates
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth import oauth

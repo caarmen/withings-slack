@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm.session import Session
 
 from slackhealthbot.database.models import Base
-from slackhealthbot.dependencies import get_db
 from slackhealthbot.main import app
+from slackhealthbot.routers.dependencies import get_db
 from tests.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,

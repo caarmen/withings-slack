@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.database import crud
-from slackhealthbot.dependencies import get_db, templates
+from slackhealthbot.routers.dependencies import get_db, templates
 from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
