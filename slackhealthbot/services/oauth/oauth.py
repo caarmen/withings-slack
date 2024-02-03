@@ -2,14 +2,11 @@ import dataclasses
 import datetime
 from typing import Self
 
-from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 from fastapi import Request
 from pydantic import HttpUrl
-from starlette.config import Config
 
-config = Config(".env")
-oauth = OAuth(config)
+from slackhealthbot.services.oauth.config import oauth
 
 
 @dataclasses.dataclass

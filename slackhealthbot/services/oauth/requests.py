@@ -4,7 +4,7 @@ from typing import Any, Protocol, runtime_checkable
 import httpx
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
-from slackhealthbot.services.oauth.oauth import oauth
+from slackhealthbot.services.oauth.config import oauth
 
 
 @runtime_checkable

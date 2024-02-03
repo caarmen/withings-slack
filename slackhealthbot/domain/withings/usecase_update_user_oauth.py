@@ -3,14 +3,15 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
+from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.domain.oauth import usecase_parse_oauth
 from slackhealthbot.repositories import withingsrepository
 
 
 async def do(
-    db: AsyncSession,
     token: dict[str, Any],
 ):
+    db: AsyncSession = ctx_db.get()
     oauth_fields: OAuthFields = usecase_parse_oauth.do(token)
     await withingsrepository.update_oauth_data(
         db,

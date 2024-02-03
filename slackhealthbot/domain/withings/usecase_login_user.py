@@ -43,7 +43,7 @@ async def _upsert_user(
             oauth_access_token=oauth_fields.oauth_access_token,
             oauth_refresh_token=oauth_fields.oauth_refresh_token,
             oauth_expiration_date=oauth_fields.oauth_expiration_date,
-        )
+        ),
     )
     return await withingsrepository.get_user_by_withings_userid(
         db,

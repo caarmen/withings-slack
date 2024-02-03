@@ -11,9 +11,8 @@ from slackhealthbot.domain.withings import (
 )
 from slackhealthbot.routers.dependencies import get_db, templates
 from slackhealthbot.services.exceptions import UserLoggedOutException
-from slackhealthbot.services.oauth import oauth
-from slackhealthbot.services.withings import oauth as withings_oauth
-from slackhealthbot.settings import settings
+from slackhealthbot.services.oauth.config import oauth
+from slackhealthbot.settings import withings_oauth_settings as settings
 
 router = APIRouter()
 
@@ -30,7 +29,9 @@ def validate_withings_notification_webhook():
 
 @router.get("/withings-oauth-webhook/")
 async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    token: dict = await oauth.fetch_token(withings_oauth.PROVIDER, request)
+    token: dict = await oauth.create_client(settings.name).authorize_access_token(
+        request
+    )
     await usecase_login_user.do(
         db=db, token=token, slack_alias=request.session.pop("slack_alias")
     )
@@ -41,11 +42,9 @@ async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(ge
 
 @router.get("/v1/withings-authorization/{slack_alias}")
 async def get_withings_authorization(slack_alias: str, request: Request):
-    return await oauth.create_oauth_url(
-        provider=withings_oauth.PROVIDER,
-        request=request,
-        slack_alias=slack_alias,
-        redirect_uri=settings.withings_redirect_uri,
+    request.session["slack_alias"] = slack_alias
+    return await oauth.create_client(settings.name).authorize_redirect(
+        request, redirect_uri=settings.redirect_uri
     )
 
 

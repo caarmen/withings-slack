@@ -13,7 +13,7 @@ from slackhealthbot.domain.withings.usecase_update_user_oauth import (
 )
 from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
-from slackhealthbot.services.withings import oauth as oauth_withings
+from slackhealthbot.services.oauth import withingsconfig as oauth_withings
 from slackhealthbot.settings import settings
 
 

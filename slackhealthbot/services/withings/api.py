@@ -2,19 +2,18 @@ import logging
 from typing import Optional
 
 from slackhealthbot.services.oauth import requests
-from slackhealthbot.services.withings.oauth import PROVIDER
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import withings_oauth_settings as settings
 
 
 async def subscribe(
     oauth_token: requests.OAuthToken,
 ):
-    callbackurl = f"{settings.withings_callback_url}withings-notification-webhook/"
+    callbackurl = f"{settings.callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     response = await requests.post(
-        provider=PROVIDER,
+        provider=settings.name,
         token=oauth_token,
-        url=f"{settings.withings_base_url}notify",
+        url=f"{settings.base_url}notify",
         data={
             "action": "subscribe",
             "callbackurl": callbackurl,
@@ -35,9 +34,9 @@ async def get_last_weight_kg(
     """
     # https://developer.withings.com/api-reference/#tag/measure/operation/measure-getmeas
     response = await requests.post(
-        provider=PROVIDER,
+        provider=settings.name,
         token=oauth_token,
-        url=f"{settings.withings_base_url}measure",
+        url=f"{settings.base_url}measure",
         data={
             "action": "getmeas",
             "meastype": 1,  # weight
