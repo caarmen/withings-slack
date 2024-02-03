@@ -9,22 +9,13 @@ from slackhealthbot.database import models
 
 async def get_user(
     db: AsyncSession,
-    withings_oauth_userid: str = None,
     fitbit_oauth_userid: str = None,
     slack_alias: str = None,
 ) -> models.User:
     """
-    Return the user with the given withings oauth user id.
+    Return the user with the given user id.
     """
-    if withings_oauth_userid:
-        return (
-            await db.scalars(
-                statement=select(models.User)
-                .join(models.User.withings)
-                .where(models.WithingsUser.oauth_userid == withings_oauth_userid)
-            )
-        ).one()
-    elif fitbit_oauth_userid:
+    if fitbit_oauth_userid:
         return (
             await db.scalars(
                 statement=select(models.User)
@@ -44,10 +35,8 @@ async def get_user(
 
 @dataclasses.dataclass
 class UserUpsert:
-    withings_oauth_userid: str = None
     fitbit_oauth_userid: str = None
     data: dict = None
-    withings_data: dict = None
     fitbit_data: dict = None
 
 
@@ -56,19 +45,11 @@ async def upsert_user(
     user_upsert: UserUpsert,
 ) -> models.User:
     try:
-        if user_upsert.withings_oauth_userid:
-            user = await get_user(
-                db, withings_oauth_userid=user_upsert.withings_oauth_userid
-            )
-        else:
-            user = await get_user(
-                db, fitbit_oauth_userid=user_upsert.fitbit_oauth_userid
-            )
+        user = await get_user(db, fitbit_oauth_userid=user_upsert.fitbit_oauth_userid)
         return await update_user(
             db,
             user,
             data=user_upsert.data,
-            withings_data=user_upsert.withings_data,
             fitbit_data=user_upsert.fitbit_data,
         )
     except NoResultFound:
@@ -79,42 +60,14 @@ async def upsert_user(
                 db,
                 user,
                 data=user_upsert.data,
-                withings_data=user_upsert.withings_data,
                 fitbit_data=user_upsert.fitbit_data,
             )
         except NoResultFound:
             return await create_user(
                 db,
                 models.User(**user_upsert.data),
-                withings_data=user_upsert.withings_data,
                 fitbit_data=user_upsert.fitbit_data,
             )
-
-
-async def upsert_withings_data(
-    db: AsyncSession,
-    user_id: str,
-    data: dict,
-) -> models.WithingsUser:
-    try:
-        withings_user: models.WithingsUser = (
-            await db.scalars(
-                statement=select(models.WithingsUser).where(
-                    models.WithingsUser.user_id == user_id
-                )
-            )
-        ).one()
-        await db.execute(
-            statement=update(models.WithingsUser)
-            .where(models.WithingsUser.id == withings_user.id)
-            .values(**data)
-        )
-    except NoResultFound:
-        withings_user = models.WithingsUser(user_id=user_id, **data)
-        db.add(withings_user)
-    await db.commit()
-    await db.refresh(withings_user)
-    return withings_user
 
 
 async def upsert_fitbit_data(
@@ -209,18 +162,11 @@ async def get_activity_by_user_and_log_id(
 async def create_user(
     db: AsyncSession,
     user: models.User,
-    withings_data: dict,
     fitbit_data: dict,
 ) -> models.User:
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    if withings_data:
-        withings_user = models.WithingsUser(
-            user_id=user.id,
-            **withings_data,
-        )
-        db.add(withings_user)
     if fitbit_data:
         fitbit_user = models.FitbitUser(user_id=user.id, **fitbit_data)
         db.add(fitbit_user)
@@ -233,7 +179,6 @@ async def update_user(
     db: AsyncSession,
     user: models.User,
     data: dict = None,
-    withings_data: dict = None,
     fitbit_data: dict = None,
 ) -> models.User:
     if data:
@@ -242,8 +187,6 @@ async def update_user(
             .where(models.User.id == user.id)
             .values(**data)
         )
-    if withings_data:
-        await upsert_withings_data(db, user_id=user.id, data=withings_data)
     if fitbit_data:
         await upsert_fitbit_data(db, user_id=user.id, data=fitbit_data)
     await db.commit()
