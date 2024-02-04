@@ -9,8 +9,8 @@ from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
 from slackhealthbot.data.repositories import fitbitrepository
-from slackhealthbot.scheduler import Cache, do_poll
 from slackhealthbot.settings import settings
+from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
 from tests.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,

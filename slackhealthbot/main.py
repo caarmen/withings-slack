@@ -7,7 +7,7 @@ from fastapi import FastAPI, Response
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from slackhealthbot import logger, scheduler
+from slackhealthbot import logger
 from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     do as fitbit_usecase_update_user_oauth,
 )
@@ -19,13 +19,14 @@ from slackhealthbot.oauth import withingsconfig as oauth_withings
 from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
 from slackhealthbot.settings import settings
+from slackhealthbot.tasks import fitbitpoll
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     logger.update_external_loggers()
     if settings.fitbit_poll_enabled:
-        await scheduler.schedule_fitbit_poll(delay_s=10)
+        await fitbitpoll.schedule_fitbit_poll(delay_s=10)
     oauth_withings.configure(withings_usecase_update_user_oauth)
     oauth_fitbit.configure(fitbit_usecase_update_user_oauth)
     yield
