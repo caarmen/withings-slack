@@ -3,8 +3,8 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import SleepData
+from slackhealthbot.remoteservices.fitbit import api
 from slackhealthbot.repositories import fitbitrepository
-from slackhealthbot.services.fitbit import api
 
 
 async def do(

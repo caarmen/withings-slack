@@ -14,10 +14,10 @@ from slackhealthbot.domain.fitbit.usecase_update_user_oauth import (
 from slackhealthbot.domain.withings.usecase_update_user_oauth import (
     do as withings_usecase_update_user_oauth,
 )
+from slackhealthbot.oauth import fitbitconfig as oauth_fitbit
+from slackhealthbot.oauth import withingsconfig as oauth_withings
 from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
-from slackhealthbot.services.oauth import fitbitconfig as oauth_fitbit
-from slackhealthbot.services.oauth import withingsconfig as oauth_withings
 from slackhealthbot.settings import settings
 
 

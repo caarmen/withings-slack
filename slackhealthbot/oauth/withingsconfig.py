@@ -5,7 +5,7 @@ from authlib.common.urls import add_params_to_qs
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.services.oauth.config import oauth
+from slackhealthbot.oauth.config import oauth
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 ACCESS_TOKEN_EXTRA_PARAMS = {

@@ -3,8 +3,8 @@ import logging
 from typing import Optional
 
 from slackhealthbot.core.models import ActivityData, OAuthFields, SleepData
-from slackhealthbot.services.fitbit import parser
-from slackhealthbot.services.oauth import requests
+from slackhealthbot.oauth import requests
+from slackhealthbot.remoteservices.fitbit import parser
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 

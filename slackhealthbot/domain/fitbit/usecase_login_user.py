@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.domain.oauth import usecase_parse_oauth
+from slackhealthbot.remoteservices.fitbit import api
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import OAuthData, UserIdentity
-from slackhealthbot.services.fitbit import api
 
 
 async def do(

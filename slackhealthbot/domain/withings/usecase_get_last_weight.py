@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import WeightData
+from slackhealthbot.remoteservices.withings import api
 from slackhealthbot.repositories import withingsrepository
-from slackhealthbot.services.withings import api
 
 
 async def do(

@@ -2,7 +2,7 @@ import logging
 from typing import Optional
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.services.oauth import requests
+from slackhealthbot.oauth import requests
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 

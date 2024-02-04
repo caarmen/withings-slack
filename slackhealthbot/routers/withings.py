@@ -10,8 +10,8 @@ from slackhealthbot.domain.withings import (
     usecase_post_user_logged_out,
     usecase_process_new_weight,
 )
+from slackhealthbot.oauth.config import oauth
 from slackhealthbot.routers.dependencies import get_db, templates
-from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 router = APIRouter()

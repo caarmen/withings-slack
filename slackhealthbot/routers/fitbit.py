@@ -13,10 +13,10 @@ from slackhealthbot.domain.fitbit import (
     usecase_process_new_sleep,
 )
 from slackhealthbot.domain.slack import usecase_post_user_logged_out
+from slackhealthbot.oauth.config import oauth
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import UserIdentity
 from slackhealthbot.routers.dependencies import get_db, templates
-from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 router = APIRouter()

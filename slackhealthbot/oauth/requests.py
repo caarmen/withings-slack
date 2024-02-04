@@ -4,7 +4,7 @@ import httpx
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.services.oauth.config import oauth
+from slackhealthbot.oauth.config import oauth
 
 
 def asdict(token: OAuthFields) -> dict[str, str]:
