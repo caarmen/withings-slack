@@ -2,12 +2,10 @@ import asyncio
 import dataclasses
 import datetime
 import logging
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.core.models import SleepData
 from slackhealthbot.database.connection import SessionLocal
 from slackhealthbot.domain.usecases.fitbit import (
     usecase_process_new_activity,
@@ -29,13 +27,11 @@ class Cache:
 
 async def handle_success_poll(
     fitbit_userid: str,
-    sleep_data: Optional[SleepData],
     when: datetime.date,
     cache: Cache,
 ):
-    if sleep_data:
-        cache.cache_sleep_success[fitbit_userid] = when
-        cache.cache_fail.pop(fitbit_userid, None)
+    cache.cache_sleep_success[fitbit_userid] = when
+    cache.cache_fail.pop(fitbit_userid, None)
 
 
 async def handle_fail_poll(
@@ -117,7 +113,7 @@ async def fitbit_poll_sleep(
     latest_successful_poll = cache.cache_sleep_success.get(fitbit_userid)
     if not latest_successful_poll or latest_successful_poll < when:
         try:
-            sleep_data: SleepData = await usecase_process_new_sleep.do(
+            sleep_data = await usecase_process_new_sleep.do(
                 db,
                 fitbit_userid=fitbit_userid,
                 when=when,
@@ -130,12 +126,12 @@ async def fitbit_poll_sleep(
                 cache=cache,
             )
         else:
-            await handle_success_poll(
-                fitbit_userid=fitbit_userid,
-                sleep_data=sleep_data,
-                when=when,
-                cache=cache,
-            )
+            if sleep_data:
+                await handle_success_poll(
+                    fitbit_userid=fitbit_userid,
+                    when=when,
+                    cache=cache,
+                )
 
 
 async def schedule_fitbit_poll(

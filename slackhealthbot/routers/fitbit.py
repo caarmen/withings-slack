@@ -6,7 +6,6 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.core.models import SleepData
 from slackhealthbot.domain.usecases.fitbit import (
     usecase_login_user,
     usecase_post_user_logged_out,
@@ -94,7 +93,7 @@ async def fitbit_notification_webhook(
 
         try:
             if notification.collectionType == "sleep":
-                new_sleep_data: SleepData = await usecase_process_new_sleep.do(
+                new_sleep_data = await usecase_process_new_sleep.do(
                     db,
                     fitbit_userid=notification.ownerId,
                     when=notification.date,
