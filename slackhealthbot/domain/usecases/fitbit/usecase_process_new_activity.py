@@ -4,10 +4,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.domaintorepository.activity import (
-    core_activity_to_repository_activity,
+    domain_activity_to_repository_activity,
 )
 from slackhealthbot.domain.modelmappers.repositorytodomain.activity import (
-    repository_activity_to_core_activity,
+    repository_activity_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData, ActivityHistory
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
@@ -52,14 +52,14 @@ async def do(
     await fitbitrepository.create_activity_for_user(
         db=db,
         fitbit_userid=fitbit_userid,
-        activity=core_activity_to_repository_activity(
+        activity=domain_activity_to_repository_activity(
             new_activity_data,
         ),
     )
     await usecase_post_activity.do(
         slack_alias=user_identity.slack_alias,
         activity_history=ActivityHistory(
-            latest_activity_data=repository_activity_to_core_activity(
+            latest_activity_data=repository_activity_to_domain_activity(
                 last_activity_data,
                 new_activity_data.name,
             ),

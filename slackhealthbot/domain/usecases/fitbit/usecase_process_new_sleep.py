@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.domaintorepository.sleep import (
-    core_sleep_to_repository_sleep,
+    domain_sleep_to_repository_sleep,
 )
 from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_sleep
@@ -38,11 +38,11 @@ async def do(
     await fitbitrepository.update_sleep_for_user(
         db=db,
         fitbit_userid=fitbit_userid,
-        sleep=core_sleep_to_repository_sleep(new_sleep_data),
+        sleep=domain_sleep_to_repository_sleep(new_sleep_data),
     )
     await usecase_post_sleep.do(
         slack_alias=user_identity.slack_alias,
         new_sleep_data=new_sleep_data,
-        last_sleep_data=core_sleep_to_repository_sleep(last_sleep_data),
+        last_sleep_data=domain_sleep_to_repository_sleep(last_sleep_data),
     )
     return new_sleep_data

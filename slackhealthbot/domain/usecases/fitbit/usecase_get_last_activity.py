@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
-    remote_service_activity_to_core_activity,
+    remote_service_activity_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
 from slackhealthbot.remoteservices.fitbit import activityapi
@@ -23,4 +23,4 @@ async def do(
         oauth_token=user.oauth_data,
         when=when,
     )
-    return remote_service_activity_to_core_activity(last_activities)
+    return remote_service_activity_to_domain_activity(last_activities)

@@ -2,7 +2,7 @@ from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.models.sleep import SleepData
 
 
-def repository_sleep_to_core_sleep(
+def repository_sleep_to_domain_sleep(
     repo: fitbitrepository.Sleep | None,
 ) -> SleepData | None:
     if not repo:

@@ -2,7 +2,7 @@ from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.models.activity import ActivityData
 
 
-def core_activity_to_repository_activity(
+def domain_activity_to_repository_activity(
     domain: ActivityData | None,
 ) -> fitbitrepository.Activity | None:
     if not domain:

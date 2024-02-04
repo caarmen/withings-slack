@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.sleep import (
-    remote_service_sleep_to_core_sleep,
+    remote_service_sleep_to_domain_sleep,
 )
 from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.remoteservices.fitbit import sleepapi
@@ -23,4 +23,4 @@ async def do(
         oauth_token=user.oauth_data,
         when=when,
     )
-    return remote_service_sleep_to_core_sleep(last_sleep)
+    return remote_service_sleep_to_domain_sleep(last_sleep)

@@ -6,7 +6,7 @@ from slackhealthbot.domain.models.activity import (
 )
 
 
-def repository_activity_to_core_activity(
+def repository_activity_to_domain_activity(
     repo: fitbitrepository.Activity | None,
     name: str,
 ) -> ActivityData | None:

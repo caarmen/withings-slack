@@ -2,7 +2,7 @@ from slackhealthbot.domain.models.activity import ActivityData, ActivityZoneMinu
 from slackhealthbot.remoteservices.fitbit.activityapi import FitbitActivities
 
 
-def remote_service_activity_to_core_activity(
+def remote_service_activity_to_domain_activity(
     remote: FitbitActivities | None,
 ) -> ActivityData | None:
     if not remote or not remote.activities:

@@ -5,7 +5,7 @@ from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.remoteservices.fitbit import sleepapi
 
 
-def remote_service_sleep_to_core_sleep(
+def remote_service_sleep_to_domain_sleep(
     remote: sleepapi.FitbitSleep | None,
 ) -> SleepData | None:
     if not remote:

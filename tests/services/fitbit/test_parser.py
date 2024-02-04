@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.sleep import (
-    remote_service_sleep_to_core_sleep,
+    remote_service_sleep_to_domain_sleep,
 )
 from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.remoteservices.fitbit.sleepapi import FitbitSleep
@@ -53,5 +53,5 @@ def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
     )
     with open(input_file) as input:
         api_data: FitbitSleep = FitbitSleep.parse(input=input.read())
-        actual_sleep_data = remote_service_sleep_to_core_sleep(api_data)
+        actual_sleep_data = remote_service_sleep_to_domain_sleep(api_data)
         assert actual_sleep_data == expected_sleep_data
