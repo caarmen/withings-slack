@@ -52,10 +52,16 @@ async def create_user(
     fitbit_userid: str,
     oauth_data: OAuthData,
 ) -> User:
-    user = models.User(slack_alias=slack_alias)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    user = (
+        await db.scalars(
+            statement=select(models.User).where(models.User.slack_alias == slack_alias)
+        )
+    ).one_or_none()
+    if not user:
+        user = models.User(slack_alias=slack_alias)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
     fitbit_user = models.FitbitUser(
         user_id=user.id,
@@ -66,10 +72,11 @@ async def create_user(
     )
     db.add(fitbit_user)
     await db.commit()
+    await db.refresh(fitbit_user)
 
     return User(
         identity=UserIdentity(
-            fitbit_userid=fitbit_user,
+            fitbit_userid=fitbit_user.oauth_userid,
             slack_alias=slack_alias,
         ),
         oauth_data=OAuthData(
@@ -91,9 +98,13 @@ async def get_user_identity_by_fitbit_userid(
             .where(models.FitbitUser.oauth_userid == fitbit_userid)
         )
     ).one_or_none()
-    return UserIdentity(
-        fitbit_userid=user.fitbit.oauth_userid,
-        slack_alias=user.slack_alias,
+    return (
+        UserIdentity(
+            fitbit_userid=user.fitbit.oauth_userid,
+            slack_alias=user.slack_alias,
+        )
+        if user
+        else None
     )
 
 

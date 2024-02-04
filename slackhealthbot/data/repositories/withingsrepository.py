@@ -22,7 +22,7 @@ class OAuthData:
 
 @dataclasses.dataclass
 class FitnessData:
-    last_weight_kg: float | None
+    last_weight_kg: float | None = None
 
 
 @dataclasses.dataclass
@@ -38,10 +38,16 @@ async def create_user(
     withings_userid: str,
     oauth_data: OAuthData,
 ) -> User:
-    user = models.User(slack_alias=slack_alias)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    user = (
+        await db.scalars(
+            statement=select(models.User).where(models.User.slack_alias == slack_alias)
+        )
+    ).one_or_none()
+    if not user:
+        user = models.User(slack_alias=slack_alias)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
 
     withings_user = models.WithingsUser(
         user_id=user.id,
@@ -52,6 +58,7 @@ async def create_user(
     )
     db.add(withings_user)
     await db.commit()
+    await db.refresh(withings_user)
 
     return User(
         identity=UserIdentity(
@@ -78,9 +85,13 @@ async def get_user_identity_by_withings_userid(
             .where(models.WithingsUser.oauth_userid == withings_userid)
         )
     ).one_or_none()
-    return UserIdentity(
-        withings_userid=user.withings.oauth_userid,
-        slack_alias=user.slack_alias,
+    return (
+        UserIdentity(
+            withings_userid=user.withings.oauth_userid,
+            slack_alias=user.slack_alias,
+        )
+        if user
+        else None
     )
 
 
