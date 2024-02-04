@@ -14,6 +14,14 @@ class WithingsOAuthSettings:
     redirect_uri: str
 
 
+@dataclasses.dataclass
+class FitbitOAuthSettings:
+    name = "fitbit"
+    base_url: str
+    oauth_scopes: list[str]
+    subscriber_verification_code: str
+
+
 class Settings(BaseSettings):
     database_path: Path = "/tmp/data/slackhealthbot.db"
     server_url: AnyHttpUrl
@@ -49,6 +57,15 @@ class Settings(BaseSettings):
             redirect_uri=f"{self.withings_callback_url}withings-oauth-webhook/",
         )
 
+    @property
+    def fitbit_oauth_settings(self):
+        return FitbitOAuthSettings(
+            base_url=self.fitbit_base_url,
+            oauth_scopes=self.fitbit_oauth_scopes,
+            subscriber_verification_code=self.fitbit_client_subscriber_verification_code,
+        )
+
 
 settings = Settings()
 withings_oauth_settings = settings.withings_oauth_settings
+fitbit_oauth_settings = settings.fitbit_oauth_settings

@@ -3,13 +3,13 @@ import json
 import re
 
 import pytest
+from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.database import crud
-from slackhealthbot.database.models import FitbitActivity, FitbitUser, User
+from slackhealthbot.database.models import FitbitUser, User
+from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.scheduler import Cache, do_poll
-from slackhealthbot.services.models import user_last_sleep_data
 from slackhealthbot.settings import settings
 from tests.factories.factories import (
     FitbitActivityFactory,
@@ -35,6 +35,7 @@ async def test_fitbit_poll_sleep(
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory],
     scenario: FitbitSleepScenario,
+    client: TestClient,
 ):
     """
     Given a user with given previous sleep data logged
@@ -46,7 +47,7 @@ async def test_fitbit_poll_sleep(
 
     # Given a user with the given previous sleep data
     user: User = user_factory(fitbit=None)
-    fitbit_user_factory(
+    fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
         **scenario.input_initial_sleep_data,
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
@@ -68,12 +69,18 @@ async def test_fitbit_poll_sleep(
     )
 
     # When we poll for new sleep data
-    await do_poll(
-        db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
-    )
+    # Use the client as a context manager so that the app lifespan hook is called
+    # https://fastapi.tiangolo.com/advanced/testing-events/
+    with client:
+        await do_poll(
+            db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
+        )
 
     # Then the last sleep data is updated in the database
-    actual_last_sleep_data = user_last_sleep_data(user.fitbit)
+    actual_last_sleep_data = await fitbitrepository.get_sleep_by_fitbit_userid(
+        mocked_async_session,
+        fitbit_userid=fitbit_user.oauth_userid,
+    )
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data
 
     # And the message was sent to slack as expected
@@ -97,6 +104,7 @@ async def test_fitbit_poll_activity(
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
+    client: TestClient,
 ):
     """
     Given a user with given previous activity data logged
@@ -137,22 +145,27 @@ async def test_fitbit_poll_activity(
     )
 
     # When we poll for new sleep data
-    await do_poll(
-        db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
-    )
+    # Use the client as a context manager so that the app lifespan hook is called
+    # https://fastapi.tiangolo.com/advanced/testing-events/
+    with client:
+        await do_poll(
+            db=mocked_async_session, cache=Cache(), when=datetime.date(2023, 1, 23)
+        )
 
     # Then the latest activity data is updated in the database
-    latest_activity: FitbitActivity = await crud.get_latest_activity_by_user_and_type(
-        db=mocked_async_session,
-        fitbit_user_id=fitbit_user.id,
-        type_id=activity_type_id,
+    repo_activity: fitbitrepository.Activity = (
+        await fitbitrepository.get_latest_activity_by_user_and_type(
+            mocked_async_session,
+            fitbit_userid=fitbit_user.oauth_userid,
+            type_id=activity_type_id,
+        )
     )
     if scenario.is_new_log_expected:
-        assert latest_activity.log_id == scenario.expected_new_last_activity_log_id
+        assert repo_activity.log_id == scenario.expected_new_last_activity_log_id
     elif scenario.input_initial_activity_data:
-        assert latest_activity.log_id == scenario.input_initial_activity_data["log_id"]
+        assert repo_activity.log_id == scenario.input_initial_activity_data["log_id"]
     else:
-        assert not latest_activity
+        assert not repo_activity
 
     # And the message was sent to slack as expected
     if scenario.expected_message_pattern:

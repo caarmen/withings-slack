@@ -2,14 +2,14 @@ import dataclasses
 import datetime
 from typing import Any
 
-from slackhealthbot.core.models import SleepData
+from slackhealthbot.repositories.fitbitrepository import Sleep
 
 
 @dataclasses.dataclass
 class FitbitSleepScenario:
     input_initial_sleep_data: dict[str, int]
     input_mock_fitbit_response: dict[str, Any]
-    expected_new_last_sleep_data: SleepData
+    expected_new_last_sleep_data: Sleep
     expected_icons: str | None
 
 
@@ -36,7 +36,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -70,7 +70,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -101,7 +101,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -135,7 +135,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -169,7 +169,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -203,7 +203,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -237,7 +237,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
                 },
             ]
         },
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 13, 0, 40, 0),
             end_time=datetime.datetime(2023, 5, 13, 9, 27, 30),
             sleep_minutes=495,
@@ -253,7 +253,7 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
             "last_sleep_wake_minutes": 200,
         },
         input_mock_fitbit_response={"foo": "bar"},
-        expected_new_last_sleep_data=SleepData(
+        expected_new_last_sleep_data=Sleep(
             start_time=datetime.datetime(2023, 5, 12, 1, 41, 0),
             end_time=datetime.datetime(2023, 5, 12, 10, 28, 0),
             sleep_minutes=560,

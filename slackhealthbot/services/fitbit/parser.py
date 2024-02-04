@@ -71,7 +71,9 @@ class FitBitActiveZoneMinutes(BaseModel):
 
 class FitbitActivity(BaseModel):
     logId: int
-    activeZoneMinutes: FitBitActiveZoneMinutes
+    activeZoneMinutes: FitBitActiveZoneMinutes = FitBitActiveZoneMinutes(
+        minutesInHeartRateZones=[]
+    )
     activityName: str
     activityTypeId: int
     calories: int
@@ -89,7 +91,7 @@ class FitbitActivities(BaseModel):
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
-def parse_sleep(input: str, slack_alias: str) -> Optional[SleepData]:
+def parse_sleep(input: str) -> Optional[SleepData]:
     try:
         fitbit_sleep = FitbitSleep.parse(input)
     except Exception as e:
@@ -119,7 +121,6 @@ def parse_sleep(input: str, slack_alias: str) -> Optional[SleepData]:
         end_time=datetime.datetime.strptime(main_sleep_item.endTime, DATETIME_FORMAT),
         sleep_minutes=asleep_minutes,
         wake_minutes=wake_minutes,
-        slack_alias=slack_alias,
     )
 
 

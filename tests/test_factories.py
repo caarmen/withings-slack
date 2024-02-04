@@ -1,16 +1,16 @@
 from datetime import datetime
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import crud
 from slackhealthbot.database.models import (
     FitbitActivity,
     FitbitUser,
     User,
     WithingsUser,
 )
-from slackhealthbot.repositories import withingsrepository
+from slackhealthbot.repositories import fitbitrepository, withingsrepository
 from tests.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -29,7 +29,11 @@ async def test_user_factory(
     assert isinstance(user.id, int)
     assert isinstance(user.withings, WithingsUser)
     assert isinstance(user.fitbit, FitbitUser)
-    db_user = await crud.get_user(mocked_async_session, slack_alias=user.slack_alias)
+    db_user: User = (
+        await mocked_async_session.scalars(
+            statement=select(User).where(User.slack_alias == user.slack_alias)
+        )
+    ).one()
     assert user.id == db_user.id
     assert user.slack_alias == db_user.slack_alias
     assert user.withings.id == db_user.withings.id
@@ -78,15 +82,15 @@ async def test_fitbit_user_factory(
     assert isinstance(fitbit_user.oauth_expiration_date, datetime)
     assert isinstance(user, User)
 
-    db_user = await crud.get_user(
-        mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
+        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
     )
-    db_fitbit_user = db_user.fitbit
-    assert db_fitbit_user.oauth_access_token == fitbit_user.oauth_access_token
-    assert db_fitbit_user.oauth_refresh_token == fitbit_user.oauth_refresh_token
-    assert db_fitbit_user.oauth_userid == fitbit_user.oauth_userid
-    assert db_fitbit_user.oauth_expiration_date == fitbit_user.oauth_expiration_date
-    assert db_fitbit_user.user.id == user.id
+    assert repo_user.oauth_data.oauth_access_token == fitbit_user.oauth_access_token
+    assert repo_user.oauth_data.oauth_refresh_token == fitbit_user.oauth_refresh_token
+    assert repo_user.identity.fitbit_userid == fitbit_user.oauth_userid
+    assert (
+        repo_user.oauth_data.oauth_expiration_date == fitbit_user.oauth_expiration_date
+    )
 
 
 @pytest.mark.asyncio
@@ -101,20 +105,18 @@ async def test_fitbit_activity_factory(
     fitbit_activity: FitbitActivity = fitbit_activity_factory(
         fitbit_user_id=fitbit_user.id
     )
-    db_fitbit_activity: FitbitActivity = (
-        await crud.get_latest_activity_by_user_and_type(
+    repo_activity: fitbitrepository.Activity = (
+        await fitbitrepository.get_latest_activity_by_user_and_type(
             mocked_async_session,
-            fitbit_user_id=fitbit_user.id,
+            fitbit_userid=fitbit_user.oauth_userid,
             type_id=fitbit_activity.type_id,
         )
     )
-    assert db_fitbit_activity.log_id == fitbit_activity.log_id
-    assert db_fitbit_activity.type_id == fitbit_activity.type_id
-    assert db_fitbit_activity.total_minutes == fitbit_activity.total_minutes
-    assert db_fitbit_activity.calories == fitbit_activity.calories
-    assert db_fitbit_activity.fat_burn_minutes == fitbit_activity.fat_burn_minutes
-    assert db_fitbit_activity.cardio_minutes == fitbit_activity.cardio_minutes
-    assert db_fitbit_activity.peak_minutes == fitbit_activity.peak_minutes
-    assert (
-        db_fitbit_activity.out_of_range_minutes == fitbit_activity.out_of_range_minutes
-    )
+    assert repo_activity.log_id == fitbit_activity.log_id
+    assert repo_activity.type_id == fitbit_activity.type_id
+    assert repo_activity.total_minutes == fitbit_activity.total_minutes
+    assert repo_activity.calories == fitbit_activity.calories
+    assert repo_activity.fat_burn_minutes == fitbit_activity.fat_burn_minutes
+    assert repo_activity.cardio_minutes == fitbit_activity.cardio_minutes
+    assert repo_activity.peak_minutes == fitbit_activity.peak_minutes
+    assert repo_activity.out_of_range_minutes == fitbit_activity.out_of_range_minutes

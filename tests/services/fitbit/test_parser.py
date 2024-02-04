@@ -49,5 +49,5 @@ def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
         Path(os.path.abspath(__file__)).parent.parent.parent / "data" / input_filename
     )
     with open(input_file) as input:
-        actual_sleep_data = parse_sleep(input=input.read(), slack_alias="somebody")
+        actual_sleep_data = parse_sleep(input=input.read())
         assert actual_sleep_data == expected_sleep_data

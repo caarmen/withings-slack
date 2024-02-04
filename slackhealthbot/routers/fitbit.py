@@ -5,43 +5,46 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import crud
+from slackhealthbot.core.models import SleepData
+from slackhealthbot.domain.fitbit import (
+    usecase_login_user,
+    usecase_process_new_activity,
+    usecase_process_new_sleep,
+)
+from slackhealthbot.repositories import fitbitrepository
+from slackhealthbot.repositories.fitbitrepository import UserIdentity
 from slackhealthbot.routers.dependencies import get_db, templates
-from slackhealthbot.services import models as svc_models
 from slackhealthbot.services import slack
 from slackhealthbot.services.exceptions import UserLoggedOutException
-from slackhealthbot.services.fitbit import api as fitbit_api
-from slackhealthbot.services.fitbit import oauth as fitbit_oauth
-from slackhealthbot.services.fitbit import service as fitbit_service
-from slackhealthbot.services.oauth import oauth
-from slackhealthbot.settings import settings
+from slackhealthbot.services.oauth.config import oauth
+from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 router = APIRouter()
 
 
 @router.get("/v1/fitbit-authorization/{slack_alias}")
 async def get_fitbit_authorization(slack_alias: str, request: Request):
-    return await oauth.create_oauth_url(
-        provider=fitbit_oauth.PROVIDER, request=request, slack_alias=slack_alias
-    )
+    request.session["slack_alias"] = slack_alias
+    return await oauth.create_client(settings.name).authorize_redirect(request)
 
 
 @router.get("/fitbit-notification-webhook/")
 def validate_fitbit_notification_webhook(verify: str | None = None):
     # See the fitbit verification doc:
     # https://dev.fitbit.com/build/reference/web-api/developer-guide/using-subscriptions/#Verifying-a-Subscriber
-    if verify == settings.fitbit_client_subscriber_verification_code:
+    if verify == settings.subscriber_verification_code:
         return Response(status_code=204)
     return Response(status_code=404)
 
 
 @router.get("/fitbit-oauth-webhook/")
 async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    token: dict = await oauth.fetch_token(fitbit_oauth.PROVIDER, request)
-    user = await fitbit_oauth.update_token(
+    token: dict = await oauth.create_client(settings.name).authorize_access_token(
+        request
+    )
+    await usecase_login_user.do(
         db=db, token=token, slack_alias=request.session.pop("slack_alias")
     )
-    await fitbit_api.subscribe(user)
     return templates.TemplateResponse(
         request=request, name="login_complete.html", context={"provider": "fitbit"}
     )
@@ -91,37 +94,33 @@ async def fitbit_notification_webhook(
             logging.info("fitbit_notificaiton_webhook: skipping duplicate notification")
             continue
 
-        user = await crud.get_user(db, fitbit_oauth_userid=notification.ownerId)
+        # TODO User
+        user_identity: UserIdentity = (
+            await fitbitrepository.get_user_identity_by_fitbit_userid(
+                db,
+                fitbit_userid=notification.ownerId,
+            )
+        )
         try:
             if notification.collectionType == "sleep":
-                sleep_data = await fitbit_api.get_sleep(
-                    user=user,
+                new_sleep_data: SleepData = await usecase_process_new_sleep.do(
+                    db,
+                    fitbit_userid=notification.ownerId,
                     when=notification.date,
                 )
-                if sleep_data:
+                if new_sleep_data:
                     _mark_fitbit_notification_processed(notification)
-                    last_sleep_data = svc_models.user_last_sleep_data(user.fitbit)
-                    await fitbit_service.save_new_sleep_data(db, user, sleep_data)
-                    await slack.post_sleep(
-                        slack_alias=user.slack_alias,
-                        new_sleep_data=sleep_data,
-                        last_sleep_data=last_sleep_data,
-                    )
             elif notification.collectionType == "activities":
-                activity_history = await fitbit_service.get_activity(
+                activity_history = await usecase_process_new_activity.do(
                     db=db,
-                    user=user,
+                    fitbit_userid=notification.ownerId,
                     when=datetime.datetime.now(),
                 )
                 if activity_history:
                     _mark_fitbit_notification_processed(notification)
-                    await slack.post_activity(
-                        slack_alias=user.slack_alias,
-                        activity_history=activity_history,
-                    )
         except UserLoggedOutException:
             await slack.post_user_logged_out(
-                slack_alias=user.slack_alias,
+                slack_alias=user_identity.slack_alias,
                 service="fitbit",
             )
             break

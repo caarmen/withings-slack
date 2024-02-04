@@ -9,10 +9,9 @@ from httpx import Response
 from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import crud
 from slackhealthbot.database.connection import ctx_db
-from slackhealthbot.database.models import FitbitActivity, FitbitUser, User
-from slackhealthbot.services.models import user_last_sleep_data
+from slackhealthbot.database.models import FitbitUser, User
+from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.settings import settings
 from tests.factories.factories import (
     FitbitActivityFactory,
@@ -57,10 +56,6 @@ async def test_sleep_notification(
         oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
     )
 
-    db_user = await crud.get_user(
-        mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
-    )
-
     # Mock fitbit endpoint to return some sleep data
     respx_mock.get(
         url=f"{settings.fitbit_base_url}1.2/user/-/sleep/date/2023-05-12.json",
@@ -72,23 +67,27 @@ async def test_sleep_notification(
     )
 
     # When we receive the callback from fitbit that a new sleep is available
-    response = client.post(
-        "/fitbit-notification-webhook/",
-        content=json.dumps(
-            [
-                {
-                    "ownerId": user.fitbit.oauth_userid,
-                    "date": "2023-05-12",
-                    "collectionType": "sleep",
-                }
-            ]
-        ),
-    )
+    with client:
+        response = client.post(
+            "/fitbit-notification-webhook/",
+            content=json.dumps(
+                [
+                    {
+                        "ownerId": user.fitbit.oauth_userid,
+                        "date": "2023-05-12",
+                        "collectionType": "sleep",
+                    }
+                ]
+            ),
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last sleep data is updated in the database
-    actual_last_sleep_data = user_last_sleep_data(db_user.fitbit)
+    actual_last_sleep_data = await fitbitrepository.get_sleep_by_fitbit_userid(
+        mocked_async_session,
+        fitbit_userid=fitbit_user.oauth_userid,
+    )
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data
 
     # And the message was sent to slack as expected
@@ -149,33 +148,36 @@ async def test_activity_notification(
     )
 
     # When we receive the callback from fitbit that a new activity is available
-    response = client.post(
-        "/fitbit-notification-webhook/",
-        content=json.dumps(
-            [
-                {
-                    "ownerId": user.fitbit.oauth_userid,
-                    "date": "2023-05-12",
-                    "collectionType": "activities",
-                }
-            ]
-        ),
-    )
+    with client:
+        response = client.post(
+            "/fitbit-notification-webhook/",
+            content=json.dumps(
+                [
+                    {
+                        "ownerId": user.fitbit.oauth_userid,
+                        "date": "2023-05-12",
+                        "collectionType": "activities",
+                    }
+                ]
+            ),
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the latest activity data is updated in the database
-    latest_activity: FitbitActivity = await crud.get_latest_activity_by_user_and_type(
-        db=mocked_async_session,
-        fitbit_user_id=fitbit_user.id,
-        type_id=activity_type_id,
+    repo_activity: fitbitrepository.Activity = (
+        await fitbitrepository.get_latest_activity_by_user_and_type(
+            mocked_async_session,
+            fitbit_userid=fitbit_user.oauth_userid,
+            type_id=activity_type_id,
+        )
     )
     if scenario.is_new_log_expected:
-        assert latest_activity.log_id == scenario.expected_new_last_activity_log_id
+        assert repo_activity.log_id == scenario.expected_new_last_activity_log_id
     elif scenario.input_initial_activity_data:
-        assert latest_activity.log_id == scenario.input_initial_activity_data["log_id"]
+        assert repo_activity.log_id == scenario.input_initial_activity_data["log_id"]
     else:
-        assert not latest_activity
+        assert not repo_activity
 
     # And the message was sent to slack as expected
     if scenario.expected_message_pattern:
@@ -249,23 +251,24 @@ async def test_refresh_token(
     )
 
     # When we receive the callback from fitbit that a new activity is available
-    response = client.post(
-        "/fitbit-notification-webhook/",
-        content=json.dumps(
-            [
-                {
-                    "ownerId": user.fitbit.oauth_userid,
-                    "date": "2023-05-12",
-                    "collectionType": "activities",
-                }
-            ]
-        ),
-    )
+    with client:
+        response = client.post(
+            "/fitbit-notification-webhook/",
+            content=json.dumps(
+                [
+                    {
+                        "ownerId": user.fitbit.oauth_userid,
+                        "date": "2023-05-12",
+                        "collectionType": "activities",
+                    }
+                ]
+            ),
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    db_user = await crud.get_user(
-        db=mocked_async_session, fitbit_oauth_userid=fitbit_user.oauth_userid
+    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
+        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
     )
 
     # Then the access token is refreshed.
@@ -275,16 +278,18 @@ async def test_refresh_token(
         == "Bearer some new access token"
     )
     assert oauth_token_refresh_request.call_count == 1
-    assert db_user.fitbit.oauth_access_token == "some new access token"
-    assert db_user.fitbit.oauth_refresh_token == "some new refresh token"
+    assert repo_user.oauth_data.oauth_access_token == "some new access token"
+    assert repo_user.oauth_data.oauth_refresh_token == "some new refresh token"
 
     # And the latest activity data is updated in the database
-    latest_activity: FitbitActivity = await crud.get_latest_activity_by_user_and_type(
-        db=mocked_async_session,
-        fitbit_user_id=db_user.fitbit.id,
-        type_id=activity_type_id,
+    repo_activity: fitbitrepository.Activity = (
+        await fitbitrepository.get_latest_activity_by_user_and_type(
+            db=mocked_async_session,
+            fitbit_userid=repo_user.identity.fitbit_userid,
+            type_id=activity_type_id,
+        )
     )
-    assert latest_activity.log_id == scenario.expected_new_last_activity_log_id
+    assert repo_activity.log_id == scenario.expected_new_last_activity_log_id
 
     # And the message was sent to slack as expected
     actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(

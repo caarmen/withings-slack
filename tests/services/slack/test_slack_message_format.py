@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from slackhealthbot.services import slack
+from slackhealthbot.domain.slack import usecase_post_sleep
 
 
 @pytest.mark.parametrize(
@@ -15,7 +15,7 @@ from slackhealthbot.services import slack
     ],
 )
 def test_format_minutes(input: int, expected_output: str):
-    actual_output = slack.format_minutes(input)
+    actual_output = usecase_post_sleep.format_minutes(input)
     assert actual_output == expected_output
 
 
@@ -27,5 +27,5 @@ def test_format_minutes(input: int, expected_output: str):
     ],
 )
 def test_format_time(input: datetime.datetime, expected_output: str):
-    actual_output = slack.format_time(input)
+    actual_output = usecase_post_sleep.format_time(input)
     assert actual_output == expected_output
