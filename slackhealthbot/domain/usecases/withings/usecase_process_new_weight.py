@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import WeightData
-from slackhealthbot.domain.slack import usecase_post_weight
-from slackhealthbot.domain.withings import usecase_get_last_weight
+from slackhealthbot.domain.usecases.slack import usecase_post_weight
+from slackhealthbot.domain.usecases.withings import usecase_get_last_weight
 from slackhealthbot.repositories import withingsrepository
 
 

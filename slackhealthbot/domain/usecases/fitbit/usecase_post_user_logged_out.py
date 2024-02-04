@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.domain.slack import (
+from slackhealthbot.domain.usecases.slack import (
     usecase_post_user_logged_out as slack_usecase_post_user_logged_out,
 )
 from slackhealthbot.repositories import fitbitrepository

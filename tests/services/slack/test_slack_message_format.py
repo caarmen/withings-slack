@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from slackhealthbot.domain.slack import usecase_post_sleep
+from slackhealthbot.domain.usecases.slack import usecase_post_sleep
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Form, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.domain.withings import (
+from slackhealthbot.domain.usecases.withings import (
     usecase_login_user,
     usecase_post_user_logged_out,
     usecase_process_new_weight,

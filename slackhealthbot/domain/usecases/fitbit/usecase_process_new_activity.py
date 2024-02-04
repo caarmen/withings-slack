@@ -3,14 +3,14 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import ActivityData, ActivityHistory
-from slackhealthbot.domain.fitbit import usecase_get_last_activity
 from slackhealthbot.domain.modelmappers.coretorepository.activity import (
     core_activity_to_repository_activity,
 )
 from slackhealthbot.domain.modelmappers.repositorytocore.activity import (
     repository_activity_to_core_activity,
 )
-from slackhealthbot.domain.slack import usecase_post_activity
+from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
+from slackhealthbot.domain.usecases.slack import usecase_post_activity
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.settings import settings
 

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.database.connection import ctx_db
-from slackhealthbot.domain.oauth import usecase_parse_oauth
+from slackhealthbot.domain.usecases.oauth import usecase_parse_oauth
 from slackhealthbot.repositories import withingsrepository
 
 

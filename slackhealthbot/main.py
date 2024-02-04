@@ -8,10 +8,10 @@ from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from slackhealthbot import logger, scheduler
-from slackhealthbot.domain.fitbit.usecase_update_user_oauth import (
+from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     do as fitbit_usecase_update_user_oauth,
 )
-from slackhealthbot.domain.withings.usecase_update_user_oauth import (
+from slackhealthbot.domain.usecases.withings.usecase_update_user_oauth import (
     do as withings_usecase_update_user_oauth,
 )
 from slackhealthbot.oauth import fitbitconfig as oauth_fitbit

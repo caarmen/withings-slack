@@ -3,11 +3,11 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import SleepData
-from slackhealthbot.domain.fitbit import usecase_get_last_sleep
 from slackhealthbot.domain.modelmappers.coretorepository.sleep import (
     core_sleep_to_repository_sleep,
 )
-from slackhealthbot.domain.slack import usecase_post_sleep
+from slackhealthbot.domain.usecases.fitbit import usecase_get_last_sleep
+from slackhealthbot.domain.usecases.slack import usecase_post_sleep
 from slackhealthbot.repositories import fitbitrepository
 
 

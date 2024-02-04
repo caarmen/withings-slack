@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.domain.oauth import usecase_parse_oauth
+from slackhealthbot.domain.usecases.oauth import usecase_parse_oauth
 from slackhealthbot.remoteservices.fitbit import subscribeapi
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import OAuthData, UserIdentity

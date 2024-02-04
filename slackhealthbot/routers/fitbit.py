@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import SleepData
-from slackhealthbot.domain.fitbit import (
+from slackhealthbot.domain.usecases.fitbit import (
     usecase_login_user,
     usecase_post_user_logged_out,
     usecase_process_new_activity,
