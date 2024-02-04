@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import ActivityData
-from slackhealthbot.remoteservices.fitbit import api
+from slackhealthbot.remoteservices.fitbit import activityapi
 from slackhealthbot.repositories import fitbitrepository
 
 
@@ -16,7 +16,7 @@ async def do(
         db,
         fitbit_userid=fitbit_userid,
     )
-    last_activity: ActivityData = await api.get_activity(
+    last_activity: ActivityData = await activityapi.get_activity(
         oauth_token=user.oauth_data,
         when=when,
     )

@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import SleepData
-from slackhealthbot.remoteservices.fitbit import api
+from slackhealthbot.remoteservices.fitbit import sleepapi
 from slackhealthbot.repositories import fitbitrepository
 
 
@@ -16,7 +16,7 @@ async def do(
         db,
         fitbit_userid=fitbit_userid,
     )
-    last_sleep: SleepData = await api.get_sleep(
+    last_sleep: SleepData = await sleepapi.get_sleep(
         oauth_token=user.oauth_data,
         when=when,
     )

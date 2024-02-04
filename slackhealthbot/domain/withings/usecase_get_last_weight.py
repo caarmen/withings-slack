@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import WeightData
-from slackhealthbot.remoteservices.withings import api
+from slackhealthbot.remoteservices.withings import weightapi
 from slackhealthbot.repositories import withingsrepository
 
 
@@ -17,7 +17,7 @@ async def do(
             withings_userid=withings_userid,
         )
     )
-    last_weight_kg = await api.get_last_weight_kg(
+    last_weight_kg = await weightapi.get_last_weight_kg(
         oauth_token=user.oauth_data,
         startdate=startdate,
         enddate=enddate,

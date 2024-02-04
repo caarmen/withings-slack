@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.domain.oauth import usecase_parse_oauth
-from slackhealthbot.remoteservices.fitbit import api
+from slackhealthbot.remoteservices.fitbit import subscribeapi
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import OAuthData, UserIdentity
 
@@ -15,7 +15,7 @@ async def do(
     token: dict[str, Any],
 ):
     user: fitbitrepository.User = await _upsert_user(db, slack_alias, token)
-    await api.subscribe(
+    await subscribeapi.subscribe(
         fitbit_userid=user.identity.fitbit_userid, oauth_token=user.oauth_data
     )
 

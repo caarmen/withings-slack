@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.domain.oauth import usecase_parse_oauth
-from slackhealthbot.remoteservices.withings import api
+from slackhealthbot.remoteservices.withings import subscribeapi
 from slackhealthbot.repositories import withingsrepository
 from slackhealthbot.repositories.withingsrepository import OAuthData, UserIdentity
 
@@ -15,7 +15,7 @@ async def do(
     token: dict[str, Any],
 ):
     user: withingsrepository.User = await _upsert_user(db, slack_alias, token)
-    await api.subscribe(oauth_token=user.oauth_data)
+    await subscribeapi.subscribe(oauth_token=user.oauth_data)
 
 
 async def _upsert_user(
