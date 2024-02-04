@@ -1,17 +1,71 @@
 import datetime
+import json
 import logging
-from typing import Optional
+from typing import Annotated, Literal, Self, Union
 
-from slackhealthbot.core.models import OAuthFields, SleepData
+from pydantic import BaseModel, Field
+
+from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.remoteservices.fitbit import parser
 from slackhealthbot.settings import fitbit_oauth_settings as settings
+
+
+class FitbitSleepItemSummaryItem(BaseModel):
+    minutes: int
+
+
+class FitbitClassicSleepItemSummary(BaseModel):
+    awake: FitbitSleepItemSummaryItem
+    asleep: FitbitSleepItemSummaryItem
+
+
+class FitbitStagesSleepItemSummary(BaseModel):
+    wake: FitbitSleepItemSummaryItem
+
+
+class FitbitStagesSleepItemLevels(BaseModel):
+    summary: FitbitStagesSleepItemSummary
+
+
+class FitbitClassicSleepItemLevels(BaseModel):
+    summary: FitbitClassicSleepItemSummary
+
+
+class FitbitSleepItem(BaseModel):
+    duration: int
+    endTime: str
+    isMainSleep: bool
+    startTime: str
+
+
+class FitbitClassicSleepItem(FitbitSleepItem):
+    type: Literal["classic"]
+    levels: FitbitClassicSleepItemLevels
+
+
+class FitbitStagesSleepItem(FitbitSleepItem):
+    type: Literal["stages"]
+    levels: FitbitStagesSleepItemLevels
+
+
+class FitbitSleep(BaseModel):
+    sleep: list[
+        Annotated[
+            Union[FitbitClassicSleepItem, FitbitStagesSleepItem],
+            Field(discriminator="type"),
+        ]
+    ]
+
+    @classmethod
+    def parse(cls, input: str) -> Self:
+        logging.info(f"parse sleep input: {input}")
+        return cls(**json.loads(input))
 
 
 async def get_sleep(
     oauth_token: OAuthFields,
     when: datetime.date,
-) -> Optional[SleepData]:
+) -> FitbitSleep | None:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -23,4 +77,8 @@ async def get_sleep(
         token=oauth_token,
         url=f"{settings.base_url}1.2/user/-/sleep/date/{when_str}.json",
     )
-    return parser.parse_sleep(response.content)
+    try:
+        return FitbitSleep.parse(response.content)
+    except Exception as e:
+        logging.warning(f"Error parsing sleep: error {e}, input: {input}", exc_info=e)
+        return None

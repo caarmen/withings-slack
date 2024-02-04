@@ -2,7 +2,7 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.core.models import ActivityData
+from slackhealthbot.core.models import ActivityData, ActivityZoneMinutes
 from slackhealthbot.remoteservices.fitbit import activityapi
 from slackhealthbot.repositories import fitbitrepository
 
@@ -16,8 +16,28 @@ async def do(
         db,
         fitbit_userid=fitbit_userid,
     )
-    last_activity: ActivityData = await activityapi.get_activity(
+    last_activities: activityapi.FitbitActivities = await activityapi.get_activity(
         oauth_token=user.oauth_data,
         when=when,
     )
-    return last_activity
+    return parse_activity(last_activities) if last_activities else None
+
+
+def parse_activity(
+    fitbit_activities: activityapi.FitbitActivities,
+) -> ActivityData | None:
+    if not fitbit_activities.activities:
+        return None
+    fitbit_activity = fitbit_activities.activities[0]
+    return ActivityData(
+        log_id=fitbit_activity.logId,
+        type_id=fitbit_activity.activityTypeId,
+        name=fitbit_activity.activityName,
+        calories=fitbit_activity.calories,
+        total_minutes=fitbit_activity.duration // 60000,
+        zone_minutes=[
+            ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
+            for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
+            if x.minutes > 0
+        ],
+    )

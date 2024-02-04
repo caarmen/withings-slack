@@ -5,7 +5,8 @@ from pathlib import Path
 import pytest
 
 from slackhealthbot.core.models import SleepData
-from slackhealthbot.remoteservices.fitbit.parser import parse_sleep
+from slackhealthbot.domain.fitbit.usecase_get_last_sleep import parse_sleep
+from slackhealthbot.remoteservices.fitbit.sleepapi import FitbitSleep
 
 
 @pytest.mark.parametrize(
@@ -49,5 +50,6 @@ def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
         Path(os.path.abspath(__file__)).parent.parent.parent / "data" / input_filename
     )
     with open(input_file) as input:
-        actual_sleep_data = parse_sleep(input=input.read())
+        api_data: FitbitSleep = FitbitSleep.parse(input=input.read())
+        actual_sleep_data = parse_sleep(api_data)
         assert actual_sleep_data == expected_sleep_data

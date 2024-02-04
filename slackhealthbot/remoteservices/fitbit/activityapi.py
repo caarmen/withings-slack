@@ -1,16 +1,46 @@
 import datetime
+import json
 import logging
-from typing import Optional
+from typing import Self
 
-from slackhealthbot.core.models import ActivityData, OAuthFields
+from pydantic import BaseModel
+
+from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.remoteservices.fitbit import parser
 from slackhealthbot.settings import fitbit_oauth_settings as settings
+
+
+class FitbitMinutesInHeartRateZone(BaseModel):
+    minutes: int
+    type: str
+
+
+class FitBitActiveZoneMinutes(BaseModel):
+    minutesInHeartRateZones: list[FitbitMinutesInHeartRateZone]
+
+
+class FitbitActivity(BaseModel):
+    logId: int
+    activeZoneMinutes: FitBitActiveZoneMinutes = FitBitActiveZoneMinutes(
+        minutesInHeartRateZones=[]
+    )
+    activityName: str
+    activityTypeId: int
+    calories: int
+    duration: int
+
+
+class FitbitActivities(BaseModel):
+    activities: list[FitbitActivity]
+
+    @classmethod
+    def parse(cls, input: str) -> Self:
+        return cls(**json.loads(input))
 
 
 async def get_activity(
     oauth_token: OAuthFields, when: datetime.datetime
-) -> Optional[ActivityData]:
+) -> FitbitActivities | None:
     """
     :raises:
         UserLoggedOutException if the refresh token request fails
@@ -28,4 +58,10 @@ async def get_activity(
             "limit": 1,
         },
     )
-    return parser.parse_activity(response.content)
+    try:
+        return FitbitActivities.parse(response.content)
+    except Exception as e:
+        logging.warning(
+            f"Error parsing activity: error {e}, input: {input}", exc_info=e
+        )
+        return None
