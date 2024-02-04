@@ -3,7 +3,7 @@ import datetime
 from slackhealthbot.core.models import OAuthFields
 
 
-def do(response_data: dict) -> OAuthFields:
+def remote_service_oauth_to_core_oauth(response_data: dict) -> OAuthFields:
     return OAuthFields(
         oauth_userid=response_data["userid"],
         oauth_access_token=response_data["access_token"],

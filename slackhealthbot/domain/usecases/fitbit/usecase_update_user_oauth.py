@@ -7,7 +7,7 @@ from slackhealthbot.database.connection import ctx_db
 from slackhealthbot.domain.modelmappers.coretorepository.oauthfitbit import (
     core_oauth_to_repository_oauth,
 )
-from slackhealthbot.domain.usecases.oauth import usecase_parse_oauth
+from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
 from slackhealthbot.repositories import fitbitrepository
 
 
@@ -16,7 +16,7 @@ async def do(
     **_kwargs,
 ):
     db: AsyncSession = ctx_db.get()
-    oauth_fields: OAuthFields = usecase_parse_oauth.do(token)
+    oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
     await fitbitrepository.update_oauth_data(
         db,
         fitbit_userid=oauth_fields.oauth_userid,

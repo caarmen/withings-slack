@@ -6,7 +6,7 @@ from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.domain.modelmappers.coretorepository.oauthwithings import (
     core_oauth_to_repository_oauth,
 )
-from slackhealthbot.domain.usecases.oauth import usecase_parse_oauth
+from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
 from slackhealthbot.remoteservices.withings import subscribeapi
 from slackhealthbot.repositories import withingsrepository
 from slackhealthbot.repositories.withingsrepository import UserIdentity
@@ -24,7 +24,7 @@ async def do(
 async def _upsert_user(
     db: AsyncSession, slack_alias: str, token: dict[str, Any]
 ) -> withingsrepository.User:
-    oauth_fields: OAuthFields = usecase_parse_oauth.do(token)
+    oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
     user_identity: UserIdentity = (
         await withingsrepository.get_user_identity_by_withings_userid(
             db, withings_userid=oauth_fields.oauth_userid

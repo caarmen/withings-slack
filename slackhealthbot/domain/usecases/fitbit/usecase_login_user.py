@@ -6,7 +6,7 @@ from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.domain.modelmappers.coretorepository.oauthfitbit import (
     core_oauth_to_repository_oauth,
 )
-from slackhealthbot.domain.usecases.oauth import usecase_parse_oauth
+from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
 from slackhealthbot.remoteservices.fitbit import subscribeapi
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import UserIdentity
@@ -26,7 +26,7 @@ async def do(
 async def _upsert_user(
     db: AsyncSession, slack_alias: str, token: dict[str, Any]
 ) -> fitbitrepository.User:
-    oauth_fields: OAuthFields = usecase_parse_oauth.do(token)
+    oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
     user_identity: UserIdentity = (
         await fitbitrepository.get_user_identity_by_fitbit_userid(
             db, fitbit_userid=oauth_fields.oauth_userid
