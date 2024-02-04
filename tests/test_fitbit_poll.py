@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.database.models import FitbitUser, User
-from slackhealthbot.repositories import fitbitrepository
+from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.scheduler import Cache, do_poll
 from slackhealthbot.settings import settings
 from tests.factories.factories import (

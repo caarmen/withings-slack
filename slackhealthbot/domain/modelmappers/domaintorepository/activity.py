@@ -1,5 +1,5 @@
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.repositories import fitbitrepository
 
 
 def core_activity_to_repository_activity(

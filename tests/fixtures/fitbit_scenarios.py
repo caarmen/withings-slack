@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 from typing import Any
 
-from slackhealthbot.repositories.fitbitrepository import Sleep
+from slackhealthbot.data.repositories.fitbitrepository import Sleep
 
 
 @dataclasses.dataclass

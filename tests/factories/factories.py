@@ -1,7 +1,7 @@
 from factory import Faker, RelatedFactoryList, SelfAttribute, Sequence, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 
-from slackhealthbot.database.models import (
+from slackhealthbot.data.database.models import (
     FitbitActivity,
     FitbitUser,
     User,

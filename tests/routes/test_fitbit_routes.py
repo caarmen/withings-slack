@@ -9,9 +9,9 @@ from httpx import Response
 from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database.connection import ctx_db
-from slackhealthbot.database.models import FitbitUser, User
-from slackhealthbot.repositories import fitbitrepository
+from slackhealthbot.data.database.connection import ctx_db
+from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.settings import settings
 from tests.factories.factories import (
     FitbitActivityFactory,

@@ -3,13 +3,13 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
+from slackhealthbot.data.repositories import withingsrepository
+from slackhealthbot.data.repositories.withingsrepository import UserIdentity
 from slackhealthbot.domain.modelmappers.coretorepository.oauthwithings import (
     core_oauth_to_repository_oauth,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
 from slackhealthbot.remoteservices.withings import subscribeapi
-from slackhealthbot.repositories import withingsrepository
-from slackhealthbot.repositories.withingsrepository import UserIdentity
 
 
 async def do(

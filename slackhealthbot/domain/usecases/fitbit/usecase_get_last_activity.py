@@ -2,12 +2,12 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
     remote_service_activity_to_core_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
 from slackhealthbot.remoteservices.fitbit import activityapi
-from slackhealthbot.repositories import fitbitrepository
 
 
 async def do(

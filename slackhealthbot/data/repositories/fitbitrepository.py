@@ -4,7 +4,7 @@ import datetime
 from sqlalchemy import and_, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database import models
+from slackhealthbot.data.database import models
 
 
 @dataclasses.dataclass

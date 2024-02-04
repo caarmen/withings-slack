@@ -4,13 +4,13 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.database.models import (
+from slackhealthbot.data.database.models import (
     FitbitActivity,
     FitbitUser,
     User,
     WithingsUser,
 )
-from slackhealthbot.repositories import fitbitrepository, withingsrepository
+from slackhealthbot.data.repositories import fitbitrepository, withingsrepository
 from tests.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,

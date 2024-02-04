@@ -1,5 +1,5 @@
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.repositories import fitbitrepository
 
 
 def core_sleep_to_repository_sleep(

@@ -3,12 +3,12 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.database.connection import ctx_db
+from slackhealthbot.data.database.connection import ctx_db
+from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.coretorepository.oauthfitbit import (
     core_oauth_to_repository_oauth,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.repositories import fitbitrepository
 
 
 async def do(

@@ -1,5 +1,5 @@
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.repositories import withingsrepository
+from slackhealthbot.data.repositories import withingsrepository
 
 
 def core_oauth_to_repository_oauth(

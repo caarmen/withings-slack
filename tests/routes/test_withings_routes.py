@@ -9,10 +9,10 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.database.connection import ctx_db
-from slackhealthbot.database.models import User
-from slackhealthbot.database.models import WithingsUser as DbWithingsUser
-from slackhealthbot.repositories import withingsrepository
+from slackhealthbot.data.database.connection import ctx_db
+from slackhealthbot.data.database.models import User
+from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
+from slackhealthbot.data.repositories import withingsrepository
 from slackhealthbot.settings import settings
 from tests.factories.factories import UserFactory, WithingsUserFactory
 

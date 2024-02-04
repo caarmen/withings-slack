@@ -1,5 +1,5 @@
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.repositories import fitbitrepository
+from slackhealthbot.data.repositories import fitbitrepository
 
 
 def core_oauth_to_repository_oauth(
