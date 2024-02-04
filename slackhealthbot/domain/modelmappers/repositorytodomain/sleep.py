@@ -1,4 +1,4 @@
-from slackhealthbot.core.models import SleepData
+from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.repositories import fitbitrepository
 
 

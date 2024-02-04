@@ -1,6 +1,6 @@
 import httpx
 
-from slackhealthbot.core.models import ActivityHistory, ActivityZone
+from slackhealthbot.domain.models.activity import ActivityHistory, ActivityZone
 from slackhealthbot.settings import settings
 
 

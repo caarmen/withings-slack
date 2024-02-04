@@ -1,7 +1,7 @@
 import datetime
 import logging
 
-from slackhealthbot.core.models import SleepData
+from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.remoteservices.fitbit import sleepapi
 
 

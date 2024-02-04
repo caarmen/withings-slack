@@ -1,6 +1,6 @@
 import httpx
 
-from slackhealthbot.core.models import WeightData
+from slackhealthbot.domain.models.weight import WeightData
 from slackhealthbot.settings import settings
 
 
