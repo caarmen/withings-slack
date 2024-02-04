@@ -4,13 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.domain.withings import (
     usecase_login_user,
     usecase_post_user_logged_out,
     usecase_process_new_weight,
 )
 from slackhealthbot.routers.dependencies import get_db, templates
-from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import withings_oauth_settings as settings
 

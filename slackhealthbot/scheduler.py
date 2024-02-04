@@ -6,16 +6,16 @@ from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import SleepData
 from slackhealthbot.database.connection import SessionLocal
 from slackhealthbot.domain.fitbit import (
     usecase_process_new_activity,
     usecase_process_new_sleep,
 )
+from slackhealthbot.domain.slack import usecase_post_user_logged_out
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import UserIdentity
-from slackhealthbot.services import slack
-from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.settings import settings
 
 
@@ -46,7 +46,7 @@ async def handle_fail_poll(
 ):
     last_error_post = cache.cache_fail.get(fitbit_userid)
     if not last_error_post or last_error_post < when:
-        await slack.post_user_logged_out(
+        usecase_post_user_logged_out.do(
             slack_alias=slack_alias,
             service="fitbit",
         )

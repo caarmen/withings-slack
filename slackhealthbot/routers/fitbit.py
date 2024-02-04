@@ -5,17 +5,17 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import SleepData
 from slackhealthbot.domain.fitbit import (
     usecase_login_user,
     usecase_process_new_activity,
     usecase_process_new_sleep,
 )
+from slackhealthbot.domain.slack import usecase_post_user_logged_out
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.repositories.fitbitrepository import UserIdentity
 from slackhealthbot.routers.dependencies import get_db, templates
-from slackhealthbot.services import slack
-from slackhealthbot.services.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
@@ -94,13 +94,6 @@ async def fitbit_notification_webhook(
             logging.info("fitbit_notificaiton_webhook: skipping duplicate notification")
             continue
 
-        # TODO User
-        user_identity: UserIdentity = (
-            await fitbitrepository.get_user_identity_by_fitbit_userid(
-                db,
-                fitbit_userid=notification.ownerId,
-            )
-        )
         try:
             if notification.collectionType == "sleep":
                 new_sleep_data: SleepData = await usecase_process_new_sleep.do(
@@ -119,7 +112,13 @@ async def fitbit_notification_webhook(
                 if activity_history:
                     _mark_fitbit_notification_processed(notification)
         except UserLoggedOutException:
-            await slack.post_user_logged_out(
+            user_identity: UserIdentity = (
+                await fitbitrepository.get_user_identity_by_fitbit_userid(
+                    db,
+                    fitbit_userid=notification.ownerId,
+                )
+            )
+            await usecase_post_user_logged_out.do(
                 slack_alias=user_identity.slack_alias,
                 service="fitbit",
             )

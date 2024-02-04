@@ -4,7 +4,7 @@ from typing import Any, Callable
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 from fastapi import status
 
-from slackhealthbot.services.exceptions import UserLoggedOutException
+from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.services.oauth.config import oauth
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
