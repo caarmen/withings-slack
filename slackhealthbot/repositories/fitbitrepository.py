@@ -97,6 +97,16 @@ async def get_user_identity_by_fitbit_userid(
     )
 
 
+async def get_all_user_identities(
+    db: AsyncSession,
+) -> list[UserIdentity]:
+    users = await db.scalars(statement=select(models.User).join(models.User.fitbit))
+    return [
+        UserIdentity(fitbit_userid=x.fitbit.oauth_userid, slack_alias=x.slack_alias)
+        for x in users
+    ]
+
+
 async def get_oauth_data_by_fitbit_userid(
     db: AsyncSession,
     fitbit_userid: str,
