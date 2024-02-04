@@ -1,20 +1,13 @@
-import datetime
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
 import httpx
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
+from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.services.oauth.config import oauth
 
 
-@runtime_checkable
-class OAuthToken(Protocol):
-    oauth_access_token: str
-    oauth_refresh_token: str
-    oauth_expiration_date: datetime.datetime
-
-
-def asdict(token: OAuthToken) -> dict[str, str]:
+def asdict(token: OAuthFields) -> dict[str, str]:
     return {
         "access_token": token.oauth_access_token,
         "refresh_token": token.oauth_refresh_token,
@@ -24,7 +17,7 @@ def asdict(token: OAuthToken) -> dict[str, str]:
 
 async def get(
     provider: str,
-    token: OAuthToken,
+    token: OAuthFields,
     url: str,
     params: dict[str, Any] = None,
 ) -> httpx.Response:
@@ -43,7 +36,7 @@ async def get(
 
 async def post(
     provider: str,
-    token: OAuthToken,
+    token: OAuthFields,
     url: str,
     data: dict[str, str] = None,
 ) -> httpx.Response:

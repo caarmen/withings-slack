@@ -1,12 +1,13 @@
 import logging
 from typing import Optional
 
+from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.services.oauth import requests
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 
 async def subscribe(
-    oauth_token: requests.OAuthToken,
+    oauth_token: OAuthFields,
 ):
     callbackurl = f"{settings.callback_url}withings-notification-webhook/"
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
@@ -24,7 +25,7 @@ async def subscribe(
 
 
 async def get_last_weight_kg(
-    oauth_token: requests.OAuthToken,
+    oauth_token: OAuthFields,
     startdate: int,
     enddate: int,
 ) -> Optional[float]:

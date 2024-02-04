@@ -2,7 +2,7 @@ import datetime
 import logging
 from typing import Optional
 
-from slackhealthbot.core.models import ActivityData, SleepData
+from slackhealthbot.core.models import ActivityData, OAuthFields, SleepData
 from slackhealthbot.services.fitbit import parser
 from slackhealthbot.services.oauth import requests
 from slackhealthbot.settings import fitbit_oauth_settings as settings
@@ -10,7 +10,7 @@ from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 async def subscribe(
     fitbit_userid: str,
-    oauth_token: requests.OAuthToken,
+    oauth_token: OAuthFields,
 ):
     for collectionPath in ["sleep", "activities"]:
         response = await requests.post(
@@ -24,7 +24,7 @@ async def subscribe(
 
 
 async def get_sleep(
-    oauth_token: requests.OAuthToken,
+    oauth_token: OAuthFields,
     when: datetime.date,
 ) -> Optional[SleepData]:
     """
@@ -42,7 +42,7 @@ async def get_sleep(
 
 
 async def get_activity(
-    oauth_token: requests.OAuthToken, when: datetime.datetime
+    oauth_token: OAuthFields, when: datetime.datetime
 ) -> Optional[ActivityData]:
     """
     :raises:
