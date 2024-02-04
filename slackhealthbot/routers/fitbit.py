@@ -9,13 +9,11 @@ from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import SleepData
 from slackhealthbot.domain.fitbit import (
     usecase_login_user,
+    usecase_post_user_logged_out,
     usecase_process_new_activity,
     usecase_process_new_sleep,
 )
-from slackhealthbot.domain.slack import usecase_post_user_logged_out
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.repositories import fitbitrepository
-from slackhealthbot.repositories.fitbitrepository import UserIdentity
 from slackhealthbot.routers.dependencies import get_db, templates
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
@@ -112,14 +110,8 @@ async def fitbit_notification_webhook(
                 if activity_history:
                     _mark_fitbit_notification_processed(notification)
         except UserLoggedOutException:
-            user_identity: UserIdentity = (
-                await fitbitrepository.get_user_identity_by_fitbit_userid(
-                    db,
-                    fitbit_userid=notification.ownerId,
-                )
-            )
             await usecase_post_user_logged_out.do(
-                slack_alias=user_identity.slack_alias,
+                fitbit_userid=notification.ownerId,
                 service="fitbit",
             )
             break
