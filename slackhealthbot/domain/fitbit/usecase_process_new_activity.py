@@ -2,13 +2,14 @@ import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from slackhealthbot.core.models import (
-    ActivityData,
-    ActivityHistory,
-    ActivityZone,
-    ActivityZoneMinutes,
-)
+from slackhealthbot.core.models import ActivityData, ActivityHistory
 from slackhealthbot.domain.fitbit import usecase_get_last_activity
+from slackhealthbot.domain.modelmappers.coretorepository.activity import (
+    core_activity_to_repository_activity,
+)
+from slackhealthbot.domain.modelmappers.repositorytocore.activity import (
+    repository_activity_to_core_activity,
+)
 from slackhealthbot.domain.slack import usecase_post_activity
 from slackhealthbot.repositories import fitbitrepository
 from slackhealthbot.settings import settings
@@ -51,34 +52,17 @@ async def do(
     await fitbitrepository.create_activity_for_user(
         db=db,
         fitbit_userid=fitbit_userid,
-        activity=fitbitrepository.Activity(
-            log_id=new_activity_data.log_id,
-            total_minutes=new_activity_data.total_minutes,
-            calories=new_activity_data.calories,
-            type_id=new_activity_data.type_id,
-            **{f"{x.zone}_minutes": x.minutes for x in new_activity_data.zone_minutes},
+        activity=core_activity_to_repository_activity(
+            new_activity_data,
         ),
     )
     await usecase_post_activity.do(
         slack_alias=user_identity.slack_alias,
         activity_history=ActivityHistory(
-            latest_activity_data=ActivityData(
-                log_id=last_activity_data.log_id,
-                type_id=last_activity_data.type_id,
-                name=new_activity_data.name,
-                calories=last_activity_data.calories,
-                total_minutes=last_activity_data.total_minutes,
-                zone_minutes=[
-                    ActivityZoneMinutes(
-                        zone=x,
-                        minutes=getattr(last_activity_data, f"{x}_minutes"),
-                    )
-                    for x in ActivityZone
-                    if getattr(last_activity_data, f"{x}_minutes")
-                ],
-            )
-            if last_activity_data
-            else None,
+            latest_activity_data=repository_activity_to_core_activity(
+                last_activity_data,
+                new_activity_data.name,
+            ),
             new_activity_data=new_activity_data,
         ),
     )
