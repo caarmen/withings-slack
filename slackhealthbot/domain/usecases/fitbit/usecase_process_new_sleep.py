@@ -6,6 +6,9 @@ from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.domaintorepository.sleep import (
     domain_sleep_to_repository_sleep,
 )
+from slackhealthbot.domain.modelmappers.repositorytodomain.sleep import (
+    repository_sleep_to_domain_sleep,
+)
 from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_sleep
 from slackhealthbot.domain.usecases.slack import usecase_post_sleep
@@ -43,6 +46,6 @@ async def do(
     await usecase_post_sleep.do(
         slack_alias=user_identity.slack_alias,
         new_sleep_data=new_sleep_data,
-        last_sleep_data=domain_sleep_to_repository_sleep(last_sleep_data),
+        last_sleep_data=repository_sleep_to_domain_sleep(last_sleep_data),
     )
     return new_sleep_data
