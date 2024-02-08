@@ -4,7 +4,9 @@ import json
 import math
 
 import pytest
+from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 from fastapi import status
+from fastapi.responses import RedirectResponse
 from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
@@ -233,3 +235,76 @@ async def test_refresh_token(
     # And the message is sent to slack as expected
     actual_message = json.loads(slack_request.calls[0].request.content)["text"]
     assert "↘️" in actual_message
+
+
+@pytest.mark.asyncio
+async def test_login_success(
+    mocked_async_session,
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    ctx_db.set(mocked_async_session)
+
+    # mock authlib's generation of a url on withings
+    async def mock_authorize_redirect(fake_self, request, redirect_uri):
+        return RedirectResponse("https://fakewithings.com", status_code=302)
+
+    monkeypatch.setattr(
+        StarletteOAuth2App,
+        "authorize_redirect",
+        mock_authorize_redirect,
+    )
+    # Simulate the user starting the withings login
+    with client:
+        response: Response = client.get(
+            "/v1/withings-authorization/jdoe",
+            follow_redirects=False,
+        )
+    assert response.status_code == status.HTTP_302_FOUND
+    assert response.headers["location"] == "https://fakewithings.com"
+
+    # mock authlib's token response
+    async def mock_authorize_access_token(fake_self, request):
+        return {
+            "userid": "user123",
+            "access_token": "some access token",
+            "refresh_token": "some refresh token",
+            "expires_in": 3600,
+        }
+
+    monkeypatch.setattr(
+        StarletteOAuth2App,
+        "authorize_access_token",
+        mock_authorize_access_token,
+    )
+
+    # Simulate withings's response to the sleep and activity subscriptions
+    async def mock_post(fake_self, *args, **kwargs):
+        return Response(status_code=200, json={})
+
+    monkeypatch.setattr(
+        StarletteOAuth2App,
+        "post",
+        mock_post,
+    )
+
+    # Simulate withings calling us back to finish the login
+    with client:
+        response: Response = client.get(
+            "/withings-oauth-webhook",
+        )
+
+    assert response.status_code == status.HTTP_200_OK
+
+    # Verify that we have the expected data in the db
+    repo_user = await withingsrepository.get_user_by_withings_userid(
+        mocked_async_session,
+        "user123",
+    )
+    assert repo_user.identity == withingsrepository.UserIdentity(
+        withings_userid="user123",
+        slack_alias="jdoe",
+    )
+
+    assert repo_user.oauth_data.oauth_access_token == "some access token"
+    assert repo_user.oauth_data.oauth_refresh_token == "some refresh token"
