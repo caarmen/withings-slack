@@ -50,7 +50,8 @@ async def test_fitbit_poll_sleep(
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
         **scenario.input_initial_sleep_data,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
 
     # Mock fitbit endpoint to return no activity data
@@ -120,7 +121,8 @@ async def test_fitbit_poll_activity(
     user: User = user_factory(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
     if scenario.input_initial_activity_data:
         fitbit_activity_factory(

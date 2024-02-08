@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
 from sqlalchemy import select
@@ -63,7 +63,7 @@ async def test_withings_user_factory(
     assert repo_user.oauth_data.oauth_refresh_token == withings_user.oauth_refresh_token
     assert (
         repo_user.oauth_data.oauth_expiration_date
-        == withings_user.oauth_expiration_date
+        == withings_user.oauth_expiration_date.replace(tzinfo=timezone.utc)
     )
     assert repo_user.fitness_data.last_weight_kg == withings_user.last_weight
 
@@ -89,7 +89,8 @@ async def test_fitbit_user_factory(
     assert repo_user.oauth_data.oauth_refresh_token == fitbit_user.oauth_refresh_token
     assert repo_user.identity.fitbit_userid == fitbit_user.oauth_userid
     assert (
-        repo_user.oauth_data.oauth_expiration_date == fitbit_user.oauth_expiration_date
+        repo_user.oauth_data.oauth_expiration_date
+        == fitbit_user.oauth_expiration_date.replace(tzinfo=timezone.utc)
     )
 
 

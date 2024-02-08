@@ -82,7 +82,9 @@ async def create_user(
         oauth_data=OAuthData(
             oauth_access_token=fitbit_user.oauth_access_token,
             oauth_refresh_token=fitbit_user.oauth_refresh_token,
-            oauth_expiration_date=fitbit_user.oauth_expiration_date,
+            oauth_expiration_date=fitbit_user.oauth_expiration_date.replace(
+                tzinfo=datetime.timezone.utc
+            ),
         ),
     )
 
@@ -132,7 +134,9 @@ async def get_oauth_data_by_fitbit_userid(
     return OAuthData(
         oauth_access_token=fitbit_user.oauth_access_token,
         oauth_refresh_token=fitbit_user.oauth_refresh_token,
-        oauth_expiration_date=fitbit_user.oauth_expiration_date,
+        oauth_expiration_date=fitbit_user.oauth_expiration_date.replace(
+            tzinfo=datetime.timezone.utc
+        ),
     )
 
 
@@ -155,7 +159,9 @@ async def get_user_by_fitbit_userid(
         oauth_data=OAuthData(
             oauth_access_token=user.fitbit.oauth_access_token,
             oauth_refresh_token=user.fitbit.oauth_refresh_token,
-            oauth_expiration_date=user.fitbit.oauth_expiration_date,
+            oauth_expiration_date=user.fitbit.oauth_expiration_date.replace(
+                tzinfo=datetime.timezone.utc
+            ),
         ),
     )
 

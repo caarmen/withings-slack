@@ -53,7 +53,8 @@ async def test_sleep_notification(
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
         **scenario.input_initial_sleep_data,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
 
     # Mock fitbit endpoint to return some sleep data
@@ -127,7 +128,8 @@ async def test_activity_notification(
     user: User = user_factory(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
 
     if scenario.input_initial_activity_data:
@@ -218,7 +220,8 @@ async def test_refresh_token(
     fitbit_user: FitbitUser = fitbit_user_factory(
         user_id=user.id,
         oauth_access_token="some old access token",
-        oauth_expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        - datetime.timedelta(days=1),
     )
 
     # Mock fitbit oauth refresh token success

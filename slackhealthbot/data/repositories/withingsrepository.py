@@ -68,7 +68,9 @@ async def create_user(
         oauth_data=OAuthData(
             oauth_access_token=withings_user.oauth_access_token,
             oauth_refresh_token=withings_user.oauth_refresh_token,
-            oauth_expiration_date=withings_user.oauth_expiration_date,
+            oauth_expiration_date=withings_user.oauth_expiration_date.replace(
+                tzinfo=datetime.timezone.utc
+            ),
         ),
         fitness_data=FitnessData(),
     )
@@ -109,7 +111,9 @@ async def get_oauth_data_by_withings_userid(
     return OAuthData(
         oauth_access_token=withings_user.oauth_access_token,
         oauth_refresh_token=withings_user.oauth_refresh_token,
-        oauth_expiration_date=withings_user.oauth_expiration_date,
+        oauth_expiration_date=withings_user.oauth_expiration_date.replace(
+            tzinfo=datetime.timezone.utc
+        ),
     )
 
 
@@ -148,7 +152,9 @@ async def get_user_by_withings_userid(
         oauth_data=OAuthData(
             oauth_access_token=user.withings.oauth_access_token,
             oauth_refresh_token=user.withings.oauth_refresh_token,
-            oauth_expiration_date=user.withings.oauth_expiration_date,
+            oauth_expiration_date=user.withings.oauth_expiration_date.replace(
+                tzinfo=datetime.timezone.utc
+            ),
         ),
         fitness_data=FitnessData(
             last_weight_kg=user.withings.last_weight,

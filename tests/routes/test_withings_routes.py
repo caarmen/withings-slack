@@ -58,7 +58,8 @@ async def test_weight_notification(
     db_withings_user: DbWithingsUser = withings_user_factory(
         user_id=user.id,
         last_weight=scenario.input_initial_weight,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
     # The user has the previous weight logged
     assert db_withings_user.last_weight == scenario.input_initial_weight
@@ -146,7 +147,8 @@ async def test_refresh_token(
         user_id=user.id,
         last_weight=50.2,
         oauth_access_token="some old access token",
-        oauth_expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        - datetime.timedelta(days=1),
     )
 
     # Mock withings oauth refresh token success
