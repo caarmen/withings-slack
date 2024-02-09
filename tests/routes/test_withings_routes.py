@@ -2,6 +2,7 @@ import dataclasses
 import datetime
 import json
 import math
+import re
 
 import pytest
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
@@ -280,7 +281,7 @@ async def test_login_success(
 
     # Simulate withings's response to the sleep and activity subscriptions
     async def mock_post(fake_self, *args, **kwargs):
-        return Response(status_code=200, json={})
+        return Response(status_code=200, json={"status": 0})
 
     monkeypatch.setattr(
         StarletteOAuth2App,
@@ -308,3 +309,84 @@ async def test_login_success(
 
     assert repo_user.oauth_data.oauth_access_token == "some access token"
     assert repo_user.oauth_data.oauth_refresh_token == "some refresh token"
+
+
+@pytest.mark.asyncio
+async def test_logged_out(
+    mocked_async_session,
+    client: TestClient,
+    respx_mock: MockRouter,
+    withings_factories: tuple[UserFactory, WithingsUserFactory],
+):
+    """
+    Given a user whose access token is invalid
+    When we receive the callback from withings that a new weight is available
+    Then no weight is updated in the database
+    And a message is posted to slack about the user being logged out
+    """
+
+    user_factory, withings_user_factory = withings_factories
+
+    ctx_db.set(mocked_async_session)
+    # Given a user
+    user: User = user_factory(withings=None, slack_alias="jdoe")
+    db_withings_user: DbWithingsUser = withings_user_factory(
+        user_id=user.id,
+        last_weight=None,
+        oauth_access_token="some invalid access token",
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
+    )
+
+    # Mock withings endpoint to return an unauthorized error
+    withings_weight_request = respx_mock.post(
+        url=f"{settings.withings_base_url}measure",
+    ).mock(
+        return_value=Response(
+            status_code=200, json={"status": 100}  # TODO confirm code
+        )
+    )
+
+    # Mock an empty ok response from the slack webhook
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
+    )
+    # When we receive the callback from withings that a new weight is available
+    with client as client_ctx:
+        response = client_ctx.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    repo_user: withingsrepository.User = (
+        await withingsrepository.get_user_by_withings_userid(
+            mocked_async_session,
+            withings_userid=db_withings_user.oauth_userid,
+        )
+    )
+
+    # Then the access token is not refreshed.
+    assert withings_weight_request.call_count == 1
+    assert repo_user.oauth_data.oauth_access_token == "some invalid access token"
+
+    # And no new weight data is updated in the database
+    repo_fitness_data: withingsrepository.FitnessData = (
+        await withingsrepository.get_fitness_data_by_withings_userid(
+            db=mocked_async_session,
+            withings_userid=repo_user.identity.withings_userid,
+        )
+    )
+    assert repo_fitness_data.last_weight_kg is None
+
+    # And a message was sent to slack about the user being logged out
+    actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(
+        "\n", ""
+    )
+    assert re.search(
+        "Oh no <@jdoe>, looks like you were logged out of withings! 😳.", actual_message
+    )

@@ -375,3 +375,85 @@ async def test_login_success(
 
     assert repo_user.oauth_data.oauth_access_token == "some access token"
     assert repo_user.oauth_data.oauth_refresh_token == "some refresh token"
+
+
+@pytest.mark.asyncio
+async def test_logged_out(
+    mocked_async_session,
+    client: TestClient,
+    respx_mock: MockRouter,
+    fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+):
+    """
+    Given a user whose access token is invalid
+    When we receive the callback from fitbit that a new activity is available
+    Then no activity is updated in the database
+    And a message is posted to slack about the user being logged out
+    """
+
+    user_factory, fitbit_user_factory, _ = fitbit_factories
+
+    ctx_db.set(mocked_async_session)
+    activity_type_id = 55001
+
+    # Given a user
+    user: User = user_factory(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory(
+        user_id=user.id,
+        oauth_access_token="some invalid access token",
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
+    )
+
+    # Mock fitbit endpoint to return an unauthorized error
+    fitbit_activity_request = respx_mock.get(
+        url=f"{settings.fitbit_base_url}1/user/-/activities/list.json",
+    ).mock(Response(status_code=401))
+
+    # Mock an empty ok response from the slack webhook
+    slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(
+        return_value=Response(200)
+    )
+
+    # When we receive the callback from fitbit that a new activity is available
+    with client:
+        response = client.post(
+            "/fitbit-notification-webhook/",
+            content=json.dumps(
+                [
+                    {
+                        "ownerId": user.fitbit.oauth_userid,
+                        "date": "2023-05-12",
+                        "collectionType": "activities",
+                    }
+                ]
+            ),
+        )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
+        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
+    )
+
+    # Then the access token is not refreshed.
+    assert fitbit_activity_request.call_count == 1
+    assert repo_user.oauth_data.oauth_access_token == "some invalid access token"
+
+    # And no new activity data is updated in the database
+    repo_activity: fitbitrepository.Activity = (
+        await fitbitrepository.get_latest_activity_by_user_and_type(
+            db=mocked_async_session,
+            fitbit_userid=repo_user.identity.fitbit_userid,
+            type_id=activity_type_id,
+        )
+    )
+    assert repo_activity is None
+
+    # And a message was sent to slack about the user being logged out
+    actual_message = json.loads(slack_request.calls[0].request.content)["text"].replace(
+        "\n", ""
+    )
+    assert re.search(
+        "Oh no <@jdoe>, looks like you were logged out of fitbit! 😳.", actual_message
+    )

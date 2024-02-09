@@ -13,7 +13,7 @@ def fitbit_compliance_fix(session: AsyncOAuth2Client):
     def _fix_access_token_response(resp):
         data = resp.json()
         logging.info(f"Token response {data}")
-        if resp.status_code != status.HTTP_200_OK:
+        if is_auth_failure(resp):
             raise UserLoggedOutException
         data["userid"] = data["user_id"]
         resp.json = lambda: data
@@ -27,6 +27,10 @@ def fitbit_compliance_fix(session: AsyncOAuth2Client):
     )
 
 
+def is_auth_failure(response) -> bool:
+    return response.status_code != status.HTTP_200_OK
+
+
 def configure(update_token_callback: Callable[[dict[str, Any]], None]):
     oauth.register(
         name=settings.name,
@@ -37,5 +41,8 @@ def configure(update_token_callback: Callable[[dict[str, Any]], None]):
         compliance_fix=fitbit_compliance_fix,
         update_token=update_token_callback,
         token_endpoint_auth_method="client_secret_basic",
-        client_kwargs={"code_challenge_method": "S256"},
+        client_kwargs={
+            "code_challenge_method": "S256",
+            "is_auth_failure": is_auth_failure,
+        },
     )

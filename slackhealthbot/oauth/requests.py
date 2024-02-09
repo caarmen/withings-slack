@@ -3,6 +3,7 @@ from typing import Any
 import httpx
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
 
+from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth.config import oauth
 
@@ -31,6 +32,8 @@ async def get(
         params=params,
         token=asdict(token),
     )
+    if client.client_kwargs["is_auth_failure"](response):
+        raise UserLoggedOutException
     return response
 
 
@@ -51,4 +54,6 @@ async def post(
         data=data,
         token=asdict(token),
     )
+    if client.client_kwargs["is_auth_failure"](response):
+        raise UserLoggedOutException
     return response

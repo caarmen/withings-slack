@@ -110,8 +110,8 @@ async def fitbit_notification_webhook(
                     _mark_fitbit_notification_processed(notification)
         except UserLoggedOutException:
             await usecase_post_user_logged_out.do(
+                db=db,
                 fitbit_userid=notification.ownerId,
-                service="fitbit",
             )
             break
     return Response(status_code=status.HTTP_204_NO_CONTENT)
