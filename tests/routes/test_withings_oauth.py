@@ -158,12 +158,10 @@ async def test_refresh_token_fail(
         - datetime.timedelta(days=1),
     )
 
-    # Mock withings oauth refresh token success
+    # Mock withings oauth refresh token fail
     oauth_token_refresh_request = respx_mock.post(
         url=f"{settings.withings_base_url}v2/oauth2",
-    ).mock(
-        Response(status_code=200, json={"status": 100})  # TODO confirm code
-    )
+    ).mock(Response(status_code=200, json={"status": 401}))
 
     # Mock an empty ok response from the slack webhook
     slack_request = respx_mock.post(url=f"{settings.slack_webhook_url}").mock(
@@ -336,11 +334,7 @@ async def test_logged_out(
     # Mock withings endpoint to return an unauthorized error
     withings_weight_request = respx_mock.post(
         url=f"{settings.withings_base_url}measure",
-    ).mock(
-        return_value=Response(
-            status_code=200, json={"status": 100}  # TODO confirm code
-        )
-    )
+    ).mock(return_value=Response(status_code=200, json={"status": 401}))
 
     # Mock an empty ok response from the slack webhook
     slack_request = respx_mock.post(f"{settings.slack_webhook_url}").mock(

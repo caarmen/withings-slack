@@ -22,6 +22,7 @@ def withings_compliance_fix(session: AsyncOAuth2Client):
         logging.info(f"Token response {resp}")
         # https://developer.withings.com/api-reference/#section/Response-status
         if is_auth_failure(resp):
+            resp.status_code = 400
             raise UserLoggedOutException
         data = resp.json()
         resp.json = lambda: data["body"]
@@ -39,7 +40,12 @@ def withings_compliance_fix(session: AsyncOAuth2Client):
 
 
 def is_auth_failure(response) -> bool:
-    return response.json()["status"] != 0
+    status = response.json()["status"]
+    # https://developer.withings.com/api-reference/#tag/response_status
+    if status != 0:
+        logging.warning(f"Auth failure {response.json()}")
+        return True
+    return False
 
 
 def configure(update_token_callback: Callable[[dict[str, Any]], None]):
