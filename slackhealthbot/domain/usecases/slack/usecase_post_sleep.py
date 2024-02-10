@@ -11,6 +11,25 @@ async def do(
     new_sleep_data: SleepData,
     last_sleep_data: SleepData,
 ):
+    message = create_message(
+        slack_alias=slack_alias,
+        new_sleep_data=new_sleep_data,
+        last_sleep_data=last_sleep_data,
+    )
+    async with httpx.AsyncClient() as client:
+        await client.post(
+            url=str(settings.slack_webhook_url),
+            json={
+                "text": message,
+            },
+        )
+
+
+def create_message(
+    slack_alias: str,
+    new_sleep_data: SleepData,
+    last_sleep_data: SleepData,
+):
     if last_sleep_data:
         start_time_icon = get_datetime_change_icon(
             last_datetime=last_sleep_data.start_time,
@@ -29,20 +48,13 @@ async def do(
     else:
         start_time_icon = end_time_icon = sleep_minutes_icon = wake_minutes_icon = ""
 
-    message = f"""
+    return f"""
     New sleep from <@{slack_alias}>: 
     • Went to bed at {format_time(new_sleep_data.start_time)} {start_time_icon}
     • Woke up at {format_time(new_sleep_data.end_time)} {end_time_icon}
     • Total sleep: {format_minutes(new_sleep_data.sleep_minutes)} {sleep_minutes_icon}
     • Awake: {format_minutes(new_sleep_data.wake_minutes)} {wake_minutes_icon}
     """.strip()
-    async with httpx.AsyncClient() as client:
-        await client.post(
-            url=str(settings.slack_webhook_url),
-            json={
-                "text": message,
-            },
-        )
 
 
 def get_datetime_change_icon(
