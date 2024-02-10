@@ -262,26 +262,6 @@ async def create_activity_for_user(
     await db.commit()
 
 
-async def update_activity(
-    db: AsyncSession,
-    activity: Activity,
-):
-    await db.execute(
-        statement=update(models.FitbitActivity)
-        .where(models.FitbitActivity.log_id == activity.log_id)
-        .values(
-            type_id=activity.type_id,
-            total_minutes=activity.total_minutes,
-            calories=activity.calories,
-            fat_burn_minutes=activity.fat_burn_minutes,
-            cardio_minutes=activity.cardio_minutes,
-            peak_minutes=activity.peak_minutes,
-            out_of_range_minutes=activity.out_of_range_minutes,
-        )
-    )
-    await db.commit()
-
-
 async def update_sleep_for_user(
     db: AsyncSession,
     fitbit_userid: str,
