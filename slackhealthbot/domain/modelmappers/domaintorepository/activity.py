@@ -3,10 +3,8 @@ from slackhealthbot.domain.models.activity import ActivityData
 
 
 def domain_activity_to_repository_activity(
-    domain: ActivityData | None,
-) -> fitbitrepository.Activity | None:
-    if not domain:
-        return None
+    domain: ActivityData,
+) -> fitbitrepository.Activity:
     return fitbitrepository.Activity(
         log_id=domain.log_id,
         total_minutes=domain.total_minutes,
