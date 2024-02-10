@@ -11,7 +11,7 @@ from slackhealthbot.data.database.models import (
     WithingsUser,
 )
 from slackhealthbot.data.repositories import fitbitrepository, withingsrepository
-from tests.factories.factories import (
+from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,

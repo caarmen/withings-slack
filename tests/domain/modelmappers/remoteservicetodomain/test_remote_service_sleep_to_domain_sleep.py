@@ -49,7 +49,10 @@ from slackhealthbot.remoteservices.fitbit.sleepapi import FitbitSleep
 )
 def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
     input_file = (
-        Path(os.path.abspath(__file__)).parent.parent.parent / "data" / input_filename
+        Path(os.path.abspath(__file__)).parent.parent.parent.parent
+        / "testsupport"
+        / "fixtures"
+        / input_filename
     )
     with open(input_file) as input:
         api_data: FitbitSleep = FitbitSleep.parse(input=input.read())

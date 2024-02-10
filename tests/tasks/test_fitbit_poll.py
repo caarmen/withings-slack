@@ -11,12 +11,12 @@ from slackhealthbot.data.database.models import FitbitUser, User
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.settings import settings
 from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
-from tests.factories.factories import (
+from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
 )
-from tests.fixtures.fitbit_scenarios import (
+from tests.testsupport.fixtures.fitbit_scenarios import (
     FitbitActivityScenario,
     FitbitSleepScenario,
     activity_scenarios,

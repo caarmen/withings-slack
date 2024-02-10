@@ -13,7 +13,7 @@ from slackhealthbot.data.database.models import User
 from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
 from slackhealthbot.data.repositories import withingsrepository
 from slackhealthbot.settings import settings
-from tests.factories.factories import UserFactory, WithingsUserFactory
+from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
 
 
 @dataclasses.dataclass

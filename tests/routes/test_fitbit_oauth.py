@@ -15,12 +15,12 @@ from slackhealthbot.data.database.connection import ctx_db
 from slackhealthbot.data.database.models import FitbitUser, User
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.settings import settings
-from tests.factories.factories import (
+from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
 )
-from tests.fixtures.fitbit_scenarios import activity_scenarios
+from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
 
 
 @pytest.mark.asyncio

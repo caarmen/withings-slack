@@ -12,12 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from slackhealthbot.data.database.models import FitbitUser, User
 from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.settings import settings
-from tests.factories.factories import (
+from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
 )
-from tests.fixtures.fitbit_scenarios import (
+from tests.testsupport.fixtures.fitbit_scenarios import (
     FitbitActivityScenario,
     FitbitSleepScenario,
     activity_scenarios,
