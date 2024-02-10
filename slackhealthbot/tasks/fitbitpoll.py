@@ -49,15 +49,14 @@ async def handle_fail_poll(
         cache.cache_fail[fitbit_userid] = when
 
 
-async def fitbit_poll(cache: Cache):
+async def fitbit_poll(cache: Cache, db: AsyncSession | None = None):
     logging.info("fitbit poll")
     today = datetime.date.today()
     try:
-        async with SessionLocal() as db:
-            await do_poll(db, cache, when=today)
+        async with (SessionLocal() if not db else db) as session:
+            await do_poll(session, cache, when=today)
     except Exception:
         logging.error("Error polling fitbit", exc_info=True)
-    await schedule_fitbit_poll(cache=cache)
 
 
 async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
@@ -135,9 +134,17 @@ async def fitbit_poll_sleep(
 
 
 async def schedule_fitbit_poll(
-    delay_s: int = settings.fitbit_poll_interval_s, cache: Cache = None
+    initial_delay_s: int = settings.fitbit_poll_interval_s,
+    cache: Cache = None,
+    db: AsyncSession | None = None,
 ):
     if cache is None:
         cache = Cache()
-    loop = asyncio.get_event_loop()
-    loop.call_later(float(delay_s), asyncio.create_task, fitbit_poll(cache))
+
+    async def run_with_delay():
+        await asyncio.sleep(initial_delay_s)
+        while True:
+            await fitbit_poll(cache, db=db)
+            await asyncio.sleep(settings.fitbit_poll_interval_s)
+
+    return asyncio.create_task(run_with_delay())

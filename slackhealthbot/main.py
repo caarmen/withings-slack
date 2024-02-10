@@ -25,11 +25,14 @@ from slackhealthbot.tasks import fitbitpoll
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     logger.update_external_loggers()
-    if settings.fitbit_poll_enabled:
-        await fitbitpoll.schedule_fitbit_poll(delay_s=10)
     oauth_withings.configure(withings_usecase_update_user_oauth)
     oauth_fitbit.configure(fitbit_usecase_update_user_oauth)
+    schedule_task = None
+    if settings.fitbit_poll_enabled:
+        schedule_task = await fitbitpoll.schedule_fitbit_poll(initial_delay_s=10)
     yield
+    if schedule_task:
+        schedule_task.cancel()
 
 
 app = FastAPI(
