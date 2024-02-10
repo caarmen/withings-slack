@@ -19,11 +19,11 @@ def withings_compliance_fix(session: AsyncOAuth2Client):
         return url, headers, body
 
     def _fix_access_token_response(resp):
-        data = resp.json()
-        logging.info(f"Token response {data}")
+        logging.info(f"Token response {resp}")
         # https://developer.withings.com/api-reference/#section/Response-status
         if is_auth_failure(resp):
             raise UserLoggedOutException
+        data = resp.json()
         resp.json = lambda: data["body"]
         return resp
 

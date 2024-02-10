@@ -11,10 +11,10 @@ from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 def fitbit_compliance_fix(session: AsyncOAuth2Client):
     def _fix_access_token_response(resp):
-        data = resp.json()
-        logging.info(f"Token response {data}")
+        logging.info(f"Token response {resp}")
         if is_auth_failure(resp):
             raise UserLoggedOutException
+        data = resp.json()
         data["userid"] = data["user_id"]
         resp.json = lambda: data
         return resp
