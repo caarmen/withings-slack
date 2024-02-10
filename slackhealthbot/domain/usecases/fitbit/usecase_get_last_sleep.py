@@ -15,12 +15,14 @@ async def do(
     fitbit_userid: str,
     when: datetime.date,
 ) -> SleepData | None:
-    user: fitbitrepository.User = await fitbitrepository.get_user_by_fitbit_userid(
-        db,
-        fitbit_userid=fitbit_userid,
+    oauth_data: fitbitrepository.OAuthData = (
+        await fitbitrepository.get_oauth_data_by_fitbit_userid(
+            db,
+            fitbit_userid=fitbit_userid,
+        )
     )
     last_sleep: sleepapi.FitbitSleep = await sleepapi.get_sleep(
-        oauth_token=user.oauth_data,
+        oauth_token=oauth_data,
         when=when,
     )
     return remote_service_sleep_to_domain_sleep(last_sleep)
