@@ -1,7 +1,5 @@
-import httpx
-
 from slackhealthbot.domain.models.activity import ActivityHistory, ActivityZone
-from slackhealthbot.settings import settings
+from slackhealthbot.remoteservices.slack import messageapi
 
 
 async def do(
@@ -46,13 +44,7 @@ New {activity.name} activity from <@{slack_alias}>:
             for zone_minutes in activity.zone_minutes
         ]
     )
-    async with httpx.AsyncClient() as client:
-        await client.post(
-            url=str(settings.slack_webhook_url),
-            json={
-                "text": message.strip(),
-            },
-        )
+    await messageapi.post_message(message.strip())
 
 
 def format_activity_zone(activity_zone: ActivityZone) -> str:

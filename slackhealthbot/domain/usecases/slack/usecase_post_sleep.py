@@ -1,9 +1,7 @@
 import datetime
 
-import httpx
-
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.settings import settings
+from slackhealthbot.remoteservices.slack import messageapi
 
 
 async def do(
@@ -16,13 +14,7 @@ async def do(
         new_sleep_data=new_sleep_data,
         last_sleep_data=last_sleep_data,
     )
-    async with httpx.AsyncClient() as client:
-        await client.post(
-            url=str(settings.slack_webhook_url),
-            json={
-                "text": message,
-            },
-        )
+    await messageapi.post_message(message)
 
 
 def create_message(

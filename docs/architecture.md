@@ -55,6 +55,7 @@ graph TD
     subgraph RemoteServices[Remote services]
         FitbitApis
         WithingsApis
+        SlackApis
     end
     subgraph Core
         CoreModels[Models]

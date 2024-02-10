@@ -1,7 +1,5 @@
-import httpx
-
 from slackhealthbot.domain.models.weight import WeightData
-from slackhealthbot.settings import settings
+from slackhealthbot.remoteservices.slack import messageapi
 
 
 async def do(weight_data: WeightData):
@@ -10,13 +8,7 @@ async def do(weight_data: WeightData):
         f"New weight from <@{weight_data.slack_alias}>: "
         + f"{weight_data.weight_kg:.2f} kg. {icon}"
     )
-    async with httpx.AsyncClient() as client:
-        await client.post(
-            url=str(settings.slack_webhook_url),
-            json={
-                "text": message,
-            },
-        )
+    await messageapi.post_message(message)
 
 
 WEIGHT_CHANGE_KG_SMALL = 0.1
