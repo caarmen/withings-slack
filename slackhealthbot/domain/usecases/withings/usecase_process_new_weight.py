@@ -12,7 +12,15 @@ async def do(
     startdate: int,
     enddate: int,
 ):
-    weight_data: WeightData = await usecase_get_last_weight.do(
+    user: withingsrepository.User = (
+        await withingsrepository.get_user_by_withings_userid(
+            db,
+            withings_userid=withings_userid,
+        )
+    )
+    previous_weight_kg: float = user.fitness_data.last_weight_kg
+
+    new_weight_kg: float = await usecase_get_last_weight.do(
         db=db,
         withings_userid=withings_userid,
         startdate=startdate,
@@ -21,6 +29,12 @@ async def do(
     await withingsrepository.update_user_weight(
         db=db,
         withings_userid=withings_userid,
-        last_weight_kg=weight_data.weight_kg,
+        last_weight_kg=new_weight_kg,
     )
-    await usecase_post_weight.do(weight_data)
+    await usecase_post_weight.do(
+        WeightData(
+            weight_kg=new_weight_kg,
+            slack_alias=user.identity.slack_alias,
+            last_weight_kg=previous_weight_kg,
+        )
+    )
