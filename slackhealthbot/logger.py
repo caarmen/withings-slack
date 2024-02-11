@@ -2,6 +2,7 @@
 Middleware which adds a correlation id to the response headers and logs.
 See https://github.com/tiangolo/fastapi/discussions/8190
 """
+
 import copy
 import logging
 from contextvars import ContextVar
