@@ -78,4 +78,5 @@ graph TD
     RemoteServices-->Core
     RemoteServices-->OAuth
     Routes-->OAuth
+    OAuth-->Core
 ```
