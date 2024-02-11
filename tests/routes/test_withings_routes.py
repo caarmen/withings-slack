@@ -9,11 +9,11 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.database import crud
-from slackhealthbot.database.connection import ctx_db
-from slackhealthbot.database.models import User, WithingsUser
+from slackhealthbot.data.database.models import User
+from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
+from slackhealthbot.data.repositories import withingsrepository
 from slackhealthbot.settings import settings
-from tests.factories.factories import UserFactory, WithingsUserFactory
+from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
 
 
 @dataclasses.dataclass
@@ -54,15 +54,12 @@ async def test_weight_notification(
 
     # Given a user
     user: User = user_factory(withings=None)
-    withings_user: WithingsUser = withings_user_factory(
+    db_withings_user: DbWithingsUser = withings_user_factory(
         user_id=user.id,
         last_weight=scenario.input_initial_weight,
-        oauth_expiration_date=datetime.datetime.utcnow() + datetime.timedelta(days=1),
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
-    db_user = await crud.get_user(
-        mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
-    )
-    db_withings_user = db_user.withings
     # The user has the previous weight logged
     assert db_withings_user.last_weight == scenario.input_initial_weight
 
@@ -96,20 +93,29 @@ async def test_weight_notification(
     )
 
     # When we receive the callback from withings that a new weight is available
-    response = client.post(
-        "/withings-notification-webhook/",
-        data={
-            "userid": withings_user.oauth_userid,
-            "startdate": 1683894606,
-            "enddate": 1686570821,
-        },
-    )
+    # Use the client as a context manager so the app can have its lfespan events triggered.
+    # https://fastapi.tiangolo.com/advanced/testing-events/
+    with client:
+        response = client.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last_weight is updated in the database
+    fitness_data: withingsrepository.FitnessData = (
+        await withingsrepository.get_fitness_data_by_withings_userid(
+            mocked_async_session,
+            withings_userid=db_withings_user.oauth_userid,
+        )
+    )
     assert math.isclose(
-        db_user.withings.last_weight, scenario.expected_new_latest_weight_kg
+        fitness_data.last_weight_kg, scenario.expected_new_latest_weight_kg
     )
 
     # And the message is sent to slack as expected
@@ -118,54 +124,35 @@ async def test_weight_notification(
 
 
 @pytest.mark.asyncio
-async def test_refresh_token(
+async def test_duplicate_weight_notification(
     mocked_async_session,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
 ):
     """
-    Given a user whose access token is expired
-    When we receive the callback from withings that a new weight is available
-    Then the access token is refreshed
-    And the latest weight is updated in the database
-    And the message is posted to slack with the correct pattern.
+    Given a user with a given previous weight logged
+    When we receive the callback twice from withings that a new weight is available
+    Then the last_weight is updated in the database
+    And the message is posted to slack only once
     """
+
     user_factory, withings_user_factory = withings_factories
 
-    ctx_db.set(mocked_async_session)
     # Given a user
     user: User = user_factory(withings=None)
-    withings_user: WithingsUser = withings_user_factory(
+    db_withings_user: DbWithingsUser = withings_user_factory(
         user_id=user.id,
         last_weight=50.2,
-        oauth_access_token="some old access token",
-        oauth_expiration_date=datetime.datetime.utcnow() - datetime.timedelta(days=1),
-    )
-
-    # Mock withings oauth refresh token success
-    oauth_token_refresh_request = respx_mock.post(
-        url=f"{settings.withings_base_url}v2/oauth2",
-    ).mock(
-        Response(
-            status_code=200,
-            json={
-                "status": 0,
-                "body": {
-                    "userid": user.withings.oauth_userid,
-                    "access_token": "some new access token",
-                    "refresh_token": "some new refresh token",
-                    "expires_in": 600,
-                },
-            },
-        )
+        oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(days=1),
     )
 
     # Mock withings endpoint to return some weight data
-    withings_weight_request = respx_mock.post(
+    weight_request = respx_mock.post(
         url=f"{settings.withings_base_url}measure",
     ).mock(
-        Response(
+        return_value=Response(
             status_code=200,
             json={
                 "status": 0,
@@ -182,7 +169,7 @@ async def test_refresh_token(
                     ],
                 },
             },
-        ),
+        )
     )
 
     # Mock an empty ok response from the slack webhook
@@ -191,33 +178,47 @@ async def test_refresh_token(
     )
 
     # When we receive the callback from withings that a new weight is available
-    response = client.post(
-        "/withings-notification-webhook/",
-        data={
-            "userid": withings_user.oauth_userid,
-            "startdate": 1683894606,
-            "enddate": 1686570821,
-        },
-    )
+    # Use the client as a context manager so the app can have its lfespan events triggered.
+    # https://fastapi.tiangolo.com/advanced/testing-events/
+    with client:
+        response = client.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    db_user = await crud.get_user(
-        db=mocked_async_session, withings_oauth_userid=withings_user.oauth_userid
+    # Then the last_weight is updated in the database
+    assert weight_request.call_count == 1
+    fitness_data: withingsrepository.FitnessData = (
+        await withingsrepository.get_fitness_data_by_withings_userid(
+            mocked_async_session,
+            withings_userid=db_withings_user.oauth_userid,
+        )
     )
-    # Then the access token is refreshed.
-    assert withings_weight_request.call_count == 1
-    assert (
-        withings_weight_request.calls[0].request.headers["authorization"]
-        == "Bearer some new access token"
-    )
-    assert oauth_token_refresh_request.call_count == 1
-    assert db_user.withings.oauth_access_token == "some new access token"
-    assert db_user.withings.oauth_refresh_token == "some new refresh token"
-
-    # And the last_weight is updated in the database
-    assert math.isclose(db_user.withings.last_weight, 50.05)
+    assert math.isclose(fitness_data.last_weight_kg, 50.05)
 
     # And the message is sent to slack as expected
+    assert slack_request.call_count == 1
     actual_message = json.loads(slack_request.calls[0].request.content)["text"]
     assert "↘️" in actual_message
+
+    # When we receive the callback a second time from withings
+    with client:
+        response = client.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": db_withings_user.oauth_userid,
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    # Then we don't post to stack a second time
+    assert weight_request.call_count == 1
+    assert slack_request.call_count == 1

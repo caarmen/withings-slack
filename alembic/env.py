@@ -5,8 +5,8 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from slackhealthbot.database import models as db_models
-from slackhealthbot.database.connection import connection_url
+from slackhealthbot.data.database import models as db_models
+from slackhealthbot.data.database.connection import connection_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

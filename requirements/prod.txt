@@ -10,3 +10,4 @@ python-multipart==0.0.6
 httpx==0.26.0
 uvicorn==0.26.0
 itsdangerous==2.1.2
+Jinja2==3.1.3

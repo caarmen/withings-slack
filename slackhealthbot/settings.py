@@ -1,7 +1,25 @@
+import dataclasses
 from pathlib import Path
 
 from pydantic import AnyHttpUrl, HttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+@dataclasses.dataclass
+class WithingsOAuthSettings:
+    name = "withings"
+    base_url: str
+    oauth_scopes: list[str]
+    callback_url: str
+    redirect_uri: str
+
+
+@dataclasses.dataclass
+class FitbitOAuthSettings:
+    name = "fitbit"
+    base_url: str
+    oauth_scopes: list[str]
+    subscriber_verification_code: str
 
 
 class Settings(BaseSettings):
@@ -31,8 +49,23 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     @property
-    def withings_redirect_uri(self) -> str:
-        return f"{self.withings_callback_url}withings-oauth-webhook/"
+    def withings_oauth_settings(self):
+        return WithingsOAuthSettings(
+            base_url=self.withings_base_url,
+            oauth_scopes=self.withings_oauth_scopes,
+            callback_url=self.withings_callback_url,
+            redirect_uri=f"{self.withings_callback_url}withings-oauth-webhook/",
+        )
+
+    @property
+    def fitbit_oauth_settings(self):
+        return FitbitOAuthSettings(
+            base_url=self.fitbit_base_url,
+            oauth_scopes=self.fitbit_oauth_scopes,
+            subscriber_verification_code=self.fitbit_client_subscriber_verification_code,
+        )
 
 
 settings = Settings()
+withings_oauth_settings = settings.withings_oauth_settings
+fitbit_oauth_settings = settings.fitbit_oauth_settings

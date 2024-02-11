@@ -5,9 +5,10 @@ from pytest_factoryboy import register
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm.session import Session
 
-from slackhealthbot.database.models import Base
-from slackhealthbot.main import app, get_db
-from tests.factories.factories import (
+from slackhealthbot.data.database.models import Base
+from slackhealthbot.main import app
+from slackhealthbot.routers.dependencies import get_db
+from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
     UserFactory,
