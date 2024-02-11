@@ -1,6 +1,6 @@
 # slack-health-bot: Slack notifications for limited Withings and Fitbit data
 
-Pushes messages to a pre-selected Slack channel, when users log new weight data in Withings or new sleep data in Fitbit.
+Pushes messages to a pre-selected Slack channel, when users log new weight data in Withings or new sleep or activity data in Fitbit.
 
 [![GitHub Workflow Status (with branch)](https://img.shields.io/github/actions/workflow/status/caarmen/slack-health-bot/check.yml)](https://github.com/caarmen/slack-health-bot/actions/workflows/check.yml?query=branch%3Amain)
 [![GitHub](https://img.shields.io/github/license/caarmen/slack-health-bot)](https://github.com/caarmen/slack-health-bot/blob/main/LICENSE)
@@ -64,8 +64,9 @@ curl --location 'http://your-server/withings-notification-webhook/' \
   - Change `your-server` with the address on which the server is available.
   - Change `your-slack-alias` with your slack username.
 * Authorize the app in the Fitbit screen.
-* Log a new sleep measurement in your Fitbit account.
-  - After the polling period, you should see a message in the configured slack channel saying:
+* Log a new sleep measurement or activity in your Fitbit account.
+  - After the polling period (if polling is enabled), or after a the webhook is called,
+    you should see a message in the configured slack channel saying (for the sleep example):
     > New sleep from @`your-slack-alias`:
     >
     > • Went to bed at 22:17
