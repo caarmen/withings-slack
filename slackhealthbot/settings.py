@@ -45,6 +45,7 @@ class Settings(BaseSettings):
         # 90001,  # Bike
         # 1071,   # Outdoor Bike
     ]
+    fitbit_activity_record_history_days: int = 180
     slack_webhook_url: HttpUrl
     model_config = SettingsConfigDict(env_file=".env")
 
