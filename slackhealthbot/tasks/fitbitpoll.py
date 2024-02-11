@@ -53,16 +53,16 @@ async def fitbit_poll(cache: Cache, db: AsyncSession | None = None):
     logging.info("fitbit poll")
     today = datetime.date.today()
     try:
-        async with (SessionLocal() if not db else db) as session:
+        async with SessionLocal() if not db else db as session:
             await do_poll(session, cache, when=today)
     except Exception:
         logging.error("Error polling fitbit", exc_info=True)
 
 
 async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
-    user_identities: list[
-        UserIdentity
-    ] = await fitbitrepository.get_all_user_identities(db)
+    user_identities: list[UserIdentity] = (
+        await fitbitrepository.get_all_user_identities(db)
+    )
     for user_identity in user_identities:
         await fitbit_poll_sleep(
             db,
