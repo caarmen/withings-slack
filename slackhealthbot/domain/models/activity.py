@@ -1,5 +1,17 @@
 import dataclasses
-from enum import StrEnum, auto
+from enum import Enum, StrEnum, auto
+
+
+class Ranking(Enum):
+    ALL_TIME_TOP = auto()
+    RECENT_TOP = auto()
+    NONE = auto()
+
+
+@dataclasses.dataclass
+class Metric:
+    value: int
+    ranking: Ranking
 
 
 class ActivityZone(StrEnum):
@@ -12,7 +24,7 @@ class ActivityZone(StrEnum):
 @dataclasses.dataclass
 class ActivityZoneMinutes:
     zone: ActivityZone
-    minutes: int
+    minutes: Metric
 
 
 @dataclasses.dataclass
@@ -20,8 +32,8 @@ class ActivityData:
     log_id: int
     type_id: int
     name: str
-    total_minutes: int
-    calories: int
+    total_minutes: Metric
+    calories: Metric
     zone_minutes: list[ActivityZoneMinutes]
 
 
