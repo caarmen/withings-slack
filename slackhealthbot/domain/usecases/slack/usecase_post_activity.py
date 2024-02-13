@@ -48,7 +48,7 @@ New {activity.name} activity from <@{slack_alias}>:
 
 
 def format_activity_zone(activity_zone: ActivityZone) -> str:
-    return activity_zone.name.capitalize().replace("_", " ")
+    return activity_zone.capitalize().replace("_", " ")
 
 
 ACTIVITY_DURATION_MINUTES_CHANGE_SMALL = 2

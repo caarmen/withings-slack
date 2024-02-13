@@ -1,8 +1,6 @@
 import dataclasses
 from enum import StrEnum, auto
 
-from pydantic import BaseModel
-
 
 class ActivityZone(StrEnum):
     PEAK = auto()
@@ -11,12 +9,14 @@ class ActivityZone(StrEnum):
     OUT_OF_RANGE = auto()
 
 
-class ActivityZoneMinutes(BaseModel):
+@dataclasses.dataclass
+class ActivityZoneMinutes:
     zone: ActivityZone
     minutes: int
 
 
-class ActivityData(BaseModel):
+@dataclasses.dataclass
+class ActivityData:
     log_id: int
     type_id: int
     name: str
