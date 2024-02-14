@@ -8,6 +8,7 @@ from slackhealthbot.domain.modelmappers.domaintorepository.activity import (
 )
 from slackhealthbot.domain.modelmappers.repositorytodomain.activity import (
     repository_activity_to_domain_activity,
+    repository_top_activity_stats_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData, ActivityHistory
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
@@ -49,12 +50,29 @@ async def do(
             type_id=new_activity_data.type_id,
         )
     )
+
     await fitbitrepository.create_activity_for_user(
         db=db,
         fitbit_userid=fitbit_userid,
         activity=domain_activity_to_repository_activity(
             new_activity_data,
         ),
+    )
+    all_time_top_activity_stats: fitbitrepository.TopActivityStats = (
+        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
+            db=db,
+            fitbit_userid=fitbit_userid,
+            type_id=new_activity_data.type_id,
+        )
+    )
+    recent_top_activity_stats: fitbitrepository.TopActivityStats = (
+        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
+            db=db,
+            fitbit_userid=fitbit_userid,
+            type_id=new_activity_data.type_id,
+            since=datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(days=settings.fitbit_activity_record_history_days),
+        )
     )
     await usecase_post_activity.do(
         slack_alias=user_identity.slack_alias,
@@ -64,7 +82,16 @@ async def do(
                 new_activity_data.name,
             ),
             new_activity_data=new_activity_data,
+            all_time_top_activity_data=repository_top_activity_stats_to_domain_activity(
+                all_time_top_activity_stats,
+                new_activity_data.name,
+            ),
+            recent_top_activity_data=repository_top_activity_stats_to_domain_activity(
+                recent_top_activity_stats,
+                new_activity_data.name,
+            ),
         ),
+        record_history_days=settings.fitbit_activity_record_history_days,
     )
 
     return new_activity_data
