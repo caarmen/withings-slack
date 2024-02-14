@@ -7,6 +7,15 @@ async def do(
     activity_history: ActivityHistory,
     record_history_days: int,
 ):
+    message = create_message(slack_alias, activity_history, record_history_days)
+    await messageapi.post_message(message.strip())
+
+
+def create_message(
+    slack_alias: str,
+    activity_history: ActivityHistory,
+    record_history_days: int,
+):
     activity = activity_history.new_activity_data
     zone_icons = {}
     zone_record_texts = {}
@@ -82,7 +91,7 @@ New {activity.name} activity from <@{slack_alias}>:
             for zone_minutes in activity.zone_minutes
         ]
     )
-    await messageapi.post_message(message.strip())
+    return message
 
 
 def format_activity_zone(activity_zone: ActivityZone) -> str:
