@@ -1,9 +1,4 @@
-from slackhealthbot.domain.models.activity import (
-    ActivityHistory,
-    ActivityZone,
-    Metric,
-    Ranking,
-)
+from slackhealthbot.domain.models.activity import ActivityHistory, ActivityZone
 from slackhealthbot.remoteservices.slack import messageapi
 
 
@@ -15,39 +10,37 @@ async def do(
     zone_icons = {}
     if activity_history.latest_activity_data:
         duration_icon = get_activity_minutes_change_icon(
-            activity.total_minutes.value
-            - activity_history.latest_activity_data.total_minutes.value,
+            activity.total_minutes
+            - activity_history.latest_activity_data.total_minutes,
         )
         calories_icon = get_activity_calories_change_icon(
-            activity.calories.value
-            - activity_history.latest_activity_data.calories.value,
+            activity.calories - activity_history.latest_activity_data.calories,
         )
         for zone_minutes in activity.zone_minutes:
             last_zone_minutes = next(
                 (
-                    x.minutes.value
+                    x.minutes
                     for x in activity_history.latest_activity_data.zone_minutes
                     if x.zone == zone_minutes.zone
                 ),
                 0,
             )
             zone_icons[zone_minutes.zone] = get_activity_minutes_change_icon(
-                zone_minutes.minutes.value - last_zone_minutes
+                zone_minutes.minutes - last_zone_minutes
             )
 
     else:
         duration_icon = calories_icon = ""
     message = f"""
 New {activity.name} activity from <@{slack_alias}>:
-    • Duration: {activity.total_minutes.value} minutes {duration_icon} {get_ranking_text(activity.total_minutes)}
-    • Calories: {activity.calories.value} {calories_icon} {get_ranking_text(activity.calories)}
+    • Duration: {activity.total_minutes} minutes {duration_icon}
+    • Calories: {activity.calories} {calories_icon}
 """
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
-            + f" minutes: {zone_minutes.minutes.value} "
+            + f" minutes: {zone_minutes.minutes} "
             + zone_icons.get(zone_minutes.zone, "")
-            + get_ranking_text(zone_minutes.minutes)
             for zone_minutes in activity.zone_minutes
         ]
     )
@@ -88,11 +81,3 @@ def get_activity_calories_change_icon(calories_change: int) -> str:
     if calories_change < -CALORIES_CHANGE_SMALL:
         return "↘️"
     return "➡️"
-
-
-def get_ranking_text(metric: Metric) -> str:
-    if metric.ranking == Ranking.ALL_TIME_TOP:
-        return "New all-time recod! 🏆"
-    if metric.ranking == Ranking.RECENT_TOP:
-        return "New record! 🏆"  # TODO (x days)
-    return ""

@@ -7,8 +7,8 @@ def domain_activity_to_repository_activity(
 ) -> fitbitrepository.Activity:
     return fitbitrepository.Activity(
         log_id=domain.log_id,
-        total_minutes=domain.total_minutes.value,
-        calories=domain.calories.value,
+        total_minutes=domain.total_minutes,
+        calories=domain.calories,
         type_id=domain.type_id,
-        **{f"{x.zone}_minutes": x.minutes.value for x in domain.zone_minutes},
+        **{f"{x.zone}_minutes": x.minutes for x in domain.zone_minutes},
     )

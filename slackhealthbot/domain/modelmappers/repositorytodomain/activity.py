@@ -3,8 +3,6 @@ from slackhealthbot.domain.models.activity import (
     ActivityData,
     ActivityZone,
     ActivityZoneMinutes,
-    Metric,
-    Ranking,
 )
 
 
@@ -18,12 +16,12 @@ def repository_activity_to_domain_activity(
         log_id=repo.log_id,
         type_id=repo.type_id,
         name=name,
-        calories=Metric(repo.calories, Ranking.NONE),
-        total_minutes=Metric(repo.total_minutes, Ranking.NONE),
+        calories=repo.calories,
+        total_minutes=repo.total_minutes,
         zone_minutes=[
             ActivityZoneMinutes(
                 zone=x,
-                minutes=Metric(getattr(repo, f"{x}_minutes"), Ranking.NONE),
+                minutes=getattr(repo, f"{x}_minutes"),
             )
             for x in ActivityZone
             if getattr(repo, f"{x}_minutes")
