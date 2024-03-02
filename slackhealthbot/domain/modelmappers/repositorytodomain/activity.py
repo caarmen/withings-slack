@@ -27,3 +27,24 @@ def repository_activity_to_domain_activity(
             if getattr(repo, f"{x}_minutes")
         ],
     )
+
+
+def repository_top_activity_stats_to_domain_activity(
+    repo: fitbitrepository.TopActivityStats,
+    name: str,
+) -> ActivityData:
+    return ActivityData(
+        log_id=-1,
+        type_id=-1,
+        name=name,
+        calories=repo.top_calories,
+        total_minutes=repo.top_total_minutes,
+        zone_minutes=[
+            ActivityZoneMinutes(
+                zone=x,
+                minutes=getattr(repo, f"top_{x}_minutes"),
+            )
+            for x in ActivityZone
+            if hasattr(repo, f"top_{x}_minutes") and getattr(repo, f"top_{x}_minutes")
+        ],
+    )

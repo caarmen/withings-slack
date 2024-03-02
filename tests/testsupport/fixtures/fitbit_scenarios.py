@@ -311,7 +311,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1234,
-        expected_message_pattern="New Spinning activity.*Fat burn.*8",
+        expected_message_pattern="New Spinning activity.*Fat burn.*8.*New all-time record",
     ),
     "New Spinning activity, partial zones": FitbitActivityScenario(
         input_initial_activity_data={
@@ -356,7 +356,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern=(
-            "New Spinning activity.*⬇️.*⬆️.*Fat burn.*8.*➡.*Cardio.*9.*↘️"
+            "New Spinning activity.*⬇️ New record.*⬆️ New all-time record.*Fat burn.*8.*➡.*New all-time record.*Cardio.*9.*↘️ New record"
         ),
     ),
     "New Spinning activity, full zones": FitbitActivityScenario(
@@ -403,8 +403,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
-        expected_message_pattern="New Spinning activity.*↗️.*➡️.*"
-        + "Fat burn.*12.*⬆️.*Cardio.*9.*⬇️.*Out of range.*10.*↗️.*Peak.*11.*⬆️",
+        expected_message_pattern="New Spinning activity.*↗️ New all-time record.*➡️ New all-time record.*"
+        + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New all-time record",
     ),
     "New unrecognized activity": FitbitActivityScenario(
         input_initial_activity_data={

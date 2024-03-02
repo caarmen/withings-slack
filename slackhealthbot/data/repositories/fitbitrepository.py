@@ -1,7 +1,7 @@
 import dataclasses
 import datetime
 
-from sqlalchemy import and_, desc, select, update
+from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.database import models
@@ -44,6 +44,15 @@ class Sleep:
     end_time: datetime.datetime
     sleep_minutes: int
     wake_minutes: int
+
+
+@dataclasses.dataclass
+class TopActivityStats:
+    top_calories: int | None
+    top_total_minutes: int | None
+    top_fat_burn_minutes: int | None
+    top_cardio_minutes: int | None
+    top_peak_minutes: int | None
 
 
 async def create_user(
@@ -315,3 +324,37 @@ async def update_oauth_data(
         )
     )
     await db.commit()
+
+
+async def get_top_activity_stats_by_user_and_activity_type(
+    db: AsyncSession,
+    fitbit_userid: str,
+    type_id: int,
+    since: datetime.datetime | None = None,
+) -> TopActivityStats:
+
+    columns = [
+        models.FitbitActivity.calories,
+        models.FitbitActivity.total_minutes,
+        models.FitbitActivity.fat_burn_minutes,
+        models.FitbitActivity.cardio_minutes,
+        models.FitbitActivity.peak_minutes,
+    ]
+    conditions = [
+        models.FitbitUser.oauth_userid == fitbit_userid,
+        models.FitbitActivity.type_id == type_id,
+    ]
+    if since:
+        conditions.append(models.FitbitActivity.updated_at >= since)
+
+    subqueries = [
+        select(func.max(column))
+        .join(models.FitbitUser)
+        .where(and_(*conditions))
+        .label(f"top_{column.name}")
+        for column in columns
+    ]
+    results = await db.execute(statement=select(*subqueries))
+    row = results.one()._asdict()
+
+    return TopActivityStats(**row)
