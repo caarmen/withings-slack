@@ -20,7 +20,7 @@ def repository_activity_to_domain_activity(
         total_minutes=repo.total_minutes,
         zone_minutes=[
             ActivityZoneMinutes(
-                zone=x,
+                zone=ActivityZone[x.upper()],
                 minutes=getattr(repo, f"{x}_minutes"),
             )
             for x in ActivityZone
@@ -41,7 +41,7 @@ def repository_top_activity_stats_to_domain_activity(
         total_minutes=repo.top_total_minutes,
         zone_minutes=[
             ActivityZoneMinutes(
-                zone=x,
+                zone=ActivityZone[x.upper()],
                 minutes=getattr(repo, f"top_{x}_minutes"),
             )
             for x in ActivityZone

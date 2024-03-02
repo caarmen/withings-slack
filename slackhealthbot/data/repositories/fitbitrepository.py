@@ -355,6 +355,7 @@ async def get_top_activity_stats_by_user_and_activity_type(
         for column in columns
     ]
     results = await db.execute(statement=select(*subqueries))
+    # noinspection PyProtectedMember
     row = results.one()._asdict()
 
     return TopActivityStats(**row)

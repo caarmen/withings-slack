@@ -57,9 +57,9 @@ class FitbitSleep(BaseModel):
     ]
 
     @classmethod
-    def parse(cls, input: str) -> Self:
-        logging.info(f"parse sleep input: {input}")
-        return cls(**json.loads(input))
+    def parse(cls, text: bytes | str) -> Self:
+        logging.info(f"parse sleep input: {text}")
+        return cls(**json.loads(text))
 
 
 async def get_sleep(

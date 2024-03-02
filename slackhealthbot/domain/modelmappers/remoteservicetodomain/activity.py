@@ -1,4 +1,8 @@
-from slackhealthbot.domain.models.activity import ActivityData, ActivityZoneMinutes
+from slackhealthbot.domain.models.activity import (
+    ActivityData,
+    ActivityZone,
+    ActivityZoneMinutes,
+)
 from slackhealthbot.remoteservices.fitbit.activityapi import FitbitActivities
 
 
@@ -15,7 +19,7 @@ def remote_service_activity_to_domain_activity(
         calories=fitbit_activity.calories,
         total_minutes=fitbit_activity.duration // 60000,
         zone_minutes=[
-            ActivityZoneMinutes(zone=x.type.lower(), minutes=x.minutes)
+            ActivityZoneMinutes(zone=ActivityZone[x.type.upper()], minutes=x.minutes)
             for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
             if x.minutes > 0
         ],

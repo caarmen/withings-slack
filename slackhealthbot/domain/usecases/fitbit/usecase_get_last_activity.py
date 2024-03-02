@@ -13,7 +13,7 @@ from slackhealthbot.remoteservices.fitbit import activityapi
 async def do(
     db: AsyncSession,
     fitbit_userid: str,
-    when: datetime.date,
+    when: datetime.datetime,
 ) -> ActivityData | None:
     user: fitbitrepository.User = await fitbitrepository.get_user_by_fitbit_userid(
         db,

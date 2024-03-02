@@ -76,8 +76,8 @@ def get_seconds_change_icon(seconds_change: int) -> str:
     return "➡️"
 
 
-def format_time(input: datetime.datetime) -> str:
-    return input.strftime("%-H:%M")
+def format_time(dt: datetime.datetime) -> str:
+    return dt.strftime("%-H:%M")
 
 
 def format_minutes(total_minutes: int) -> str:

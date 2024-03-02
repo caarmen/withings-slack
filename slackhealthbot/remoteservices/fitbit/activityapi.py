@@ -34,8 +34,8 @@ class FitbitActivities(BaseModel):
     activities: list[FitbitActivity]
 
     @classmethod
-    def parse(cls, input: str) -> Self:
-        return cls(**json.loads(input))
+    def parse(cls, text: bytes) -> Self:
+        return cls(**json.loads(text))
 
 
 async def get_activity(
