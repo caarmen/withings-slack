@@ -3,6 +3,7 @@ import string
 from contextlib import asynccontextmanager
 
 import uvicorn
+from asgi_correlation_id import CorrelationIdMiddleware
 from fastapi import FastAPI, Response
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -24,7 +25,7 @@ from slackhealthbot.tasks import fitbitpoll
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    logger.update_external_loggers()
+    logger.configure_logging()
     oauth_withings.configure(withings_usecase_update_user_oauth)
     oauth_fitbit.configure(fitbit_usecase_update_user_oauth)
     schedule_task = None
@@ -37,7 +38,7 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(
     middleware=[
-        Middleware(logger.LoggerMiddleware),
+        Middleware(CorrelationIdMiddleware),
         Middleware(
             SessionMiddleware,
             secret_key="".join(

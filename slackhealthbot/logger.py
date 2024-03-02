@@ -1,39 +1,15 @@
 """
 Middleware which adds a correlation id to the response headers and logs.
-See https://github.com/tiangolo/fastapi/discussions/8190
+https://github.com/snok/asgi-correlation-id/blob/main/README.md#integration-with-uvicorn
 """
 
-import copy
 import logging
-from contextvars import ContextVar
-from uuid import uuid4
 
-from fastapi import Request, Response
+from asgi_correlation_id import CorrelationIdFilter
 from pydantic.v1.utils import deep_update
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
 from uvicorn.config import LOGGING_CONFIG
-from uvicorn.logging import AccessFormatter
-
-_correlation_id_ctx_var: ContextVar[str] = ContextVar("correlation_id", default=None)
 
 logging_format_prefix = "%(asctime)s [%(name)-14s]"
-
-
-class UvicornAccessFormatter(AccessFormatter):
-    """
-    Add the correlation-id to uvicorn access logs
-    """
-
-    def formatMessage(self, record: logging.LogRecord) -> str:
-        recordcopy = copy.copy(record)
-        recordcopy.__dict__.update({"correlation_id": _correlation_id_ctx_var.get()})
-        return super().formatMessage(record=recordcopy)
-
-    @classmethod
-    @property
-    def name(cls):
-        return f"{cls.__module__}.{cls.__name__}"
 
 
 def get_uvicorn_log_config() -> dict:
@@ -44,63 +20,28 @@ def get_uvicorn_log_config() -> dict:
     return deep_update(
         LOGGING_CONFIG,
         {
+            "handlers": {"access": {"filters": [CorrelationIdFilter()]}},
             "formatters": {
                 "access": {
                     "fmt": logging_format_prefix
                     + " %(levelprefix)s [%(correlation_id)s] %(message)s",
-                    "()": UvicornAccessFormatter.name,
                 },
+                # Configuring the default formatter impacts the appliction lifecycle logs.
                 "default": {
                     "fmt": f"{logging_format_prefix} %(levelprefix)s %(message)s",
                 },
-            }
+            },
         },
     )
 
 
-def update_external_loggers():
-    """
-    Make the loggers in external modules to use our log handler.
-    """
-    for module in ["httpx", "sqlalchemy.engine"]:
-        custom_logger = logging.getLogger()
-        old_logger = logging.getLogger(module)
-
-        # Remove any existing handlers from the logger
-        for handler in old_logger.handlers[:]:
-            old_logger.removeHandler(handler)
-
-        # Add our custom logger as a handler
-        old_logger.addHandler(custom_logger)
-
-
-class LoggerMiddleware(BaseHTTPMiddleware):
-    """
-    Add an X-correlation-id header to responses.
-    Add the correlation id to application logs.
-    """
-
-    def __init__(self, app: ASGIApp) -> None:
-        super().__init__(app)
-        logging.getLogger().addFilter(self.add_correlation_id_to_log_record)
-
-        logging.basicConfig(
-            format=logging_format_prefix
-            + " %(levelname)-9s [%(correlation_id)s] %(message)s",
-            level=logging.INFO,
-        )
-
-    def add_correlation_id_to_log_record(self, record):
-        record.correlation_id = _correlation_id_ctx_var.get()
-        return True
-
-    async def dispatch(
-        self,
-        request: Request,
-        call_next,
-    ) -> Response:
-        correlation_id = str(uuid4())
-        _correlation_id_ctx_var.set(correlation_id)
-        response = await call_next(request)
-        response.headers["X-Correlation-Id"] = correlation_id
-        return response
+def configure_logging():
+    # This setup impacts the logs sent from our own code as well as logs from httpx.
+    console_handler = logging.StreamHandler()
+    console_handler.addFilter(CorrelationIdFilter())
+    logging.basicConfig(
+        handlers=[console_handler],
+        format=logging_format_prefix
+        + " %(levelname)-9s [%(correlation_id)s] %(message)s",
+        level=logging.INFO,
+    )
