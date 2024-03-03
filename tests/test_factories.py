@@ -24,7 +24,7 @@ async def test_user_factory(
     user_factory: UserFactory,
     mocked_async_session,
 ):
-    user: User = user_factory()
+    user: User = user_factory.create()
     assert isinstance(user.slack_alias, str)
     assert isinstance(user.id, int)
     assert isinstance(user.withings, WithingsUser)
@@ -46,8 +46,8 @@ async def test_withings_user_factory(
     withings_user_factory: WithingsUserFactory,
     mocked_async_session,
 ):
-    user: User = user_factory(withings=None)
-    withings_user: WithingsUser = withings_user_factory(user_id=user.id)
+    user: User = user_factory.create(withings=None)
+    withings_user: WithingsUser = withings_user_factory.create(user_id=user.id)
     assert isinstance(withings_user.oauth_access_token, str)
     assert isinstance(withings_user.oauth_refresh_token, str)
     assert isinstance(withings_user.oauth_userid, str)
@@ -74,8 +74,8 @@ async def test_fitbit_user_factory(
     fitbit_user_factory: FitbitUserFactory,
     mocked_async_session: AsyncSession,
 ):
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(user_id=user.id)
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)
     assert isinstance(fitbit_user.oauth_access_token, str)
     assert isinstance(fitbit_user.oauth_refresh_token, str)
     assert isinstance(fitbit_user.oauth_userid, str)
@@ -101,9 +101,9 @@ async def test_fitbit_activity_factory(
     fitbit_activity_factory: FitbitActivityFactory,
     mocked_async_session: AsyncSession,
 ):
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(user_id=user.id)
-    fitbit_activity: FitbitActivity = fitbit_activity_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)
+    fitbit_activity: FitbitActivity = fitbit_activity_factory.create(
         fitbit_user_id=fitbit_user.id
     )
     repo_activity: fitbitrepository.Activity = (

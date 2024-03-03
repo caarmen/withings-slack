@@ -50,8 +50,8 @@ async def test_fitbit_poll_sleep(
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
     # Given a user with the given previous sleep data
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         **scenario.input_initial_sleep_data,
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -122,14 +122,14 @@ async def test_fitbit_poll_activity(
     activity_type_id = 55001
 
     # Given a user with the given previous activity data
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
         + datetime.timedelta(days=1),
     )
     if scenario.input_initial_activity_data:
-        fitbit_activity_factory(
+        fitbit_activity_factory.create(
             fitbit_user_id=fitbit_user.id,
             type_id=activity_type_id,
             **scenario.input_initial_activity_data,
@@ -199,8 +199,8 @@ async def test_schedule_fitbit_poll(
 
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
         + datetime.timedelta(days=1),

@@ -38,8 +38,8 @@ async def test_refresh_token_ok(
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None)
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None)
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=50.2,
         oauth_access_token="some old access token",
@@ -149,8 +149,8 @@ async def test_refresh_token_fail(
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None, slack_alias="jdoe")
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
         oauth_access_token="some old invalid access token",
@@ -231,13 +231,13 @@ async def test_login_success(
     ctx_db.set(mocked_async_session)
     # Given a user
     if scenario == LoginScenario.EXISTING_WITHINGS_USER:
-        user: User = user_factory(withings=None, slack_alias="jdoe")
-        withings_user_factory(
+        user: User = user_factory.create(withings=None, slack_alias="jdoe")
+        withings_user_factory.create(
             user_id=user.id,
             oauth_userid="user123",
         )
     elif scenario == LoginScenario.EXISTING_NOT_WITHINGS_USER:
-        user_factory(withings=None, slack_alias="jdoe")
+        user_factory.create(withings=None, slack_alias="jdoe")
 
     # mock authlib's generation of a URL on withings
     async def mock_authorize_redirect(*_args, **_kwargs):
@@ -322,8 +322,8 @@ async def test_logged_out(
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None, slack_alias="jdoe")
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
         oauth_access_token="some invalid access token",

@@ -53,8 +53,8 @@ async def test_weight_notification(
     user_factory, withings_user_factory = withings_factories
 
     # Given a user
-    user: User = user_factory(withings=None)
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None)
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=scenario.input_initial_weight,
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -140,8 +140,8 @@ async def test_duplicate_weight_notification(
     user_factory, withings_user_factory = withings_factories
 
     # Given a user
-    user: User = user_factory(withings=None)
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None)
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=50.2,
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)

@@ -47,8 +47,8 @@ async def test_refresh_token_ok(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -157,8 +157,8 @@ async def test_refresh_token_fail(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -242,13 +242,13 @@ async def test_login_success(
 
     # Given a user
     if scenario == LoginScenario.EXISTING_FITBIT_USER:
-        user: User = user_factory(fitbit=None, slack_alias="jdoe")
-        fitbit_user_factory(
+        user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+        fitbit_user_factory.create(
             user_id=user.id,
             oauth_userid="user123",
         )
     elif scenario == LoginScenario.EXISTING_NOT_FITBIT_USER:
-        user_factory(fitbit=None, slack_alias="jdoe")
+        user_factory.create(fitbit=None, slack_alias="jdoe")
 
     # mock authlib's generation of a URL on fitbit
     async def mock_authorize_redirect(*_args, **_kwags):
@@ -335,8 +335,8 @@ async def test_logged_out(
     activity_type_id = 55001
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
