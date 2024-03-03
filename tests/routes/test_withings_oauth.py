@@ -31,7 +31,7 @@ async def test_refresh_token_ok(
     Given a user whose access token is expired
     When we receive the callback from withings that a new weight is available
     Then the access token is refreshed
-    And the latest weight is updated in the database
+    And the latest weight is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
     user_factory, withings_user_factory = withings_factories
@@ -142,7 +142,7 @@ async def test_refresh_token_fail(
     Given a user whose access token is expired and invalid
     When we receive the callback from withings that a new weight is available
     Then the access token refresh fails
-    And no weight is updated in the database
+    And no weight is updated in the database,
     And the message is posted to slack about the user being logged out
     """
     user_factory, withings_user_factory = withings_factories
@@ -239,8 +239,8 @@ async def test_login_success(
     elif scenario == LoginScenario.EXISTING_NOT_WITHINGS_USER:
         user_factory(withings=None, slack_alias="jdoe")
 
-    # mock authlib's generation of a url on withings
-    async def mock_authorize_redirect(fake_self, request, redirect_uri):
+    # mock authlib's generation of a URL on withings
+    async def mock_authorize_redirect(*_args, **_kwargs):
         return RedirectResponse("https://fakewithings.com", status_code=302)
 
     monkeypatch.setattr(
@@ -258,7 +258,7 @@ async def test_login_success(
     assert response.headers["location"] == "https://fakewithings.com"
 
     # mock authlib's token response
-    async def mock_authorize_access_token(fake_self, request):
+    async def mock_authorize_access_token(*_args, **_kwargs):
         return {
             "userid": "user123",
             "access_token": "some access token",
@@ -273,7 +273,7 @@ async def test_login_success(
     )
 
     # Simulate withings's response to the sleep and activity subscriptions
-    async def mock_post(fake_self, *args, **kwargs):
+    async def mock_post(*_args, **_kwargs):
         return Response(status_code=200, json={"status": 0})
 
     monkeypatch.setattr(

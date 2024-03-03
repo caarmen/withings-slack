@@ -46,7 +46,7 @@ async def test_weight_notification(
     """
     Given a user with a given previous weight logged
     When we receive the callback from withings that a new weight is available
-    Then the last_weight is updated in the database
+    Then the last_weight is updated in the database,
     And the message is posted to slack with the correct icon.
     """
 
@@ -133,7 +133,7 @@ async def test_duplicate_weight_notification(
     """
     Given a user with a given previous weight logged
     When we receive the callback twice from withings that a new weight is available
-    Then the last_weight is updated in the database
+    Then the last_weight is updated in the database,
     And the message is posted to slack only once
     """
 

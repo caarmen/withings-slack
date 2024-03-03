@@ -41,7 +41,7 @@ async def test_sleep_notification(
     """
     Given a user with a given previous sleep logged
     When we receive the callback from fitbit that a new sleep is available
-    Then the last sleep is updated in the database
+    Then the last sleep is updated in the database,
     And the message is posted to slack with the correct icons.
     """
 
@@ -116,7 +116,7 @@ async def test_activity_notification(
     """
     Given a user with a given previous activity logged
     When we receive the callback from fitbit that a new activity is available
-    Then the latest activity is updated in the database
+    Then the latest activity is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
 
@@ -201,7 +201,7 @@ async def test_duplicate_activity_notification(
     """
     Given a user
     When we receive the callback twice from fitbit that a new activity is available
-    Then the latest activity is updated in the database
+    Then the latest activity is updated in the database,
     And the message is posted to slack only once with the correct pattern.
     """
 
@@ -295,12 +295,12 @@ async def test_duplicate_sleep_notification(
     """
     Given a user
     When we receive the callback twice from fitbit that a new sleep is available
-    Then the latest sleep is updated in the database
+    Then the latest sleep is updated in the database,
     And the message is posted to slack only once with the correct pattern.
     """
 
     user_factory, fitbit_user_factory, _ = fitbit_factories
-    scenario: FitbitActivityScenario = sleep_scenarios["No previous sleep data"]
+    scenario: FitbitSleepScenario = sleep_scenarios["No previous sleep data"]
 
     # Given a user with the given previous sleep data
     user: User = user_factory(fitbit=None)

@@ -28,7 +28,7 @@ from slackhealthbot.domain.usecases.slack import usecase_post_activity
     ],
 )
 def test_get_activity_minutes_change_icon(
-    input_value: str,
+    input_value: int,
     expected_output: str,
 ):
     actual_output = usecase_post_activity.get_activity_minutes_change_icon(input_value)
@@ -51,7 +51,7 @@ def test_get_activity_minutes_change_icon(
     ],
 )
 def test_get_activity_calories_change_icon(
-    input_value: str,
+    input_value: int,
     expected_output: str,
 ):
     actual_output = usecase_post_activity.get_activity_calories_change_icon(input_value)
@@ -113,7 +113,8 @@ CREATE_MESSAGE_SCENARIOS = [
                 ),
             ],
         ),
-        expected_message_regex="^.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆$",
+        expected_message_regex="^.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! "
+        "🏆.* ⬆️ New all-time record! 🏆$",
     ),
     CreateMessageScenario(
         name="recent top record",
@@ -134,7 +135,8 @@ CREATE_MESSAGE_SCENARIOS = [
                 ),
             ],
         ),
-        expected_message_regex="^.* ⬆️ New record \(last 30 days\)! 🏆.* ➡️ New record \(last 30 days\)! 🏆.* ⬆️ New record \(last 30 days\)! 🏆.* ➡️ New record \(last 30 days\)! 🏆$",
+        expected_message_regex="^.* ⬆️ New record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆.* ⬆️ New "
+        "record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆$",
     ),
     CreateMessageScenario(
         name="lowest score",

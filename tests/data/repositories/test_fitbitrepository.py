@@ -25,7 +25,7 @@ async def test_top_activities(
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
     old_date = datetime.datetime(2023, 3, 4, 15, 44, 33)
 
-    # Our user, our activity, all time top record for calories
+    # Our user, our activity, all-time top record for calories
     all_time_top_calories_activity: models.FitbitActivity = fitbit_activity_factory(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,
@@ -49,7 +49,7 @@ async def test_top_activities(
         updated_at=recent_date,
     )
 
-    # Our user, our activity, all time top record for the different minutes attributes
+    # Our user, our activity, all-time top record for the different minutes attributes
     all_time_top_minutes_activity: models.FitbitActivity = fitbit_activity_factory(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,

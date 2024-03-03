@@ -7,7 +7,7 @@ from slackhealthbot.data.repositories.fitbitrepository import Sleep
 
 @dataclasses.dataclass
 class FitbitSleepScenario:
-    input_initial_sleep_data: dict[str, int]
+    input_initial_sleep_data: dict[str, int | None]
     input_mock_fitbit_response: dict[str, Any]
     expected_new_last_sleep_data: Sleep
     expected_icons: str | None
@@ -266,10 +266,10 @@ sleep_scenarios: dict[str, FitbitSleepScenario] = {
 
 @dataclasses.dataclass
 class FitbitActivityScenario:
-    input_initial_activity_data: dict[str | int] | None
+    input_initial_activity_data: dict[str, int | datetime.datetime] | None
     input_mock_fitbit_response: dict[str, Any]
     expected_new_last_activity_log_id: int
-    expected_message_pattern: str
+    expected_message_pattern: str | None
 
     @property
     def is_new_log_expected(self) -> bool:
@@ -356,7 +356,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern=(
-            "New Spinning activity.*⬇️ New record.*⬆️ New all-time record.*Fat burn.*8.*➡.*New all-time record.*Cardio.*9.*↘️ New record"
+            "New Spinning activity.*⬇️ New record.*⬆️ New all-time record.*Fat burn.*8.*➡.*New all-time "
+            "record.*Cardio.*9.*↘️ New record"
         ),
     ),
     "New Spinning activity, full zones": FitbitActivityScenario(
@@ -404,7 +405,8 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern="New Spinning activity.*↗️ New all-time record.*➡️ New all-time record.*"
-        + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New all-time record",
+        + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
+        "all-time record",
     ),
     "New unrecognized activity": FitbitActivityScenario(
         input_initial_activity_data={

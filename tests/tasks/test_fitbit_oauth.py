@@ -32,7 +32,7 @@ async def test_refresh_token_ok(
     Given a user whose access token is expired
     When we poll fitbit for a new activity
     Then the access token is refreshed
-    And the latest activity is updated in the database
+    And the latest activity is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
 
@@ -138,7 +138,7 @@ async def test_refresh_token_fail(
     Given a user whose access token is expired and invalid
     When we poll fitbit for new activity
     Then the access token refresh fails
-    And no latest activity is updated in the database
+    And no latest activity is updated in the database,
     And the message is posted to slack about the user being logged out
     """
 
