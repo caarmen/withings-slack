@@ -42,7 +42,7 @@ async def handle_fail_poll(
 ):
     last_error_post = cache.cache_fail.get(fitbit_userid)
     if not last_error_post or last_error_post < when:
-        usecase_post_user_logged_out.do(
+        await usecase_post_user_logged_out.do(
             slack_alias=slack_alias,
             service="fitbit",
         )
