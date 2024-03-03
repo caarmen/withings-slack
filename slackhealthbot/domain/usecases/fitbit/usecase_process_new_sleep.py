@@ -18,7 +18,7 @@ async def do(
     db: AsyncSession,
     fitbit_userid: str,
     when: datetime.date,
-) -> SleepData:
+) -> SleepData | None:
     user_identity: fitbitrepository.UserIdentity = (
         await fitbitrepository.get_user_identity_by_fitbit_userid(
             db,

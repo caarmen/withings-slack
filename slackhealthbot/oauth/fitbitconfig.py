@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, Coroutine
 
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
 from fastapi import status
@@ -31,7 +31,7 @@ def is_auth_failure(response) -> bool:
     return response.status_code != status.HTTP_200_OK
 
 
-def configure(update_token_callback: Callable[[dict[str, Any]], None]):
+def configure(update_token_callback: Callable[[dict[str, Any]], Coroutine]):
     oauth.register(
         name=settings.name,
         api_base_url=settings.base_url,

@@ -9,7 +9,7 @@ async def get_db():
         # We need to access the db session without having access to
         # fastapi's dependency injection. This happens when our update_token()
         # authlib function is called.
-        # Set the db in a ContextVar to allow accessing it outside of a fastapi route.
+        # Set the db in a ContextVar to allow accessing it outside a fastapi route.
         ctx_db.set(db)
         yield db
     finally:

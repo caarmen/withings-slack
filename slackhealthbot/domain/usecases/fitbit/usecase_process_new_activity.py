@@ -19,8 +19,8 @@ from slackhealthbot.settings import settings
 async def do(
     db: AsyncSession,
     fitbit_userid: str,
-    when: datetime.date,
-) -> ActivityData:
+    when: datetime.datetime,
+) -> ActivityData | None:
     user_identity: fitbitrepository.UserIdentity = (
         await fitbitrepository.get_user_identity_by_fitbit_userid(
             db,
@@ -101,7 +101,7 @@ async def _is_new_valid_activity(
     db: AsyncSession,
     fitbit_userid: str,
     type_id: int,
-    log_id: str,
+    log_id: int,
 ) -> bool:
     return (
         type_id in settings.fitbit_activity_type_ids
