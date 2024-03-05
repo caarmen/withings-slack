@@ -34,7 +34,7 @@ async def test_refresh_token_ok(
     Given a user whose access token is expired
     When we receive the callback from fitbit that a new activity is available
     Then the access token is refreshed
-    And the latest activity is updated in the database
+    And the latest activity is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
 
@@ -47,8 +47,8 @@ async def test_refresh_token_ok(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -144,7 +144,7 @@ async def test_refresh_token_fail(
     Given a user whose access token is expired and invalid
     When we receive the callback from fitbit that a new activity is available
     Then the access token refresh fails
-    And no latest activity is updated in the database
+    And no latest activity is updated in the database,
     And the message is posted to slack about the user being logged out
     """
 
@@ -157,8 +157,8 @@ async def test_refresh_token_fail(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -242,16 +242,16 @@ async def test_login_success(
 
     # Given a user
     if scenario == LoginScenario.EXISTING_FITBIT_USER:
-        user: User = user_factory(fitbit=None, slack_alias="jdoe")
-        fitbit_user_factory(
+        user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+        fitbit_user_factory.create(
             user_id=user.id,
             oauth_userid="user123",
         )
     elif scenario == LoginScenario.EXISTING_NOT_FITBIT_USER:
-        user_factory(fitbit=None, slack_alias="jdoe")
+        user_factory.create(fitbit=None, slack_alias="jdoe")
 
-    # mock authlib's generation of a url on fitbit
-    async def mock_authorize_redirect(fake_self, request):
+    # mock authlib's generation of a URL on fitbit
+    async def mock_authorize_redirect(*_args, **_kwags):
         return RedirectResponse("https://fakefitbit.com", status_code=302)
 
     monkeypatch.setattr(
@@ -269,7 +269,7 @@ async def test_login_success(
     assert response.headers["location"] == "https://fakefitbit.com"
 
     # mock authlib's token response
-    async def mock_authorize_access_token(fake_self, request):
+    async def mock_authorize_access_token(*_args, **_kwargs):
         return {
             "userid": "user123",
             "access_token": "some access token",
@@ -284,7 +284,7 @@ async def test_login_success(
     )
 
     # Simulate fitbit's response to the sleep and activity subscriptions
-    async def mock_post(fake_self, *args, **kwargs):
+    async def mock_post(*_args, **_kwargs):
         return Response(status_code=200, json={})
 
     monkeypatch.setattr(
@@ -335,8 +335,8 @@ async def test_logged_out(
     activity_type_id = 55001
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)

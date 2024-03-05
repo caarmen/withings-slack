@@ -54,7 +54,7 @@ def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
         / "fixtures"
         / input_filename
     )
-    with open(input_file) as input:
-        api_data: FitbitSleep = FitbitSleep.parse(text=input.read())
+    with open(input_file) as sleep_input:
+        api_data: FitbitSleep = FitbitSleep.parse(text=sleep_input.read())
         actual_sleep_data = remote_service_sleep_to_domain_sleep(api_data)
         assert actual_sleep_data == expected_sleep_data

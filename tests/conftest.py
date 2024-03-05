@@ -66,7 +66,11 @@ def setup_factories(mocked_session):
         FitbitUserFactory,
         FitbitActivityFactory,
     ]:
+        # The _meta attribute is documented:
+        # https://factoryboy.readthedocs.io/en/stable/reference.html#factory.Factory._meta
+        # noinspection PyProtectedMember
         factory._meta.sqlalchemy_session = mocked_session
+        # noinspection PyProtectedMember
         factory._meta.sqlalchemy_session_persistence = "commit"
 
 

@@ -31,15 +31,15 @@ async def test_refresh_token_ok(
     Given a user whose access token is expired
     When we receive the callback from withings that a new weight is available
     Then the access token is refreshed
-    And the latest weight is updated in the database
+    And the latest weight is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
     user_factory, withings_user_factory = withings_factories
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None)
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None)
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=50.2,
         oauth_access_token="some old access token",
@@ -142,15 +142,15 @@ async def test_refresh_token_fail(
     Given a user whose access token is expired and invalid
     When we receive the callback from withings that a new weight is available
     Then the access token refresh fails
-    And no weight is updated in the database
+    And no weight is updated in the database,
     And the message is posted to slack about the user being logged out
     """
     user_factory, withings_user_factory = withings_factories
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None, slack_alias="jdoe")
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
         oauth_access_token="some old invalid access token",
@@ -231,16 +231,16 @@ async def test_login_success(
     ctx_db.set(mocked_async_session)
     # Given a user
     if scenario == LoginScenario.EXISTING_WITHINGS_USER:
-        user: User = user_factory(withings=None, slack_alias="jdoe")
-        withings_user_factory(
+        user: User = user_factory.create(withings=None, slack_alias="jdoe")
+        withings_user_factory.create(
             user_id=user.id,
             oauth_userid="user123",
         )
     elif scenario == LoginScenario.EXISTING_NOT_WITHINGS_USER:
-        user_factory(withings=None, slack_alias="jdoe")
+        user_factory.create(withings=None, slack_alias="jdoe")
 
-    # mock authlib's generation of a url on withings
-    async def mock_authorize_redirect(fake_self, request, redirect_uri):
+    # mock authlib's generation of a URL on withings
+    async def mock_authorize_redirect(*_args, **_kwargs):
         return RedirectResponse("https://fakewithings.com", status_code=302)
 
     monkeypatch.setattr(
@@ -258,7 +258,7 @@ async def test_login_success(
     assert response.headers["location"] == "https://fakewithings.com"
 
     # mock authlib's token response
-    async def mock_authorize_access_token(fake_self, request):
+    async def mock_authorize_access_token(*_args, **_kwargs):
         return {
             "userid": "user123",
             "access_token": "some access token",
@@ -273,7 +273,7 @@ async def test_login_success(
     )
 
     # Simulate withings's response to the sleep and activity subscriptions
-    async def mock_post(fake_self, *args, **kwargs):
+    async def mock_post(*_args, **_kwargs):
         return Response(status_code=200, json={"status": 0})
 
     monkeypatch.setattr(
@@ -322,8 +322,8 @@ async def test_logged_out(
 
     ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory(withings=None, slack_alias="jdoe")
-    db_withings_user: DbWithingsUser = withings_user_factory(
+    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
         oauth_access_token="some invalid access token",

@@ -32,7 +32,7 @@ async def test_refresh_token_ok(
     Given a user whose access token is expired
     When we poll fitbit for a new activity
     Then the access token is refreshed
-    And the latest activity is updated in the database
+    And the latest activity is updated in the database,
     And the message is posted to slack with the correct pattern.
     """
 
@@ -45,8 +45,8 @@ async def test_refresh_token_ok(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None)
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None)
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -138,7 +138,7 @@ async def test_refresh_token_fail(
     Given a user whose access token is expired and invalid
     When we poll fitbit for new activity
     Then the access token refresh fails
-    And no latest activity is updated in the database
+    And no latest activity is updated in the database,
     And the message is posted to slack about the user being logged out
     """
 
@@ -151,8 +151,8 @@ async def test_refresh_token_fail(
     ]
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some old invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
@@ -232,8 +232,8 @@ async def test_logged_out(
     activity_type_id = 55001
 
     # Given a user
-    user: User = user_factory(fitbit=None, slack_alias="jdoe")
-    fitbit_user: FitbitUser = fitbit_user_factory(
+    user: User = user_factory.create(fitbit=None, slack_alias="jdoe")
+    fitbit_user: FitbitUser = fitbit_user_factory.create(
         user_id=user.id,
         oauth_access_token="some invalid access token",
         oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)

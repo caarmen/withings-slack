@@ -19,50 +19,56 @@ async def test_top_activities(
 ):
     user_factory, _, fitbit_activity_factory = fitbit_factories
     activity_type = 111
-    user: models.User = user_factory()
-    other_user: models.User = user_factory()
+    user: models.User = user_factory.create()
+    other_user: models.User = user_factory.create()
 
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
     old_date = datetime.datetime(2023, 3, 4, 15, 44, 33)
 
-    # Our user, our activity, all time top record for calories
-    all_time_top_calories_activity: models.FitbitActivity = fitbit_activity_factory(
-        fitbit_user_id=user.fitbit.id,
-        type_id=activity_type,
-        calories=600,
-        total_minutes=18,
-        fat_burn_minutes=17,
-        cardio_minutes=16,
-        peak_minutes=15,
-        updated_at=old_date,
+    # Our user, our activity, all-time top record for calories
+    all_time_top_calories_activity: models.FitbitActivity = (
+        fitbit_activity_factory.create(
+            fitbit_user_id=user.fitbit.id,
+            type_id=activity_type,
+            calories=600,
+            total_minutes=18,
+            fat_burn_minutes=17,
+            cardio_minutes=16,
+            peak_minutes=15,
+            updated_at=old_date,
+        )
     )
 
     # Our user, our activity, recent top record for calories
-    recent_top_calories_activity: models.FitbitActivity = fitbit_activity_factory(
-        fitbit_user_id=user.fitbit.id,
-        type_id=activity_type,
-        calories=599,
-        total_minutes=18,
-        fat_burn_minutes=17,
-        cardio_minutes=16,
-        peak_minutes=15,
-        updated_at=recent_date,
+    recent_top_calories_activity: models.FitbitActivity = (
+        fitbit_activity_factory.create(
+            fitbit_user_id=user.fitbit.id,
+            type_id=activity_type,
+            calories=599,
+            total_minutes=18,
+            fat_burn_minutes=17,
+            cardio_minutes=16,
+            peak_minutes=15,
+            updated_at=recent_date,
+        )
     )
 
-    # Our user, our activity, all time top record for the different minutes attributes
-    all_time_top_minutes_activity: models.FitbitActivity = fitbit_activity_factory(
-        fitbit_user_id=user.fitbit.id,
-        type_id=activity_type,
-        calories=333,
-        total_minutes=30,
-        fat_burn_minutes=29,
-        cardio_minutes=28,
-        peak_minutes=27,
-        updated_at=old_date,
+    # Our user, our activity, all-time top record for the different minutes attributes
+    all_time_top_minutes_activity: models.FitbitActivity = (
+        fitbit_activity_factory.create(
+            fitbit_user_id=user.fitbit.id,
+            type_id=activity_type,
+            calories=333,
+            total_minutes=30,
+            fat_burn_minutes=29,
+            cardio_minutes=28,
+            peak_minutes=27,
+            updated_at=old_date,
+        )
     )
 
     # Our user, our activity, recent top record for the different minutes attributes
-    recent_top_minutes_activity: models.FitbitActivity = fitbit_activity_factory(
+    recent_top_minutes_activity: models.FitbitActivity = fitbit_activity_factory.create(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,
         calories=333,
@@ -74,7 +80,7 @@ async def test_top_activities(
     )
 
     # Our user, but not top stats
-    fitbit_activity_factory(
+    fitbit_activity_factory.create(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,
         calories=400,
@@ -86,7 +92,7 @@ async def test_top_activities(
     )
 
     # Another user with higher stats
-    fitbit_activity_factory(
+    fitbit_activity_factory.create(
         fitbit_user_id=other_user.fitbit.id,
         type_id=activity_type,
         calories=800,
@@ -98,7 +104,7 @@ async def test_top_activities(
     )
 
     # Our user, with higher stats for another activity type
-    fitbit_activity_factory(
+    fitbit_activity_factory.create(
         fitbit_user_id=user.fitbit.id,
         type_id=999,
         calories=900,
@@ -148,7 +154,7 @@ async def test_top_activities_no_history(
 ):
     user_factory, _, _ = fitbit_factories
     activity_type = 111
-    user: models.User = user_factory()
+    user: models.User = user_factory.create()
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
 
     all_time_top_activity_stats: fitbitrepository.TopActivityStats = (
