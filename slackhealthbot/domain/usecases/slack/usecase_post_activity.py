@@ -4,15 +4,19 @@ from slackhealthbot.remoteservices.slack import messageapi
 
 async def do(
     slack_alias: str,
+    activity_name: str,
     activity_history: ActivityHistory,
     record_history_days: int,
 ):
-    message = create_message(slack_alias, activity_history, record_history_days)
+    message = create_message(
+        slack_alias, activity_name, activity_history, record_history_days
+    )
     await messageapi.post_message(message.strip())
 
 
 def create_message(
     slack_alias: str,
+    activity_name: str,
     activity_history: ActivityHistory,
     record_history_days: int,
 ):
@@ -44,21 +48,21 @@ def create_message(
         duration_icon = calories_icon = ""
     duration_record_text = get_ranking_text(
         activity.total_minutes,
-        activity_history.all_time_top_activity_data.total_minutes,
-        activity_history.recent_top_activity_data.total_minutes,
+        activity_history.all_time_top_activity_data.top_total_minutes,
+        activity_history.recent_top_activity_data.top_total_minutes,
         record_history_days=record_history_days,
     )
     calories_record_text = get_ranking_text(
         activity.calories,
-        activity_history.all_time_top_activity_data.calories,
-        activity_history.recent_top_activity_data.calories,
+        activity_history.all_time_top_activity_data.top_calories,
+        activity_history.recent_top_activity_data.top_calories,
         record_history_days=record_history_days,
     )
     for zone_minutes in activity.zone_minutes:
         all_time_top_value = next(
             (
                 x.minutes
-                for x in activity_history.all_time_top_activity_data.zone_minutes
+                for x in activity_history.all_time_top_activity_data.top_zone_minutes
                 if x.zone == zone_minutes.zone
             ),
             0,
@@ -66,7 +70,7 @@ def create_message(
         recent_top_value = next(
             (
                 x.minutes
-                for x in activity_history.recent_top_activity_data.zone_minutes
+                for x in activity_history.recent_top_activity_data.top_zone_minutes
                 if x.zone == zone_minutes.zone
             ),
             0,
@@ -78,7 +82,7 @@ def create_message(
             record_history_days=record_history_days,
         )
     message = f"""
-New {activity.name} activity from <@{slack_alias}>:
+New {activity_name} activity from <@{slack_alias}>:
     • Duration: {activity.total_minutes} minutes {duration_icon} {duration_record_text}
     • Calories: {activity.calories} {calories_icon} {calories_record_text}
 """

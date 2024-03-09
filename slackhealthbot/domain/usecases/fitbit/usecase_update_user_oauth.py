@@ -1,24 +1,21 @@
-from typing import Any
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, Callable
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.data.database.connection import ctx_db
-from slackhealthbot.data.repositories import fitbitrepository
-from slackhealthbot.domain.modelmappers.coretorepository.oauthfitbit import (
-    core_oauth_to_repository_oauth,
-)
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
+from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 
 
-async def do(
-    token: dict[str, Any],
-    **_kwargs,
-):
-    db: AsyncSession = ctx_db.get()
-    oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
-    await fitbitrepository.update_oauth_data(
-        db,
-        fitbit_userid=oauth_fields.oauth_userid,
-        oauth_data=core_oauth_to_repository_oauth(oauth_fields),
-    )
+class UpdateTokenUseCase(Callable):
+
+    def __init__(
+        self, request_context_fitbit_repository: Callable[[], FitbitRepository]
+    ):
+        self.request_context_fitbit_repository = request_context_fitbit_repository
+
+    async def __call__(self, token: dict[str, Any], **kwargs):
+        repo: FitbitRepository = self.request_context_fitbit_repository()
+        oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
+        await repo.update_oauth_data(
+            fitbit_userid=oauth_fields.oauth_userid,
+            oauth_data=oauth_fields,
+        )

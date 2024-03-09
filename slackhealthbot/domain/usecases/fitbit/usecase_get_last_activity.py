@@ -1,22 +1,19 @@
 import datetime
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from slackhealthbot.data.repositories import fitbitrepository
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
     remote_service_activity_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
+from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository, User
 from slackhealthbot.remoteservices.fitbit import activityapi
 
 
 async def do(
-    db: AsyncSession,
+    repo: FitbitRepository,
     fitbit_userid: str,
     when: datetime.datetime,
-) -> ActivityData | None:
-    user: fitbitrepository.User = await fitbitrepository.get_user_by_fitbit_userid(
-        db,
+) -> tuple[str, ActivityData] | None:
+    user: User = await repo.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_userid,
     )
     last_activities: activityapi.FitbitActivities = await activityapi.get_activity(

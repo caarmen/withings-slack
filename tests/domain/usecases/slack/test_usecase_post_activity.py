@@ -8,6 +8,7 @@ from slackhealthbot.domain.models.activity import (
     ActivityHistory,
     ActivityZone,
     ActivityZoneMinutes,
+    TopActivityStats,
 )
 from slackhealthbot.domain.usecases.slack import usecase_post_activity
 
@@ -99,7 +100,6 @@ CREATE_MESSAGE_SCENARIOS = [
         new_activity_data=ActivityData(
             log_id=-3,
             type_id=123,
-            name="Dancing",
             total_minutes=120,
             calories=315,
             zone_minutes=[
@@ -121,7 +121,6 @@ CREATE_MESSAGE_SCENARIOS = [
         new_activity_data=ActivityData(
             log_id=-3,
             type_id=123,
-            name="Dancing",
             total_minutes=90,
             calories=175,
             zone_minutes=[
@@ -143,7 +142,6 @@ CREATE_MESSAGE_SCENARIOS = [
         new_activity_data=ActivityData(
             log_id=-3,
             type_id=123,
-            name="Dancing",
             total_minutes=1,
             calories=1,
             zone_minutes=[
@@ -173,7 +171,6 @@ def test_create_message(scenario: CreateMessageScenario):
         latest_activity_data=ActivityData(
             log_id=-1,
             type_id=123,
-            name="Dancing",
             total_minutes=15,
             calories=150,
             zone_minutes=[
@@ -187,13 +184,10 @@ def test_create_message(scenario: CreateMessageScenario):
                 ),
             ],
         ),
-        all_time_top_activity_data=ActivityData(
-            log_id=-3,
-            type_id=123,
-            name="Dancing",
-            total_minutes=100,
-            calories=215,
-            zone_minutes=[
+        all_time_top_activity_data=TopActivityStats(
+            top_total_minutes=100,
+            top_calories=215,
+            top_zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
                     minutes=60,
@@ -204,13 +198,10 @@ def test_create_message(scenario: CreateMessageScenario):
                 ),
             ],
         ),
-        recent_top_activity_data=ActivityData(
-            log_id=-4,
-            type_id=123,
-            name="Dancing",
-            total_minutes=90,
-            calories=175,
-            zone_minutes=[
+        recent_top_activity_data=TopActivityStats(
+            top_total_minutes=90,
+            top_calories=175,
+            top_zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
                     minutes=50,
@@ -224,6 +215,7 @@ def test_create_message(scenario: CreateMessageScenario):
     )
     actual_message = usecase_post_activity.create_message(
         slack_alias="somebody",
+        activity_name="Dancing",
         activity_history=activity_history,
         record_history_days=30,
     )

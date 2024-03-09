@@ -10,14 +10,18 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from slackhealthbot import logger
 from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
-    do as fitbit_usecase_update_user_oauth,
+    UpdateTokenUseCase as FitbitUpdateTokenUseCase,
 )
 from slackhealthbot.domain.usecases.withings.usecase_update_user_oauth import (
     UpdateTokenUseCase as WithingsUpdateTokenUseCase,
 )
 from slackhealthbot.oauth import fitbitconfig as oauth_fitbit
 from slackhealthbot.oauth import withingsconfig as oauth_withings
-from slackhealthbot.routers.dependencies import request_context_withings_repository
+from slackhealthbot.routers.dependencies import (
+    fitbit_repository_factory,
+    request_context_fitbit_repository,
+    request_context_withings_repository,
+)
 from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
 from slackhealthbot.settings import settings
@@ -30,10 +34,13 @@ async def lifespan(_app: FastAPI):
     oauth_withings.configure(
         WithingsUpdateTokenUseCase(request_context_withings_repository)
     )
-    oauth_fitbit.configure(fitbit_usecase_update_user_oauth)
+    oauth_fitbit.configure(FitbitUpdateTokenUseCase(request_context_fitbit_repository))
     schedule_task = None
     if settings.fitbit_poll_enabled:
-        schedule_task = await fitbitpoll.schedule_fitbit_poll(initial_delay_s=10)
+        schedule_task = await fitbitpoll.schedule_fitbit_poll(
+            repo_factory=fitbit_repository_factory(),
+            initial_delay_s=10,
+        )
     yield
     if schedule_task:
         schedule_task.cancel()

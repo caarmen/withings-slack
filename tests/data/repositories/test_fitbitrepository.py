@@ -1,10 +1,14 @@
 import datetime
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.database import models
-from slackhealthbot.data.repositories import fitbitrepository
+from slackhealthbot.domain.models.activity import (
+    ActivityZone,
+    ActivityZoneMinutes,
+    TopActivityStats,
+)
+from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -14,7 +18,7 @@ from tests.testsupport.factories.factories import (
 
 @pytest.mark.asyncio
 async def test_top_activities(
-    mocked_async_session: AsyncSession,
+    fitbit_repository: FitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, fitbit_activity_factory = fitbit_factories
@@ -115,41 +119,61 @@ async def test_top_activities(
         updated_at=recent_date,
     )
 
-    all_time_top_activity_stats: fitbitrepository.TopActivityStats = (
-        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
-            db=mocked_async_session,
+    all_time_top_activity_stats: TopActivityStats = (
+        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
         )
     )
-    assert all_time_top_activity_stats == fitbitrepository.TopActivityStats(
+    assert all_time_top_activity_stats == TopActivityStats(
         top_calories=all_time_top_calories_activity.calories,
         top_total_minutes=all_time_top_minutes_activity.total_minutes,
-        top_fat_burn_minutes=all_time_top_minutes_activity.fat_burn_minutes,
-        top_cardio_minutes=all_time_top_minutes_activity.cardio_minutes,
-        top_peak_minutes=all_time_top_minutes_activity.peak_minutes,
+        top_zone_minutes=[
+            ActivityZoneMinutes(
+                zone=ActivityZone.PEAK,
+                minutes=all_time_top_minutes_activity.peak_minutes,
+            ),
+            ActivityZoneMinutes(
+                zone=ActivityZone.CARDIO,
+                minutes=all_time_top_minutes_activity.cardio_minutes,
+            ),
+            ActivityZoneMinutes(
+                zone=ActivityZone.FAT_BURN,
+                minutes=all_time_top_minutes_activity.fat_burn_minutes,
+            ),
+        ],
     )
 
-    recent_top_activity_stats: fitbitrepository.TopActivityStats = (
-        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
-            db=mocked_async_session,
+    recent_top_activity_stats: TopActivityStats = (
+        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
             since=recent_date - datetime.timedelta(days=1),
         )
     )
-    assert recent_top_activity_stats == fitbitrepository.TopActivityStats(
+    assert recent_top_activity_stats == TopActivityStats(
         top_calories=recent_top_calories_activity.calories,
         top_total_minutes=recent_top_minutes_activity.total_minutes,
-        top_fat_burn_minutes=recent_top_minutes_activity.fat_burn_minutes,
-        top_cardio_minutes=recent_top_minutes_activity.cardio_minutes,
-        top_peak_minutes=recent_top_minutes_activity.peak_minutes,
+        top_zone_minutes=[
+            ActivityZoneMinutes(
+                zone=ActivityZone.PEAK,
+                minutes=recent_top_minutes_activity.peak_minutes,
+            ),
+            ActivityZoneMinutes(
+                zone=ActivityZone.CARDIO,
+                minutes=recent_top_minutes_activity.cardio_minutes,
+            ),
+            ActivityZoneMinutes(
+                zone=ActivityZone.FAT_BURN,
+                minutes=recent_top_minutes_activity.fat_burn_minutes,
+            ),
+        ],
     )
 
 
 @pytest.mark.asyncio
 async def test_top_activities_no_history(
-    mocked_async_session: AsyncSession,
+    fitbit_repository: FitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, _ = fitbit_factories
@@ -157,33 +181,27 @@ async def test_top_activities_no_history(
     user: models.User = user_factory.create()
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
 
-    all_time_top_activity_stats: fitbitrepository.TopActivityStats = (
-        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
-            db=mocked_async_session,
+    all_time_top_activity_stats: TopActivityStats = (
+        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
         )
     )
-    assert all_time_top_activity_stats == fitbitrepository.TopActivityStats(
+    assert all_time_top_activity_stats == TopActivityStats(
         top_calories=None,
         top_total_minutes=None,
-        top_fat_burn_minutes=None,
-        top_cardio_minutes=None,
-        top_peak_minutes=None,
+        top_zone_minutes=[],
     )
 
-    recent_top_activity_stats: fitbitrepository.TopActivityStats = (
-        await fitbitrepository.get_top_activity_stats_by_user_and_activity_type(
-            db=mocked_async_session,
+    recent_top_activity_stats: TopActivityStats = (
+        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
             since=recent_date - datetime.timedelta(days=1),
         )
     )
-    assert recent_top_activity_stats == fitbitrepository.TopActivityStats(
+    assert recent_top_activity_stats == TopActivityStats(
         top_calories=None,
         top_total_minutes=None,
-        top_fat_burn_minutes=None,
-        top_cardio_minutes=None,
-        top_peak_minutes=None,
+        top_zone_minutes=[],
     )
