@@ -11,7 +11,10 @@ from respx import MockRouter
 
 from slackhealthbot.data.database.models import User
 from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
-from slackhealthbot.data.repositories import withingsrepository
+from slackhealthbot.domain.repository.withingsrepository import (
+    FitnessData,
+    WithingsRepository,
+)
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
 
@@ -37,7 +40,7 @@ class WeightNotificationScenario:
 )
 @pytest.mark.asyncio
 async def test_weight_notification(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -108,9 +111,8 @@ async def test_weight_notification(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last_weight is updated in the database
-    fitness_data: withingsrepository.FitnessData = (
-        await withingsrepository.get_fitness_data_by_withings_userid(
-            mocked_async_session,
+    fitness_data: FitnessData = (
+        await withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=db_withings_user.oauth_userid,
         )
     )
@@ -125,7 +127,7 @@ async def test_weight_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_weight_notification(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -194,9 +196,8 @@ async def test_duplicate_weight_notification(
 
     # Then the last_weight is updated in the database
     assert weight_request.call_count == 1
-    fitness_data: withingsrepository.FitnessData = (
-        await withingsrepository.get_fitness_data_by_withings_userid(
-            mocked_async_session,
+    fitness_data: FitnessData = (
+        await withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=db_withings_user.oauth_userid,
         )
     )

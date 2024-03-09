@@ -10,7 +10,8 @@ from slackhealthbot.data.database.models import (
     User,
     WithingsUser,
 )
-from slackhealthbot.data.repositories import fitbitrepository, withingsrepository
+from slackhealthbot.data.repositories import fitbitrepository
+from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -44,7 +45,7 @@ async def test_user_factory(
 async def test_withings_user_factory(
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
-    mocked_async_session,
+    withings_repository: WithingsRepository,
 ):
     user: User = user_factory.create(withings=None)
     withings_user: WithingsUser = withings_user_factory.create(user_id=user.id)
@@ -55,8 +56,8 @@ async def test_withings_user_factory(
     assert isinstance(withings_user.last_weight, float)
     assert isinstance(user, User)
 
-    repo_user = await withingsrepository.get_user_by_withings_userid(
-        mocked_async_session, withings_userid=withings_user.oauth_userid
+    repo_user = await withings_repository.get_user_by_withings_userid(
+        withings_userid=withings_user.oauth_userid
     )
     assert repo_user.identity.withings_userid == withings_user.oauth_userid
     assert repo_user.oauth_data.oauth_access_token == withings_user.oauth_access_token
