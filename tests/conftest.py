@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm.session import Session
 
 from slackhealthbot.data.database.models import Base
+from slackhealthbot.data.repositories.fitbitdbrepository import FitbitDbRepository
 from slackhealthbot.data.repositories.withingsdbrepository import WithingsDbRepository
+from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
 from slackhealthbot.main import app
 from slackhealthbot.routers.dependencies import get_db
@@ -42,6 +44,13 @@ def withings_repository(
     mocked_async_session: AsyncSession,
 ) -> WithingsRepository:
     return WithingsDbRepository(db=mocked_async_session)
+
+
+@pytest.fixture
+def fitbit_repository(
+    mocked_async_session: AsyncSession,
+) -> FitbitRepository:
+    return FitbitDbRepository(db=mocked_async_session)
 
 
 @pytest.fixture
