@@ -1,6 +1,14 @@
+from contextvars import ContextVar
+
+from fastapi import Depends
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.database.connection import SessionLocal, ctx_db
+from slackhealthbot.data.repositories.withingsdbrepository import WithingsDbRepository
+from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
+
+_ctx_withings_repository = ContextVar("withings_repository")
 
 
 async def get_db():
@@ -15,6 +23,19 @@ async def get_db():
     finally:
         await db.close()
         ctx_db.set(None)
+
+
+async def get_withings_repository(
+    db: AsyncSession = Depends(get_db),
+) -> WithingsRepository:
+    repo = WithingsDbRepository(db=db)
+    _ctx_withings_repository.set(repo)
+    yield repo
+    _ctx_withings_repository.set(None)
+
+
+def request_context_withings_repository() -> WithingsRepository:
+    return _ctx_withings_repository.get()
 
 
 templates = Jinja2Templates(directory="templates")

@@ -12,17 +12,21 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.data.database.connection import ctx_db
-from slackhealthbot.data.database.models import User
+from slackhealthbot.data.database.models import User as DbUser
 from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
-from slackhealthbot.data.repositories import withingsrepository
+from slackhealthbot.domain.repository.withingsrepository import (
+    FitnessData,
+    User,
+    UserIdentity,
+    WithingsRepository,
+)
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
 
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -36,9 +40,8 @@ async def test_refresh_token_ok(
     """
     user_factory, withings_user_factory = withings_factories
 
-    ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory.create(withings=None)
+    user: DbUser = user_factory.create(withings=None)
     db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=50.2,
@@ -107,11 +110,8 @@ async def test_refresh_token_ok(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user: withingsrepository.User = (
-        await withingsrepository.get_user_by_withings_userid(
-            mocked_async_session,
-            withings_userid=db_withings_user.oauth_userid,
-        )
+    repo_user: User = await withings_repository.get_user_by_withings_userid(
+        withings_userid=db_withings_user.oauth_userid,
     )
     # Then the access token is refreshed.
     assert withings_weight_request.call_count == 1
@@ -133,7 +133,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -147,9 +147,8 @@ async def test_refresh_token_fail(
     """
     user_factory, withings_user_factory = withings_factories
 
-    ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    user: DbUser = user_factory.create(withings=None, slack_alias="jdoe")
     db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
@@ -181,20 +180,16 @@ async def test_refresh_token_fail(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user: withingsrepository.User = (
-        await withingsrepository.get_user_by_withings_userid(
-            mocked_async_session,
-            withings_userid=db_withings_user.oauth_userid,
-        )
+    repo_user: User = await withings_repository.get_user_by_withings_userid(
+        withings_userid=db_withings_user.oauth_userid,
     )
     # Then the access token is not refreshed.
     assert oauth_token_refresh_request.call_count == 1
     assert repo_user.oauth_data.oauth_access_token == "some old invalid access token"
 
     # And no new weight data is updated in the database
-    repo_fitness_data: withingsrepository.FitnessData = (
-        await withingsrepository.get_fitness_data_by_withings_userid(
-            db=mocked_async_session,
+    repo_fitness_data: FitnessData = (
+        await withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=repo_user.identity.withings_userid,
         )
     )
@@ -221,17 +216,16 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
     scenario: LoginScenario,
 ):
     user_factory, withings_user_factory = withings_factories
-    ctx_db.set(mocked_async_session)
     # Given a user
     if scenario == LoginScenario.EXISTING_WITHINGS_USER:
-        user: User = user_factory.create(withings=None, slack_alias="jdoe")
+        user: DbUser = user_factory.create(withings=None, slack_alias="jdoe")
         withings_user_factory.create(
             user_id=user.id,
             oauth_userid="user123",
@@ -291,11 +285,10 @@ async def test_login_success(
     assert response.status_code == status.HTTP_200_OK
 
     # Verify that we have the expected data in the db
-    repo_user = await withingsrepository.get_user_by_withings_userid(
-        mocked_async_session,
+    repo_user = await withings_repository.get_user_by_withings_userid(
         "user123",
     )
-    assert repo_user.identity == withingsrepository.UserIdentity(
+    assert repo_user.identity == UserIdentity(
         withings_userid="user123",
         slack_alias="jdoe",
     )
@@ -306,7 +299,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    mocked_async_session,
+    withings_repository: WithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -320,9 +313,8 @@ async def test_logged_out(
 
     user_factory, withings_user_factory = withings_factories
 
-    ctx_db.set(mocked_async_session)
     # Given a user
-    user: User = user_factory.create(withings=None, slack_alias="jdoe")
+    user: DbUser = user_factory.create(withings=None, slack_alias="jdoe")
     db_withings_user: DbWithingsUser = withings_user_factory.create(
         user_id=user.id,
         last_weight=None,
@@ -352,11 +344,8 @@ async def test_logged_out(
         )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    repo_user: withingsrepository.User = (
-        await withingsrepository.get_user_by_withings_userid(
-            mocked_async_session,
-            withings_userid=db_withings_user.oauth_userid,
-        )
+    repo_user: User = await withings_repository.get_user_by_withings_userid(
+        withings_userid=db_withings_user.oauth_userid,
     )
 
     # Then the access token is not refreshed.
@@ -364,9 +353,8 @@ async def test_logged_out(
     assert repo_user.oauth_data.oauth_access_token == "some invalid access token"
 
     # And no new weight data is updated in the database
-    repo_fitness_data: withingsrepository.FitnessData = (
-        await withingsrepository.get_fitness_data_by_withings_userid(
-            db=mocked_async_session,
+    repo_fitness_data: FitnessData = (
+        await withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=repo_user.identity.withings_userid,
         )
     )
