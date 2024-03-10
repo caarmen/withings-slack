@@ -2,13 +2,13 @@ import asyncio
 import dataclasses
 import datetime
 import logging
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import AsyncContextManager, Callable
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.data.database.connection import SessionLocal
-from slackhealthbot.data.repositories import fitbitrepository
-from slackhealthbot.data.repositories.fitbitrepository import UserIdentity
+from slackhealthbot.domain.repository.fitbitrepository import (
+    FitbitRepository,
+    UserIdentity,
+)
 from slackhealthbot.domain.usecases.fitbit import (
     usecase_process_new_activity,
     usecase_process_new_sleep,
@@ -49,30 +49,27 @@ async def handle_fail_poll(
         cache.cache_fail[fitbit_userid] = when
 
 
-async def fitbit_poll(cache: Cache, db: AsyncSession | None = None):
+async def fitbit_poll(cache: Cache, repo: FitbitRepository):
     logging.info("fitbit poll")
     today = datetime.date.today()
     try:
-        async with SessionLocal() if not db else db as session:
-            await do_poll(session, cache, when=today)
+        await do_poll(repo, cache, when=today)
     except Exception:
         logging.error("Error polling fitbit", exc_info=True)
 
 
-async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
-    user_identities: list[UserIdentity] = (
-        await fitbitrepository.get_all_user_identities(db)
-    )
+async def do_poll(repo: FitbitRepository, cache: Cache, when: datetime.date):
+    user_identities: list[UserIdentity] = await repo.get_all_user_identities()
     for user_identity in user_identities:
         await fitbit_poll_sleep(
-            db,
+            repo,
             cache,
             when,
             fitbit_userid=user_identity.fitbit_userid,
             slack_alias=user_identity.slack_alias,
         )
         await fitbit_poll_activity(
-            db,
+            repo,
             cache,
             when,
             fitbit_userid=user_identity.fitbit_userid,
@@ -81,7 +78,7 @@ async def do_poll(db: AsyncSession, cache: Cache, when: datetime.date):
 
 
 async def fitbit_poll_activity(
-    db: AsyncSession,
+    repo: FitbitRepository,
     cache: Cache,
     when: datetime.date,
     fitbit_userid: str,
@@ -89,7 +86,7 @@ async def fitbit_poll_activity(
 ):
     try:
         await usecase_process_new_activity.do(
-            db=db,
+            repo=repo,
             fitbit_userid=fitbit_userid,
             when=datetime.datetime.now(),
         )
@@ -103,7 +100,7 @@ async def fitbit_poll_activity(
 
 
 async def fitbit_poll_sleep(
-    db: AsyncSession,
+    repo: FitbitRepository,
     cache: Cache,
     when: datetime.date,
     fitbit_userid: str,
@@ -113,7 +110,7 @@ async def fitbit_poll_sleep(
     if not latest_successful_poll or latest_successful_poll < when:
         try:
             sleep_data = await usecase_process_new_sleep.do(
-                db,
+                repo,
                 fitbit_userid=fitbit_userid,
                 when=when,
             )
@@ -134,9 +131,9 @@ async def fitbit_poll_sleep(
 
 
 async def schedule_fitbit_poll(
+    repo_factory: Callable[[], AsyncContextManager[FitbitRepository]],
     initial_delay_s: int = settings.fitbit_poll_interval_s,
     cache: Cache = None,
-    db: AsyncSession | None = None,
 ):
     if cache is None:
         cache = Cache()
@@ -144,7 +141,8 @@ async def schedule_fitbit_poll(
     async def run_with_delay():
         await asyncio.sleep(initial_delay_s)
         while True:
-            await fitbit_poll(cache, db=db)
+            async with repo_factory() as repo:
+                await fitbit_poll(cache, repo=repo)
             await asyncio.sleep(settings.fitbit_poll_interval_s)
 
     return asyncio.create_task(run_with_delay())

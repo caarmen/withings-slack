@@ -2,20 +2,20 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import Float, ForeignKey, String, func
-from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, relationship
 
 Base = declarative_base()
 
 
-class TimestampMixin:
+class TimestampMixin(Base):
+    __abstract__ = True
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         onupdate=func.now(), server_default=func.now()
     )
 
 
-class User(TimestampMixin, AsyncAttrs, Base):
+class User(TimestampMixin, Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     slack_alias: Mapped[str] = mapped_column(unique=True, index=True)
@@ -27,7 +27,7 @@ class User(TimestampMixin, AsyncAttrs, Base):
     )
 
 
-class WithingsUser(TimestampMixin, AsyncAttrs, Base):
+class WithingsUser(TimestampMixin, Base):
     __tablename__ = "withings_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
@@ -41,7 +41,7 @@ class WithingsUser(TimestampMixin, AsyncAttrs, Base):
     last_weight: Mapped[Optional[float]] = mapped_column(Float())
 
 
-class FitbitUser(TimestampMixin, AsyncAttrs, Base):
+class FitbitUser(TimestampMixin, Base):
     __tablename__ = "fitbit_users"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), unique=True)
@@ -58,7 +58,7 @@ class FitbitUser(TimestampMixin, AsyncAttrs, Base):
     last_sleep_wake_minutes: Mapped[Optional[int]] = mapped_column()
 
 
-class FitbitActivity(TimestampMixin, AsyncAttrs, Base):
+class FitbitActivity(TimestampMixin, Base):
     __tablename__ = "fitbit_activities"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     log_id: Mapped[int] = mapped_column(unique=True)

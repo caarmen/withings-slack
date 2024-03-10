@@ -2,16 +2,16 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
+from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
 from slackhealthbot.domain.usecases.withings import (
     usecase_login_user,
     usecase_post_user_logged_out,
     usecase_process_new_weight,
 )
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.routers.dependencies import get_db, templates
+from slackhealthbot.routers.dependencies import get_withings_repository, templates
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 router = APIRouter()
@@ -28,12 +28,15 @@ def validate_withings_notification_webhook():
 
 
 @router.get("/withings-oauth-webhook/")
-async def withings_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+async def withings_oauth_webhook(
+    request: Request,
+    repo: WithingsRepository = Depends(get_withings_repository),
+):
     token: dict = await oauth.create_client(settings.name).authorize_access_token(
         request
     )
     await usecase_login_user.do(
-        db=db, token=token, slack_alias=request.session.pop("slack_alias")
+        repo=repo, token=token, slack_alias=request.session.pop("slack_alias")
     )
     return templates.TemplateResponse(
         request=request, name="login_complete.html", context={"provider": "withings"}
@@ -56,7 +59,7 @@ async def withings_notification_webhook(
     userid: Annotated[str, Form()],
     startdate: Annotated[int, Form()],
     enddate: Annotated[int, Form()],
-    db: AsyncSession = Depends(get_db),
+    repo: WithingsRepository = Depends(get_withings_repository),
 ):
     logging.info(
         "withings_notification_webhook: "
@@ -68,7 +71,7 @@ async def withings_notification_webhook(
     ):
         try:
             await usecase_process_new_weight.do(
-                db,
+                repo=repo,
                 withings_userid=userid,
                 startdate=startdate,
                 enddate=enddate,
@@ -79,7 +82,7 @@ async def withings_notification_webhook(
             )
         except UserLoggedOutException:
             await usecase_post_user_logged_out.do(
-                db=db,
+                repo=repo,
                 withings_userid=userid,
             )
     else:

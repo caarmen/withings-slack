@@ -11,9 +11,12 @@ from fastapi.testclient import TestClient
 from httpx import Response
 from respx import MockRouter
 
-from slackhealthbot.data.database.connection import ctx_db
 from slackhealthbot.data.database.models import FitbitUser, User
-from slackhealthbot.data.repositories import fitbitrepository
+from slackhealthbot.domain.models.activity import ActivityData
+from slackhealthbot.domain.repository.fitbitrepository import (
+    FitbitRepository,
+    UserIdentity,
+)
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -25,7 +28,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    mocked_async_session,
+    fitbit_repository: FitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -40,7 +43,6 @@ async def test_refresh_token_ok(
 
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
-    ctx_db.set(mocked_async_session)
     scenario = activity_scenarios["No previous activity data, new Spinning activity"]
     activity_type_id = scenario.input_mock_fitbit_response["activities"][0][
         "activityTypeId"
@@ -101,8 +103,8 @@ async def test_refresh_token_ok(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
-        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
+    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+        fitbit_userid=fitbit_user.oauth_userid
     )
 
     # Then the access token is refreshed.
@@ -116,9 +118,8 @@ async def test_refresh_token_ok(
     assert repo_user.oauth_data.oauth_refresh_token == "some new refresh token"
 
     # And the latest activity data is updated in the database
-    repo_activity: fitbitrepository.Activity = (
-        await fitbitrepository.get_latest_activity_by_user_and_type(
-            db=mocked_async_session,
+    repo_activity: ActivityData = (
+        await fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
@@ -135,7 +136,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    mocked_async_session,
+    fitbit_repository: FitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -150,7 +151,6 @@ async def test_refresh_token_fail(
 
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
-    ctx_db.set(mocked_async_session)
     scenario = activity_scenarios["No previous activity data, new Spinning activity"]
     activity_type_id = scenario.input_mock_fitbit_response["activities"][0][
         "activityTypeId"
@@ -192,8 +192,8 @@ async def test_refresh_token_fail(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
-        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
+    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+        fitbit_userid=fitbit_user.oauth_userid
     )
 
     # Then the access token is not refreshed.
@@ -201,9 +201,8 @@ async def test_refresh_token_fail(
     assert repo_user.oauth_data.oauth_access_token == "some old invalid access token"
 
     # And no new activity data is updated in the database
-    repo_activity: fitbitrepository.Activity = (
-        await fitbitrepository.get_latest_activity_by_user_and_type(
-            db=mocked_async_session,
+    repo_activity: ActivityData = (
+        await fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
@@ -231,13 +230,12 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    mocked_async_session,
+    fitbit_repository: FitbitRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: LoginScenario,
 ):
-    ctx_db.set(mocked_async_session)
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
     # Given a user
@@ -302,11 +300,10 @@ async def test_login_success(
     assert response.status_code == status.HTTP_200_OK
 
     # Verify that we have the expected data in the db
-    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
-        mocked_async_session,
+    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
         "user123",
     )
-    assert repo_user.identity == fitbitrepository.UserIdentity(
+    assert repo_user.identity == UserIdentity(
         fitbit_userid="user123",
         slack_alias="jdoe",
     )
@@ -317,7 +314,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    mocked_async_session,
+    fitbit_repository: FitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -331,7 +328,6 @@ async def test_logged_out(
 
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
-    ctx_db.set(mocked_async_session)
     activity_type_id = 55001
 
     # Given a user
@@ -370,8 +366,8 @@ async def test_logged_out(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbitrepository.get_user_by_fitbit_userid(
-        mocked_async_session, fitbit_userid=fitbit_user.oauth_userid
+    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+        fitbit_userid=fitbit_user.oauth_userid
     )
 
     # Then the access token is not refreshed.
@@ -379,9 +375,8 @@ async def test_logged_out(
     assert repo_user.oauth_data.oauth_access_token == "some invalid access token"
 
     # And no new activity data is updated in the database
-    repo_activity: fitbitrepository.Activity = (
-        await fitbitrepository.get_latest_activity_by_user_and_type(
-            db=mocked_async_session,
+    repo_activity: ActivityData = (
+        await fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )

@@ -3,9 +3,9 @@ import logging
 
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
+from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.domain.usecases.fitbit import (
     usecase_login_user,
     usecase_post_user_logged_out,
@@ -13,7 +13,7 @@ from slackhealthbot.domain.usecases.fitbit import (
     usecase_process_new_sleep,
 )
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.routers.dependencies import get_db, templates
+from slackhealthbot.routers.dependencies import get_fitbit_repository, templates
 from slackhealthbot.settings import fitbit_oauth_settings as settings
 
 router = APIRouter()
@@ -35,12 +35,15 @@ def validate_fitbit_notification_webhook(verify: str | None = None):
 
 
 @router.get("/fitbit-oauth-webhook/")
-async def fitbit_oauth_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+async def fitbit_oauth_webhook(
+    request: Request,
+    repo: FitbitRepository = Depends(get_fitbit_repository),
+):
     token: dict = await oauth.create_client(settings.name).authorize_access_token(
         request
     )
     await usecase_login_user.do(
-        db=db, token=token, slack_alias=request.session.pop("slack_alias")
+        repo=repo, token=token, slack_alias=request.session.pop("slack_alias")
     )
     return templates.TemplateResponse(
         request=request, name="login_complete.html", context={"provider": "fitbit"}
@@ -83,7 +86,7 @@ def _mark_fitbit_notification_processed(notification: FitbitNotification):
 @router.post("/fitbit-notification-webhook/")
 async def fitbit_notification_webhook(
     notifications: list[FitbitNotification],
-    db: AsyncSession = Depends(get_db),
+    repo: FitbitRepository = Depends(get_fitbit_repository),
 ):
     logging.info(f"fitbit_notification_webhook: {notifications}")
     for notification in notifications:
@@ -94,7 +97,7 @@ async def fitbit_notification_webhook(
         try:
             if notification.collectionType == "sleep":
                 new_sleep_data = await usecase_process_new_sleep.do(
-                    db,
+                    repo=repo,
                     fitbit_userid=notification.ownerId,
                     when=notification.date,
                 )
@@ -102,7 +105,7 @@ async def fitbit_notification_webhook(
                     _mark_fitbit_notification_processed(notification)
             elif notification.collectionType == "activities":
                 activity_history = await usecase_process_new_activity.do(
-                    db=db,
+                    repo=repo,
                     fitbit_userid=notification.ownerId,
                     when=datetime.datetime.now(),
                 )
@@ -110,7 +113,7 @@ async def fitbit_notification_webhook(
                     _mark_fitbit_notification_processed(notification)
         except UserLoggedOutException:
             await usecase_post_user_logged_out.do(
-                db=db,
+                repo=repo,
                 fitbit_userid=notification.ownerId,
             )
             break
