@@ -12,17 +12,19 @@ graph TD
     end
     subgraph Domain
         UseCases
+        Models
+        RepositoryInterfaces
     end
     subgraph Data
         Database
-        Repositories
+        DbRepositories
     end
     subgraph RemoteServices[Remote services]
         Apis
     end
 
     EntryPoints-->Domain
-    Domain-->Data
+    Data-->Domain
     Domain-->RemoteServices
 ```
 
@@ -44,12 +46,16 @@ graph TD
             WithingsUseCases
             SlackUseCases
         end
+        subgraph RepositoryInterfaces
+            FitbitRepository
+            WithingsRepository
+        end
     end
     subgraph Data
         Database
-        subgraph Repositories
-            FitbitRepository
-            WithingsRepository
+        subgraph DbRepositories
+            FitbitDbRepository
+            WithingsDbRepository
         end
     end
     subgraph RemoteServices[Remote services]
@@ -71,9 +77,10 @@ graph TD
     Main-->Tasks
     Tasks-->Domain
     Routes-->Domain
-    Repositories-->Database
-    Domain-->Data
-    Domain-->RemoteServices
+    DbRepositories-->Database
+    DbRepositories-->RepositoryInterfaces
+    UseCases-->RemoteServices
+    UseCases-->RepositoryInterfaces
     Domain-->Core
     RemoteServices-->Core
     RemoteServices-->OAuth
