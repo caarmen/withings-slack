@@ -9,13 +9,17 @@ from slackhealthbot.data.database.models import (
     User,
     WithingsUser,
 )
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
+    LocalWithingsRepository,
+)
 from slackhealthbot.domain.models.activity import (
     ActivityData,
     ActivityZone,
     ActivityZoneMinutes,
 )
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
-from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -49,7 +53,7 @@ async def test_user_factory(
 async def test_withings_user_factory(
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
 ):
     user: User = user_factory.create(withings=None)
     withings_user: WithingsUser = withings_user_factory.create(user_id=user.id)
@@ -77,7 +81,7 @@ async def test_withings_user_factory(
 async def test_fitbit_user_factory(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
 ):
     user: User = user_factory.create(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)
@@ -104,7 +108,7 @@ async def test_fitbit_activity_factory(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
     fitbit_activity_factory: FitbitActivityFactory,
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
 ):
     user: User = user_factory.create(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)

@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.usecases.fitbit import (
     usecase_login_user,
     usecase_post_user_logged_out,
@@ -37,7 +39,7 @@ def validate_fitbit_notification_webhook(verify: str | None = None):
 @router.get("/fitbit-oauth-webhook/")
 async def fitbit_oauth_webhook(
     request: Request,
-    repo: FitbitRepository = Depends(get_fitbit_repository),
+    repo: LocalFitbitRepository = Depends(get_fitbit_repository),
 ):
     token: dict = await oauth.create_client(settings.name).authorize_access_token(
         request
@@ -86,7 +88,7 @@ def _mark_fitbit_notification_processed(notification: FitbitNotification):
 @router.post("/fitbit-notification-webhook/")
 async def fitbit_notification_webhook(
     notifications: list[FitbitNotification],
-    repo: FitbitRepository = Depends(get_fitbit_repository),
+    repo: LocalFitbitRepository = Depends(get_fitbit_repository),
 ):
     logging.info(f"fitbit_notification_webhook: {notifications}")
     for notification in notifications:

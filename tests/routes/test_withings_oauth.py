@@ -14,11 +14,11 @@ from respx import MockRouter
 
 from slackhealthbot.data.database.models import User as DbUser
 from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
-from slackhealthbot.domain.repository.withingsrepository import (
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
     FitnessData,
+    LocalWithingsRepository,
     User,
     UserIdentity,
-    WithingsRepository,
 )
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
@@ -26,7 +26,7 @@ from tests.testsupport.factories.factories import UserFactory, WithingsUserFacto
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -133,7 +133,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -216,7 +216,7 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -299,7 +299,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],

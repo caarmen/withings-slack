@@ -5,8 +5,8 @@ import logging
 from typing import AsyncContextManager, Callable
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     UserIdentity,
 )
 from slackhealthbot.domain.usecases.fitbit import (
@@ -49,7 +49,7 @@ async def handle_fail_poll(
         cache.cache_fail[fitbit_userid] = when
 
 
-async def fitbit_poll(cache: Cache, repo: FitbitRepository):
+async def fitbit_poll(cache: Cache, repo: LocalFitbitRepository):
     logging.info("fitbit poll")
     today = datetime.date.today()
     try:
@@ -58,7 +58,7 @@ async def fitbit_poll(cache: Cache, repo: FitbitRepository):
         logging.error("Error polling fitbit", exc_info=True)
 
 
-async def do_poll(repo: FitbitRepository, cache: Cache, when: datetime.date):
+async def do_poll(repo: LocalFitbitRepository, cache: Cache, when: datetime.date):
     user_identities: list[UserIdentity] = await repo.get_all_user_identities()
     for user_identity in user_identities:
         await fitbit_poll_sleep(
@@ -78,7 +78,7 @@ async def do_poll(repo: FitbitRepository, cache: Cache, when: datetime.date):
 
 
 async def fitbit_poll_activity(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     cache: Cache,
     when: datetime.date,
     fitbit_userid: str,
@@ -100,7 +100,7 @@ async def fitbit_poll_activity(
 
 
 async def fitbit_poll_sleep(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     cache: Cache,
     when: datetime.date,
     fitbit_userid: str,
@@ -131,7 +131,7 @@ async def fitbit_poll_sleep(
 
 
 async def schedule_fitbit_poll(
-    repo_factory: Callable[[], AsyncContextManager[FitbitRepository]],
+    repo_factory: Callable[[], AsyncContextManager[LocalFitbitRepository]],
     initial_delay_s: int = settings.fitbit_poll_interval_s,
     cache: Cache = None,
 ):

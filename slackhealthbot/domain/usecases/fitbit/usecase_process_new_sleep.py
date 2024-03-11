@@ -1,16 +1,16 @@
 import datetime
 
-from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     UserIdentity,
 )
+from slackhealthbot.domain.models.sleep import SleepData
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_sleep
 from slackhealthbot.domain.usecases.slack import usecase_post_sleep
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
     when: datetime.date,
 ) -> SleepData | None:

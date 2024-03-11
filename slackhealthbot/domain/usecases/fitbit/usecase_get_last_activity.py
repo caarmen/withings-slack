@@ -1,15 +1,18 @@
 import datetime
 
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+    User,
+)
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
     remote_service_activity_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository, User
 from slackhealthbot.remoteservices.fitbit import activityapi
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
     when: datetime.datetime,
 ) -> tuple[str, ActivityData] | None:

@@ -9,8 +9,10 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     UpdateTokenUseCase,
 )
@@ -42,7 +44,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import (
 )
 @pytest.mark.asyncio
 async def test_fitbit_poll_sleep(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitSleepScenario,
@@ -111,7 +113,7 @@ async def test_fitbit_poll_sleep(
 )
 @pytest.mark.asyncio
 async def test_fitbit_poll_activity(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
@@ -191,7 +193,7 @@ async def test_fitbit_poll_activity(
 @pytest.mark.asyncio
 async def test_schedule_fitbit_poll(
     mocked_async_session,
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     monkeypatch: pytest.MonkeyPatch,

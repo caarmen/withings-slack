@@ -1,17 +1,17 @@
 from typing import Any
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     User,
     UserIdentity,
 )
+from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
 from slackhealthbot.remoteservices.fitbit import subscribeapi
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     slack_alias: str,
     token: dict[str, Any],
 ):
@@ -22,7 +22,7 @@ async def do(
 
 
 async def _upsert_user(
-    repo: FitbitRepository, slack_alias: str, token: dict[str, Any]
+    repo: LocalFitbitRepository, slack_alias: str, token: dict[str, Any]
 ) -> User:
     oauth_fields: OAuthFields = oauth.remote_service_oauth_to_core_oauth(token)
     user_identity: UserIdentity = await repo.get_user_identity_by_fitbit_userid(

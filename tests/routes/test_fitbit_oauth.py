@@ -12,11 +12,11 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
-from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     UserIdentity,
 )
+from slackhealthbot.domain.models.activity import ActivityData
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -28,7 +28,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -136,7 +136,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -230,7 +230,7 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -314,7 +314,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],

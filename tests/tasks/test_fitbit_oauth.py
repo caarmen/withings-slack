@@ -10,8 +10,10 @@ from respx import MockRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.routers.dependencies import fitbit_repository_factory
 from slackhealthbot.settings import settings
 from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
@@ -128,7 +130,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -211,7 +213,7 @@ class LoginScenario(enum.Enum):
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],

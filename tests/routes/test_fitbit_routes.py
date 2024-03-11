@@ -9,8 +9,10 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -32,7 +34,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import (
 )
 @pytest.mark.asyncio
 async def test_sleep_notification(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -106,7 +108,7 @@ async def test_sleep_notification(
 )
 @pytest.mark.asyncio
 async def test_activity_notification(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -191,7 +193,7 @@ async def test_activity_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_activity_notification(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -284,7 +286,7 @@ async def test_duplicate_activity_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_sleep_notification(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],

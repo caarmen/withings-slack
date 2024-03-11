@@ -1,10 +1,12 @@
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
+    LocalWithingsRepository,
+)
 from slackhealthbot.remoteservices.withings import weightapi
 
 
 async def do(
-    repo: WithingsRepository,
+    repo: LocalWithingsRepository,
     withings_userid: str,
     startdate: int,
     enddate: int,

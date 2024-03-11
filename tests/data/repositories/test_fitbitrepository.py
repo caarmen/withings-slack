@@ -3,12 +3,14 @@ import datetime
 import pytest
 
 from slackhealthbot.data.database import models
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.models.activity import (
     ActivityZone,
     ActivityZoneMinutes,
     TopActivityStats,
 )
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -18,7 +20,7 @@ from tests.testsupport.factories.factories import (
 
 @pytest.mark.asyncio
 async def test_top_activities(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, fitbit_activity_factory = fitbit_factories
@@ -173,7 +175,7 @@ async def test_top_activities(
 
 @pytest.mark.asyncio
 async def test_top_activities_no_history(
-    fitbit_repository: FitbitRepository,
+    fitbit_repository: LocalFitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, _ = fitbit_factories

@@ -1,5 +1,5 @@
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     UserIdentity,
 )
 from slackhealthbot.domain.usecases.slack import (
@@ -8,7 +8,7 @@ from slackhealthbot.domain.usecases.slack import (
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
 ):
     user_identity: UserIdentity = await repo.get_user_identity_by_fitbit_userid(

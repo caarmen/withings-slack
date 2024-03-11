@@ -1,16 +1,18 @@
 import datetime
 
 from slackhealthbot.core.models import OAuthFields
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.modelmappers.remoteservicetodomain.sleep import (
     remote_service_sleep_to_domain_sleep,
 )
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
 from slackhealthbot.remoteservices.fitbit import sleepapi
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
     when: datetime.date,
 ) -> SleepData | None:

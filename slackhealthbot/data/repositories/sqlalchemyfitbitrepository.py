@@ -5,6 +5,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.data.database import models
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+    User,
+    UserIdentity,
+)
 from slackhealthbot.domain.models.activity import (
     ActivityData,
     ActivityZone,
@@ -12,14 +17,9 @@ from slackhealthbot.domain.models.activity import (
     TopActivityStats,
 )
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
-    User,
-    UserIdentity,
-)
 
 
-class FitbitDbRepository(FitbitRepository):
+class SQLAlchemyFitbitRepository(LocalFitbitRepository):
 
     def __init__(self, db: AsyncSession):
         self.db = db

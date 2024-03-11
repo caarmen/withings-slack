@@ -4,7 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, Request, Response, status
 
 from slackhealthbot.core.exceptions import UserLoggedOutException
-from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
+    LocalWithingsRepository,
+)
 from slackhealthbot.domain.usecases.withings import (
     usecase_login_user,
     usecase_post_user_logged_out,
@@ -30,7 +32,7 @@ def validate_withings_notification_webhook():
 @router.get("/withings-oauth-webhook/")
 async def withings_oauth_webhook(
     request: Request,
-    repo: WithingsRepository = Depends(get_withings_repository),
+    repo: LocalWithingsRepository = Depends(get_withings_repository),
 ):
     token: dict = await oauth.create_client(settings.name).authorize_access_token(
         request
@@ -59,7 +61,7 @@ async def withings_notification_webhook(
     userid: Annotated[str, Form()],
     startdate: Annotated[int, Form()],
     enddate: Annotated[int, Form()],
-    repo: WithingsRepository = Depends(get_withings_repository),
+    repo: LocalWithingsRepository = Depends(get_withings_repository),
 ):
     logging.info(
         "withings_notification_webhook: "

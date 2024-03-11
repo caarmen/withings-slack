@@ -11,9 +11,9 @@ from respx import MockRouter
 
 from slackhealthbot.data.database.models import User
 from slackhealthbot.data.database.models import WithingsUser as DbWithingsUser
-from slackhealthbot.domain.repository.withingsrepository import (
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
     FitnessData,
-    WithingsRepository,
+    LocalWithingsRepository,
 )
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
@@ -40,7 +40,7 @@ class WeightNotificationScenario:
 )
 @pytest.mark.asyncio
 async def test_weight_notification(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -127,7 +127,7 @@ async def test_weight_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_weight_notification(
-    withings_repository: WithingsRepository,
+    withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],

@@ -1,13 +1,13 @@
 import datetime
 
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+    UserIdentity,
+)
 from slackhealthbot.domain.models.activity import (
     ActivityData,
     ActivityHistory,
     TopActivityStats,
-)
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
-    UserIdentity,
 )
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
 from slackhealthbot.domain.usecases.slack import usecase_post_activity
@@ -15,7 +15,7 @@ from slackhealthbot.settings import settings
 
 
 async def do(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
     when: datetime.datetime,
 ) -> ActivityData | None:
@@ -79,7 +79,7 @@ async def do(
 
 
 async def _is_new_valid_activity(
-    repo: FitbitRepository,
+    repo: LocalFitbitRepository,
     fitbit_userid: str,
     type_id: int,
     log_id: int,

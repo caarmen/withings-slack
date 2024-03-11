@@ -1,11 +1,14 @@
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
+    LocalWithingsRepository,
+    User,
+)
 from slackhealthbot.domain.models.weight import WeightData
-from slackhealthbot.domain.repository.withingsrepository import User, WithingsRepository
 from slackhealthbot.domain.usecases.slack import usecase_post_weight
 from slackhealthbot.domain.usecases.withings import usecase_get_last_weight
 
 
 async def do(
-    repo: WithingsRepository,
+    repo: LocalWithingsRepository,
     withings_userid: str,
     startdate: int,
     enddate: int,
