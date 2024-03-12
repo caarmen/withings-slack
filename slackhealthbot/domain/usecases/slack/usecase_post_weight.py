@@ -1,5 +1,5 @@
 from slackhealthbot.domain.models.weight import WeightData
-from slackhealthbot.remoteservices.slack import messageapi
+from slackhealthbot.remoteservices.api.slack import messageapi
 
 
 async def do(weight_data: WeightData):

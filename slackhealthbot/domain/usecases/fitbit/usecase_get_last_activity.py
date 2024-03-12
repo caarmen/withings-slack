@@ -8,7 +8,7 @@ from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
     remote_service_activity_to_domain_activity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.remoteservices.fitbit import activityapi
+from slackhealthbot.remoteservices.api.fitbit import activityapi
 
 
 async def do(

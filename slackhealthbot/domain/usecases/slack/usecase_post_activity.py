@@ -1,5 +1,5 @@
 from slackhealthbot.domain.models.activity import ActivityHistory, ActivityZone
-from slackhealthbot.remoteservices.slack import messageapi
+from slackhealthbot.remoteservices.api.slack import messageapi
 
 
 async def do(

@@ -2,7 +2,7 @@ import datetime
 import logging
 
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.remoteservices.fitbit import sleepapi
+from slackhealthbot.remoteservices.api.fitbit import sleepapi
 
 
 def remote_service_sleep_to_domain_sleep(

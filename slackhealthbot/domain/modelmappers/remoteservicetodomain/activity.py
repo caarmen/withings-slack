@@ -3,7 +3,7 @@ from slackhealthbot.domain.models.activity import (
     ActivityZone,
     ActivityZoneMinutes,
 )
-from slackhealthbot.remoteservices.fitbit.activityapi import FitbitActivities
+from slackhealthbot.remoteservices.api.fitbit.activityapi import FitbitActivities
 
 
 def remote_service_activity_to_domain_activity(

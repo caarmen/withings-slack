@@ -7,7 +7,7 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     UserIdentity,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.remoteservices.fitbit import subscribeapi
+from slackhealthbot.remoteservices.api.fitbit import subscribeapi
 
 
 async def do(

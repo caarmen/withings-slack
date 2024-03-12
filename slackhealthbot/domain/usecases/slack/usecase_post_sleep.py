@@ -1,7 +1,7 @@
 import datetime
 
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.remoteservices.slack import messageapi
+from slackhealthbot.remoteservices.api.slack import messageapi
 
 
 async def do(

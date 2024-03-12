@@ -7,7 +7,7 @@ from slackhealthbot.domain.localrepository.localwithingsrepository import (
     UserIdentity,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.remoteservices.withings import subscribeapi
+from slackhealthbot.remoteservices.api.withings import subscribeapi
 
 
 async def do(

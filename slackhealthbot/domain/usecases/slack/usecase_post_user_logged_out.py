@@ -1,4 +1,4 @@
-from slackhealthbot.remoteservices.slack import messageapi
+from slackhealthbot.remoteservices.api.slack import messageapi
 from slackhealthbot.settings import settings
 
 

@@ -8,7 +8,7 @@ from slackhealthbot.domain.modelmappers.remoteservicetodomain.sleep import (
     remote_service_sleep_to_domain_sleep,
 )
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.remoteservices.fitbit import sleepapi
+from slackhealthbot.remoteservices.api.fitbit import sleepapi
 
 
 async def do(
