@@ -1,14 +1,19 @@
 from slackhealthbot.domain.models.weight import WeightData
-from slackhealthbot.remoteservices.api.slack import messageapi
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
 
 
-async def do(weight_data: WeightData):
+async def do(
+    repo: RemoteSlackRepository,
+    weight_data: WeightData,
+):
     icon = _get_weight_change_icon(weight_data)
     message = (
         f"New weight from <@{weight_data.slack_alias}>: "
         + f"{weight_data.weight_kg:.2f} kg. {icon}"
     )
-    await messageapi.post_message(message)
+    await repo.post_message(message)
 
 
 WEIGHT_CHANGE_KG_SMALL = 0.1

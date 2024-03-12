@@ -7,13 +7,20 @@ from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
 )
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
 from slackhealthbot.domain.usecases.withings import (
     usecase_login_user,
     usecase_post_user_logged_out,
     usecase_process_new_weight,
 )
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.routers.dependencies import get_withings_repository, templates
+from slackhealthbot.routers.dependencies import (
+    get_slack_repository,
+    get_withings_repository,
+    templates,
+)
 from slackhealthbot.settings import withings_oauth_settings as settings
 
 router = APIRouter()
@@ -61,7 +68,8 @@ async def withings_notification_webhook(
     userid: Annotated[str, Form()],
     startdate: Annotated[int, Form()],
     enddate: Annotated[int, Form()],
-    repo: LocalWithingsRepository = Depends(get_withings_repository),
+    withings_repo: LocalWithingsRepository = Depends(get_withings_repository),
+    slack_repo: RemoteSlackRepository = Depends(get_slack_repository),
 ):
     logging.info(
         "withings_notification_webhook: "
@@ -73,7 +81,8 @@ async def withings_notification_webhook(
     ):
         try:
             await usecase_process_new_weight.do(
-                repo=repo,
+                withings_repo=withings_repo,
+                slack_repo=slack_repo,
                 withings_userid=userid,
                 startdate=startdate,
                 enddate=enddate,
@@ -84,7 +93,8 @@ async def withings_notification_webhook(
             )
         except UserLoggedOutException:
             await usecase_post_user_logged_out.do(
-                repo=repo,
+                withings_repo=withings_repo,
+                slack_repo=slack_repo,
                 withings_userid=userid,
             )
     else:

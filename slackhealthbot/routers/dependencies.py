@@ -19,6 +19,12 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
 )
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
+from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
+    WebhookSlackRepository,
+)
 
 _ctx_db = ContextVar("ctx_db")
 _ctx_withings_repository = ContextVar("withings_repository")
@@ -59,6 +65,10 @@ async def get_fitbit_repository(
     _ctx_fitbit_repository.set(repo)
     yield repo
     _ctx_fitbit_repository.set(None)
+
+
+def get_slack_repository() -> RemoteSlackRepository:
+    return WebhookSlackRepository()
 
 
 def request_context_fitbit_repository() -> LocalFitbitRepository:

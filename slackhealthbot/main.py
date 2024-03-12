@@ -19,6 +19,7 @@ from slackhealthbot.oauth import fitbitconfig as oauth_fitbit
 from slackhealthbot.oauth import withingsconfig as oauth_withings
 from slackhealthbot.routers.dependencies import (
     fitbit_repository_factory,
+    get_slack_repository,
     request_context_fitbit_repository,
     request_context_withings_repository,
 )
@@ -38,7 +39,8 @@ async def lifespan(_app: FastAPI):
     schedule_task = None
     if settings.fitbit_poll_enabled:
         schedule_task = await fitbitpoll.schedule_fitbit_poll(
-            repo_factory=fitbit_repository_factory(),
+            fitbit_repo_factory=fitbit_repository_factory(),
+            slack_repo=get_slack_repository(),
             initial_delay_s=10,
         )
     yield

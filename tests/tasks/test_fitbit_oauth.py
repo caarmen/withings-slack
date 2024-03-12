@@ -14,6 +14,9 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
 )
 from slackhealthbot.domain.models.activity import ActivityData
+from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
+    WebhookSlackRepository,
+)
 from slackhealthbot.routers.dependencies import fitbit_repository_factory
 from slackhealthbot.settings import settings
 from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
@@ -95,7 +98,12 @@ async def test_refresh_token_ok(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         async with fitbit_repository_factory(mocked_async_session)() as repo:
-            await do_poll(repo=repo, cache=Cache(), when=datetime.date(2023, 1, 23))
+            await do_poll(
+                fitbit_repo=repo,
+                slack_repo=WebhookSlackRepository(),
+                cache=Cache(),
+                when=datetime.date(2023, 1, 23),
+            )
 
             repo_user = await repo.get_user_by_fitbit_userid(
                 fitbit_userid=fitbit_user.oauth_userid
@@ -174,7 +182,10 @@ async def test_refresh_token_fail(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            repo=fitbit_repository, cache=Cache(), when=datetime.date(2023, 1, 23)
+            fitbit_repo=fitbit_repository,
+            slack_repo=WebhookSlackRepository(),
+            cache=Cache(),
+            when=datetime.date(2023, 1, 23),
         )
 
     repo_user = await fitbit_repository.get_user_by_fitbit_userid(
@@ -256,7 +267,10 @@ async def test_logged_out(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            repo=fitbit_repository, cache=Cache(), when=datetime.date(2023, 1, 23)
+            fitbit_repo=fitbit_repository,
+            slack_repo=WebhookSlackRepository(),
+            cache=Cache(),
+            when=datetime.date(2023, 1, 23),
         )
 
     repo_user = await fitbit_repository.get_user_by_fitbit_userid(

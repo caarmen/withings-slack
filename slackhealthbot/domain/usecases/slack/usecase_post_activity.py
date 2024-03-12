@@ -1,8 +1,11 @@
 from slackhealthbot.domain.models.activity import ActivityHistory, ActivityZone
-from slackhealthbot.remoteservices.api.slack import messageapi
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
 
 
 async def do(
+    repo: RemoteSlackRepository,
     slack_alias: str,
     activity_name: str,
     activity_history: ActivityHistory,
@@ -11,7 +14,7 @@ async def do(
     message = create_message(
         slack_alias, activity_name, activity_history, record_history_days
     )
-    await messageapi.post_message(message.strip())
+    await repo.post_message(message.strip())
 
 
 def create_message(
