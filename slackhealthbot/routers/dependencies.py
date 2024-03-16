@@ -22,6 +22,12 @@ from slackhealthbot.domain.localrepository.localwithingsrepository import (
 from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
 )
+from slackhealthbot.domain.remoterepository.remotewithingsrepository import (
+    RemoteWithingsRepository,
+)
+from slackhealthbot.remoteservices.repositories.webapiwithingsrepository import (
+    WebApiWithingsRepository,
+)
 from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
@@ -45,7 +51,7 @@ async def get_db():
         _ctx_db.set(None)
 
 
-async def get_withings_repository(
+async def get_local_withings_repository(
     db: AsyncSession = Depends(get_db),
 ) -> LocalWithingsRepository:
     repo = SQLAlchemyWithingsRepository(db=db)
@@ -56,6 +62,10 @@ async def get_withings_repository(
 
 def request_context_withings_repository() -> LocalWithingsRepository:
     return _ctx_withings_repository.get()
+
+
+def get_remote_withings_repository() -> RemoteWithingsRepository:
+    return WebApiWithingsRepository()
 
 
 async def get_fitbit_repository(

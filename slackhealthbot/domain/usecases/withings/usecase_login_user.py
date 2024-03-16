@@ -7,16 +7,19 @@ from slackhealthbot.domain.localrepository.localwithingsrepository import (
     UserIdentity,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.remoteservices.api.withings import subscribeapi
+from slackhealthbot.domain.remoterepository.remotewithingsrepository import (
+    RemoteWithingsRepository,
+)
 
 
 async def do(
-    repo: LocalWithingsRepository,
+    local_repo: LocalWithingsRepository,
+    remote_repo: RemoteWithingsRepository,
     slack_alias: str,
     token: dict[str, Any],
 ):
-    user: User = await _upsert_user(repo, slack_alias, token)
-    await subscribeapi.subscribe(oauth_token=user.oauth_data)
+    user: User = await _upsert_user(local_repo, slack_alias, token)
+    await remote_repo.subscribe(user.oauth_data)
 
 
 async def _upsert_user(
