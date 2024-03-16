@@ -20,7 +20,7 @@ from tests.testsupport.factories.factories import (
 
 @pytest.mark.asyncio
 async def test_top_activities(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, fitbit_activity_factory = fitbit_factories
@@ -122,7 +122,7 @@ async def test_top_activities(
     )
 
     all_time_top_activity_stats: TopActivityStats = (
-        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
         )
@@ -147,7 +147,7 @@ async def test_top_activities(
     )
 
     recent_top_activity_stats: TopActivityStats = (
-        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
             since=recent_date - datetime.timedelta(days=1),
@@ -175,7 +175,7 @@ async def test_top_activities(
 
 @pytest.mark.asyncio
 async def test_top_activities_no_history(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
 ):
     user_factory, _, _ = fitbit_factories
@@ -184,7 +184,7 @@ async def test_top_activities_no_history(
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
 
     all_time_top_activity_stats: TopActivityStats = (
-        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
         )
@@ -196,7 +196,7 @@ async def test_top_activities_no_history(
     )
 
     recent_top_activity_stats: TopActivityStats = (
-        await fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repository.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=user.fitbit.oauth_userid,
             type_id=activity_type,
             since=recent_date - datetime.timedelta(days=1),

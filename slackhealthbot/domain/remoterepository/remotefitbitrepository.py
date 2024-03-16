@@ -24,3 +24,9 @@ class RemoteFitbitRepository(ABC):
         when: datetime.date,
     ) -> SleepData | None:
         pass
+
+    def parse_oauth_fields(
+        self,
+        response_data: dict[str, str],
+    ) -> OAuthFields:
+        pass

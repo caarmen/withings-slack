@@ -18,3 +18,9 @@ class RemoteWithingsRepository(ABC):
         enddate: int,
     ) -> float | None:
         pass
+
+    def parse_oauth_fields(
+        self,
+        response_data: dict[str, str],
+    ) -> OAuthFields:
+        pass

@@ -34,7 +34,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import (
 )
 @pytest.mark.asyncio
 async def test_sleep_notification(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -86,7 +86,7 @@ async def test_sleep_notification(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     # Then the last sleep data is updated in the database
-    actual_last_sleep_data = await fitbit_repository.get_sleep_by_fitbit_userid(
+    actual_last_sleep_data = await local_fitbit_repository.get_sleep_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid,
     )
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data
@@ -108,7 +108,7 @@ async def test_sleep_notification(
 )
 @pytest.mark.asyncio
 async def test_activity_notification(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -168,7 +168,7 @@ async def test_activity_notification(
 
     # Then the latest activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_user.oauth_userid,
             type_id=activity_type_id,
         )
@@ -193,7 +193,7 @@ async def test_activity_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_activity_notification(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -249,7 +249,7 @@ async def test_duplicate_activity_notification(
     # Then the latest activity data is updated in the database
     assert activity_request.call_count == 1
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_user.oauth_userid,
             type_id=activity_type_id,
         )
@@ -286,7 +286,7 @@ async def test_duplicate_activity_notification(
 
 @pytest.mark.asyncio
 async def test_duplicate_sleep_notification(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -339,7 +339,7 @@ async def test_duplicate_sleep_notification(
 
     # Then the last sleep data is updated in the database
     assert sleep_request.call_count == 1
-    actual_last_sleep_data = await fitbit_repository.get_sleep_by_fitbit_userid(
+    actual_last_sleep_data = await local_fitbit_repository.get_sleep_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid,
     )
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data

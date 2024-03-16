@@ -42,6 +42,19 @@ class WebApiFitbitRepository(RemoteFitbitRepository):
         )
         return remote_service_activity_to_domain_activity(activities)
 
+    def parse_oauth_fields(
+        self,
+        response_data: dict[str, str],
+    ) -> OAuthFields:
+        return OAuthFields(
+            oauth_userid=response_data["userid"],
+            oauth_access_token=response_data["access_token"],
+            oauth_refresh_token=response_data["refresh_token"],
+            oauth_expiration_date=datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(seconds=int(response_data["expires_in"]))
+            - datetime.timedelta(minutes=5),
+        )
+
 
 def remote_service_sleep_to_domain_sleep(
     remote: sleepapi.FitbitSleep | None,

@@ -53,7 +53,7 @@ async def test_user_factory(
 async def test_withings_user_factory(
     user_factory: UserFactory,
     withings_user_factory: WithingsUserFactory,
-    withings_repository: LocalWithingsRepository,
+    local_withings_repository: LocalWithingsRepository,
 ):
     user: User = user_factory.create(withings=None)
     withings_user: WithingsUser = withings_user_factory.create(user_id=user.id)
@@ -64,7 +64,7 @@ async def test_withings_user_factory(
     assert isinstance(withings_user.last_weight, float)
     assert isinstance(user, User)
 
-    repo_user = await withings_repository.get_user_by_withings_userid(
+    repo_user = await local_withings_repository.get_user_by_withings_userid(
         withings_userid=withings_user.oauth_userid
     )
     assert repo_user.identity.withings_userid == withings_user.oauth_userid
@@ -81,7 +81,7 @@ async def test_withings_user_factory(
 async def test_fitbit_user_factory(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
 ):
     user: User = user_factory.create(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)
@@ -91,7 +91,7 @@ async def test_fitbit_user_factory(
     assert isinstance(fitbit_user.oauth_expiration_date, datetime)
     assert isinstance(user, User)
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
     assert repo_user.oauth_data.oauth_access_token == fitbit_user.oauth_access_token
@@ -108,7 +108,7 @@ async def test_fitbit_activity_factory(
     user_factory: UserFactory,
     fitbit_user_factory: FitbitUserFactory,
     fitbit_activity_factory: FitbitActivityFactory,
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
 ):
     user: User = user_factory.create(fitbit=None)
     fitbit_user: FitbitUser = fitbit_user_factory.create(user_id=user.id)
@@ -116,7 +116,7 @@ async def test_fitbit_activity_factory(
         fitbit_user_id=fitbit_user.id
     )
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_user.oauth_userid,
             type_id=fitbit_activity.type_id,
         )

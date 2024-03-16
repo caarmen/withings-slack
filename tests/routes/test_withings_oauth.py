@@ -26,7 +26,7 @@ from tests.testsupport.factories.factories import UserFactory, WithingsUserFacto
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    withings_repository: LocalWithingsRepository,
+    local_withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -110,7 +110,7 @@ async def test_refresh_token_ok(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user: User = await withings_repository.get_user_by_withings_userid(
+    repo_user: User = await local_withings_repository.get_user_by_withings_userid(
         withings_userid=db_withings_user.oauth_userid,
     )
     # Then the access token is refreshed.
@@ -133,7 +133,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    withings_repository: LocalWithingsRepository,
+    local_withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -180,7 +180,7 @@ async def test_refresh_token_fail(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user: User = await withings_repository.get_user_by_withings_userid(
+    repo_user: User = await local_withings_repository.get_user_by_withings_userid(
         withings_userid=db_withings_user.oauth_userid,
     )
     # Then the access token is not refreshed.
@@ -189,7 +189,7 @@ async def test_refresh_token_fail(
 
     # And no new weight data is updated in the database
     repo_fitness_data: FitnessData = (
-        await withings_repository.get_fitness_data_by_withings_userid(
+        await local_withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=repo_user.identity.withings_userid,
         )
     )
@@ -216,7 +216,7 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    withings_repository: LocalWithingsRepository,
+    local_withings_repository: LocalWithingsRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -285,7 +285,7 @@ async def test_login_success(
     assert response.status_code == status.HTTP_200_OK
 
     # Verify that we have the expected data in the db
-    repo_user = await withings_repository.get_user_by_withings_userid(
+    repo_user = await local_withings_repository.get_user_by_withings_userid(
         "user123",
     )
     assert repo_user.identity == UserIdentity(
@@ -299,7 +299,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    withings_repository: LocalWithingsRepository,
+    local_withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
@@ -344,7 +344,7 @@ async def test_logged_out(
         )
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    repo_user: User = await withings_repository.get_user_by_withings_userid(
+    repo_user: User = await local_withings_repository.get_user_by_withings_userid(
         withings_userid=db_withings_user.oauth_userid,
     )
 
@@ -354,7 +354,7 @@ async def test_logged_out(
 
     # And no new weight data is updated in the database
     repo_fitness_data: FitnessData = (
-        await withings_repository.get_fitness_data_by_withings_userid(
+        await local_withings_repository.get_fitness_data_by_withings_userid(
             withings_userid=repo_user.identity.withings_userid,
         )
     )

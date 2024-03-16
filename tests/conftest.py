@@ -18,7 +18,19 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
 )
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
+from slackhealthbot.domain.remoterepository.remotewithingsrepository import (
+    RemoteWithingsRepository,
+)
 from slackhealthbot.main import app
+from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
+    WebApiFitbitRepository,
+)
+from slackhealthbot.remoteservices.repositories.webapiwithingsrepository import (
+    WebApiWithingsRepository,
+)
 from slackhealthbot.routers.dependencies import get_db
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -48,17 +60,39 @@ async def mocked_async_session(mocked_session: Session):
 
 
 @pytest.fixture
-def withings_repository(
+def local_withings_repository(
     mocked_async_session: AsyncSession,
 ) -> LocalWithingsRepository:
     return SQLAlchemyWithingsRepository(db=mocked_async_session)
 
 
 @pytest.fixture
-def fitbit_repository(
+def remote_withings_repository(
+    mocked_async_session: AsyncSession,
+) -> RemoteWithingsRepository:
+    return WebApiWithingsRepository()
+
+
+@pytest.fixture
+def local_fitbit_repository(
     mocked_async_session: AsyncSession,
 ) -> LocalFitbitRepository:
     return SQLAlchemyFitbitRepository(db=mocked_async_session)
+
+
+@pytest.fixture
+def remote_fitbit_repository(
+    mocked_async_session: AsyncSession,
+) -> RemoteFitbitRepository:
+    return WebApiFitbitRepository()
+
+
+@pytest.fixture
+def fitbit_repositories(
+    local_fitbit_repository: LocalFitbitRepository,
+    remote_fitbit_repository: RemoteFitbitRepository,
+) -> tuple[LocalFitbitRepository, RemoteFitbitRepository]:
+    return local_fitbit_repository, remote_fitbit_repository
 
 
 @pytest.fixture

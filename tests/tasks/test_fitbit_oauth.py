@@ -14,8 +14,8 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
 )
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
-    WebApiFitbitRepository,
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
 )
 from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
@@ -34,6 +34,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
     mocked_async_session: AsyncSession,
+    remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -103,7 +104,7 @@ async def test_refresh_token_ok(
         async with fitbit_repository_factory(mocked_async_session)() as repo:
             await do_poll(
                 local_fitbit_repo=repo,
-                remote_fitbit_repo=WebApiFitbitRepository(),
+                remote_fitbit_repo=remote_fitbit_repository,
                 slack_repo=WebhookSlackRepository(),
                 cache=Cache(),
                 when=datetime.date(2023, 1, 23),
@@ -142,7 +143,8 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
+    remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -186,14 +188,14 @@ async def test_refresh_token_fail(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            local_fitbit_repo=fitbit_repository,
-            remote_fitbit_repo=WebApiFitbitRepository(),
+            local_fitbit_repo=local_fitbit_repository,
+            remote_fitbit_repo=remote_fitbit_repository,
             slack_repo=WebhookSlackRepository(),
             cache=Cache(),
             when=datetime.date(2023, 1, 23),
         )
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
 
@@ -204,7 +206,7 @@ async def test_refresh_token_fail(
 
     # And no new activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
@@ -229,7 +231,8 @@ class LoginScenario(enum.Enum):
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    fitbit_repository: LocalFitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
+    remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -272,14 +275,14 @@ async def test_logged_out(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            local_fitbit_repo=fitbit_repository,
-            remote_fitbit_repo=WebApiFitbitRepository(),
+            local_fitbit_repo=local_fitbit_repository,
+            remote_fitbit_repo=remote_fitbit_repository,
             slack_repo=WebhookSlackRepository(),
             cache=Cache(),
             when=datetime.date(2023, 1, 23),
         )
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
 
@@ -289,7 +292,7 @@ async def test_logged_out(
 
     # And no new activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
