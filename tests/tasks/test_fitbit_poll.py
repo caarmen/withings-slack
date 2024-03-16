@@ -17,6 +17,9 @@ from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     UpdateTokenUseCase,
 )
 from slackhealthbot.oauth import fitbitconfig
+from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
+    WebApiFitbitRepository,
+)
 from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
@@ -90,7 +93,8 @@ async def test_fitbit_poll_sleep(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            fitbit_repo=fitbit_repository,
+            local_fitbit_repo=fitbit_repository,
+            remote_fitbit_repo=WebApiFitbitRepository(),
             slack_repo=WebhookSlackRepository(),
             cache=Cache(),
             when=datetime.date(2023, 1, 23),
@@ -169,7 +173,8 @@ async def test_fitbit_poll_activity(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            fitbit_repo=fitbit_repository,
+            local_fitbit_repo=fitbit_repository,
+            remote_fitbit_repo=WebApiFitbitRepository(),
             slack_repo=WebhookSlackRepository(),
             cache=Cache(),
             when=datetime.date(2023, 1, 23),
@@ -239,7 +244,8 @@ async def test_schedule_fitbit_poll(
     fitbitconfig.configure(UpdateTokenUseCase(request_context_fitbit_repository))
     task = await fitbitpoll.schedule_fitbit_poll(
         initial_delay_s=0,
-        fitbit_repo_factory=fitbit_repository_factory(mocked_async_session),
+        local_fitbit_repo_factory=fitbit_repository_factory(mocked_async_session),
+        remote_fitbit_repo=WebApiFitbitRepository(),
         slack_repo=WebhookSlackRepository(),
     )
     await asyncio.sleep(1)

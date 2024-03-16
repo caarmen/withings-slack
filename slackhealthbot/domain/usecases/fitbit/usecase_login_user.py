@@ -7,18 +7,19 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     UserIdentity,
 )
 from slackhealthbot.domain.modelmappers.remoteservicetocore import oauth
-from slackhealthbot.remoteservices.api.fitbit import subscribeapi
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
 
 
 async def do(
-    repo: LocalFitbitRepository,
+    local_repo: LocalFitbitRepository,
+    remote_repo: RemoteFitbitRepository,
     slack_alias: str,
     token: dict[str, Any],
 ):
-    user: User = await _upsert_user(repo, slack_alias, token)
-    await subscribeapi.subscribe(
-        fitbit_userid=user.identity.fitbit_userid, oauth_token=user.oauth_data
-    )
+    user: User = await _upsert_user(local_repo, slack_alias, token)
+    await remote_repo.subscribe(oauth_fields=user.oauth_data)
 
 
 async def _upsert_user(

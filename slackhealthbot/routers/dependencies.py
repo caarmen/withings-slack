@@ -19,11 +19,17 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
 )
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
 from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
 )
 from slackhealthbot.domain.remoterepository.remotewithingsrepository import (
     RemoteWithingsRepository,
+)
+from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
+    WebApiFitbitRepository,
 )
 from slackhealthbot.remoteservices.repositories.webapiwithingsrepository import (
     WebApiWithingsRepository,
@@ -68,13 +74,17 @@ def get_remote_withings_repository() -> RemoteWithingsRepository:
     return WebApiWithingsRepository()
 
 
-async def get_fitbit_repository(
+async def get_local_fitbit_repository(
     db: AsyncSession = Depends(get_db),
 ) -> LocalFitbitRepository:
     repo = SQLAlchemyFitbitRepository(db=db)
     _ctx_fitbit_repository.set(repo)
     yield repo
     _ctx_fitbit_repository.set(None)
+
+
+def get_remote_fitbit_repository() -> RemoteFitbitRepository:
+    return WebApiFitbitRepository()
 
 
 def get_slack_repository() -> RemoteSlackRepository:

@@ -9,6 +9,9 @@ from slackhealthbot.domain.models.activity import (
     ActivityHistory,
     TopActivityStats,
 )
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
 from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
 )
@@ -18,16 +21,20 @@ from slackhealthbot.settings import settings
 
 
 async def do(
-    fitbit_repo: LocalFitbitRepository,
+    local_fitbit_repo: LocalFitbitRepository,
+    remote_fitbit_repo: RemoteFitbitRepository,
     slack_repo: RemoteSlackRepository,
     fitbit_userid: str,
     when: datetime.datetime,
 ) -> ActivityData | None:
-    user_identity: UserIdentity = await fitbit_repo.get_user_identity_by_fitbit_userid(
-        fitbit_userid=fitbit_userid,
+    user_identity: UserIdentity = (
+        await local_fitbit_repo.get_user_identity_by_fitbit_userid(
+            fitbit_userid=fitbit_userid,
+        )
     )
     new_activity = await usecase_get_last_activity.do(
-        repo=fitbit_repo,
+        local_repo=local_fitbit_repo,
+        remote_repo=remote_fitbit_repo,
         fitbit_userid=fitbit_userid,
         when=when,
     )
@@ -37,7 +44,7 @@ async def do(
     activity_name, new_activity_data = new_activity
 
     if not await _is_new_valid_activity(
-        fitbit_repo,
+        local_fitbit_repo,
         fitbit_userid=fitbit_userid,
         type_id=new_activity_data.type_id,
         log_id=new_activity_data.log_id,
@@ -45,24 +52,24 @@ async def do(
         return None
 
     last_activity_data: ActivityData = (
-        await fitbit_repo.get_latest_activity_by_user_and_type(
+        await local_fitbit_repo.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_userid,
             type_id=new_activity_data.type_id,
         )
     )
 
-    await fitbit_repo.create_activity_for_user(
+    await local_fitbit_repo.create_activity_for_user(
         fitbit_userid=fitbit_userid,
         activity=new_activity_data,
     )
     all_time_top_activity_stats: TopActivityStats = (
-        await fitbit_repo.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repo.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=fitbit_userid,
             type_id=new_activity_data.type_id,
         )
     )
     recent_top_activity_stats: TopActivityStats = (
-        await fitbit_repo.get_top_activity_stats_by_user_and_activity_type(
+        await local_fitbit_repo.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=fitbit_userid,
             type_id=new_activity_data.type_id,
             since=datetime.datetime.now(datetime.timezone.utc)

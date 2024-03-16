@@ -4,23 +4,22 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
     User,
 )
-from slackhealthbot.domain.modelmappers.remoteservicetodomain.activity import (
-    remote_service_activity_to_domain_activity,
-)
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.remoteservices.api.fitbit import activityapi
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
 
 
 async def do(
-    repo: LocalFitbitRepository,
+    local_repo: LocalFitbitRepository,
+    remote_repo: RemoteFitbitRepository,
     fitbit_userid: str,
     when: datetime.datetime,
 ) -> tuple[str, ActivityData] | None:
-    user: User = await repo.get_user_by_fitbit_userid(
+    user: User = await local_repo.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_userid,
     )
-    last_activities: activityapi.FitbitActivities = await activityapi.get_activity(
-        oauth_token=user.oauth_data,
+    return await remote_repo.get_activity(
+        oauth_fields=user.oauth_data,
         when=when,
     )
-    return remote_service_activity_to_domain_activity(last_activities)
