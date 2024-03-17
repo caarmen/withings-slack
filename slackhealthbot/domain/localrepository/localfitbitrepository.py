@@ -19,7 +19,7 @@ class User:
     oauth_data: OAuthFields
 
 
-class FitbitRepository(ABC):
+class LocalFitbitRepository(ABC):
     async def create_user(
         self,
         slack_alias: str,

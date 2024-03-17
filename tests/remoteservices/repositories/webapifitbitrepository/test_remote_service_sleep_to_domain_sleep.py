@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from slackhealthbot.domain.modelmappers.remoteservicetodomain.sleep import (
+from slackhealthbot.domain.models.sleep import SleepData
+from slackhealthbot.remoteservices.api.fitbit.sleepapi import FitbitSleep
+from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
     remote_service_sleep_to_domain_sleep,
 )
-from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.remoteservices.fitbit.sleepapi import FitbitSleep
 
 
 @pytest.mark.parametrize(

@@ -5,15 +5,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.data.database import models
-from slackhealthbot.domain.repository.withingsrepository import (
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
     FitnessData,
+    LocalWithingsRepository,
     User,
     UserIdentity,
-    WithingsRepository,
 )
 
 
-class WithingsDbRepository(WithingsRepository):
+class SQLAlchemyWithingsRepository(LocalWithingsRepository):
 
     def __init__(self, db: AsyncSession):
         self.db = db

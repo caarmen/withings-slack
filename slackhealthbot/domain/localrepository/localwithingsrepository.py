@@ -22,7 +22,7 @@ class User:
     fitness_data: FitnessData
 
 
-class WithingsRepository(ABC):
+class LocalWithingsRepository(ABC):
     @abstractmethod
     async def create_user(
         self,

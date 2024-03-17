@@ -1,10 +1,13 @@
 import datetime
 
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.remoteservices.slack import messageapi
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
 
 
 async def do(
+    repo: RemoteSlackRepository,
     slack_alias: str,
     new_sleep_data: SleepData,
     last_sleep_data: SleepData,
@@ -14,7 +17,7 @@ async def do(
         new_sleep_data=new_sleep_data,
         last_sleep_data=last_sleep_data,
     )
-    await messageapi.post_message(message)
+    await repo.post_message(message)
 
 
 def create_message(

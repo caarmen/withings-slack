@@ -9,12 +9,20 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
 from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     UpdateTokenUseCase,
 )
 from slackhealthbot.oauth import fitbitconfig
+from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
+    WebhookSlackRepository,
+)
 from slackhealthbot.routers.dependencies import (
     fitbit_repository_factory,
     request_context_fitbit_repository,
@@ -42,7 +50,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import (
 )
 @pytest.mark.asyncio
 async def test_fitbit_poll_sleep(
-    fitbit_repository: FitbitRepository,
+    fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitSleepScenario,
@@ -54,6 +62,7 @@ async def test_fitbit_poll_sleep(
     Then the last sleep is updated in the database,
     And the message is posted to slack with the correct icon.
     """
+    local_fitbit_repository, remote_fitbit_repository = fitbit_repositories
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
     # Given a user with the given previous sleep data
@@ -85,11 +94,15 @@ async def test_fitbit_poll_sleep(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            repo=fitbit_repository, cache=Cache(), when=datetime.date(2023, 1, 23)
+            local_fitbit_repo=local_fitbit_repository,
+            remote_fitbit_repo=remote_fitbit_repository,
+            slack_repo=WebhookSlackRepository(),
+            cache=Cache(),
+            when=datetime.date(2023, 1, 23),
         )
 
     # Then the last sleep data is updated in the database
-    actual_last_sleep_data = await fitbit_repository.get_sleep_by_fitbit_userid(
+    actual_last_sleep_data = await local_fitbit_repository.get_sleep_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid,
     )
     assert actual_last_sleep_data == scenario.expected_new_last_sleep_data
@@ -111,7 +124,7 @@ async def test_fitbit_poll_sleep(
 )
 @pytest.mark.asyncio
 async def test_fitbit_poll_activity(
-    fitbit_repository: FitbitRepository,
+    fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
@@ -124,6 +137,7 @@ async def test_fitbit_poll_activity(
     And the message is posted to slack with the correct pattern.
     """
 
+    local_fitbit_repository, remote_fitbit_repository = fitbit_repositories
     user_factory, fitbit_user_factory, fitbit_activity_factory = fitbit_factories
     activity_type_id = 55001
 
@@ -161,12 +175,16 @@ async def test_fitbit_poll_activity(
     # https://fastapi.tiangolo.com/advanced/testing-events/
     with client:
         await do_poll(
-            repo=fitbit_repository, cache=Cache(), when=datetime.date(2023, 1, 23)
+            local_fitbit_repo=local_fitbit_repository,
+            remote_fitbit_repo=remote_fitbit_repository,
+            slack_repo=WebhookSlackRepository(),
+            cache=Cache(),
+            when=datetime.date(2023, 1, 23),
         )
 
     # Then the latest activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_user.oauth_userid,
             type_id=activity_type_id,
         )
@@ -191,7 +209,7 @@ async def test_fitbit_poll_activity(
 @pytest.mark.asyncio
 async def test_schedule_fitbit_poll(
     mocked_async_session,
-    fitbit_repository: FitbitRepository,
+    fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     monkeypatch: pytest.MonkeyPatch,
@@ -203,6 +221,7 @@ async def test_schedule_fitbit_poll(
         "No previous activity data, new Spinning activity"
     ]
 
+    local_fitbit_repository, remote_fitbit_repository = fitbit_repositories
     user_factory, fitbit_user_factory, _ = fitbit_factories
 
     user: User = user_factory.create(fitbit=None)
@@ -225,21 +244,28 @@ async def test_schedule_fitbit_poll(
         return_value=Response(200)
     )
 
-    fitbitconfig.configure(UpdateTokenUseCase(request_context_fitbit_repository))
+    fitbitconfig.configure(
+        UpdateTokenUseCase(
+            request_context_fitbit_repository,
+            remote_repo=remote_fitbit_repository,
+        )
+    )
     task = await fitbitpoll.schedule_fitbit_poll(
         initial_delay_s=0,
-        repo_factory=fitbit_repository_factory(mocked_async_session),
+        local_fitbit_repo_factory=fitbit_repository_factory(mocked_async_session),
+        remote_fitbit_repo=remote_fitbit_repository,
+        slack_repo=WebhookSlackRepository(),
     )
     await asyncio.sleep(1)
     # Then the last sleep data is updated in the database
-    actual_last_sleep_data = await fitbit_repository.get_sleep_by_fitbit_userid(
+    actual_last_sleep_data = await local_fitbit_repository.get_sleep_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid,
     )
     assert actual_last_sleep_data == sleep_scenario.expected_new_last_sleep_data
 
     # Then the latest activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_user.oauth_userid,
             type_id=55001,
         )

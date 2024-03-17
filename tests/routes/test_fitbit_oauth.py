@@ -12,11 +12,11 @@ from httpx import Response
 from respx import MockRouter
 
 from slackhealthbot.data.database.models import FitbitUser, User
-from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.domain.repository.fitbitrepository import (
-    FitbitRepository,
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
     UserIdentity,
 )
+from slackhealthbot.domain.models.activity import ActivityData
 from slackhealthbot.settings import settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -28,7 +28,7 @@ from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
 
 @pytest.mark.asyncio
 async def test_refresh_token_ok(
-    fitbit_repository: FitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -103,7 +103,7 @@ async def test_refresh_token_ok(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
 
@@ -119,7 +119,7 @@ async def test_refresh_token_ok(
 
     # And the latest activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
@@ -136,7 +136,7 @@ async def test_refresh_token_ok(
 
 @pytest.mark.asyncio
 async def test_refresh_token_fail(
-    fitbit_repository: FitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -192,7 +192,7 @@ async def test_refresh_token_fail(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
 
@@ -202,7 +202,7 @@ async def test_refresh_token_fail(
 
     # And no new activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )
@@ -230,7 +230,7 @@ class LoginScenario(enum.Enum):
     argvalues=[[x] for x in LoginScenario],
 )
 async def test_login_success(
-    fitbit_repository: FitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -300,7 +300,7 @@ async def test_login_success(
     assert response.status_code == status.HTTP_200_OK
 
     # Verify that we have the expected data in the db
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         "user123",
     )
     assert repo_user.identity == UserIdentity(
@@ -314,7 +314,7 @@ async def test_login_success(
 
 @pytest.mark.asyncio
 async def test_logged_out(
-    fitbit_repository: FitbitRepository,
+    local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
@@ -366,7 +366,7 @@ async def test_logged_out(
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
-    repo_user = await fitbit_repository.get_user_by_fitbit_userid(
+    repo_user = await local_fitbit_repository.get_user_by_fitbit_userid(
         fitbit_userid=fitbit_user.oauth_userid
     )
 
@@ -376,7 +376,7 @@ async def test_logged_out(
 
     # And no new activity data is updated in the database
     repo_activity: ActivityData = (
-        await fitbit_repository.get_latest_activity_by_user_and_type(
+        await local_fitbit_repository.get_latest_activity_by_user_and_type(
             fitbit_userid=repo_user.identity.fitbit_userid,
             type_id=activity_type_id,
         )

@@ -7,10 +7,36 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from slackhealthbot.data.database.connection import SessionLocal
-from slackhealthbot.data.repositories.fitbitdbrepository import FitbitDbRepository
-from slackhealthbot.data.repositories.withingsdbrepository import WithingsDbRepository
-from slackhealthbot.domain.repository.fitbitrepository import FitbitRepository
-from slackhealthbot.domain.repository.withingsrepository import WithingsRepository
+from slackhealthbot.data.repositories.sqlalchemyfitbitrepository import (
+    SQLAlchemyFitbitRepository,
+)
+from slackhealthbot.data.repositories.sqlalchemywithingsrepository import (
+    SQLAlchemyWithingsRepository,
+)
+from slackhealthbot.domain.localrepository.localfitbitrepository import (
+    LocalFitbitRepository,
+)
+from slackhealthbot.domain.localrepository.localwithingsrepository import (
+    LocalWithingsRepository,
+)
+from slackhealthbot.domain.remoterepository.remotefitbitrepository import (
+    RemoteFitbitRepository,
+)
+from slackhealthbot.domain.remoterepository.remoteslackrepository import (
+    RemoteSlackRepository,
+)
+from slackhealthbot.domain.remoterepository.remotewithingsrepository import (
+    RemoteWithingsRepository,
+)
+from slackhealthbot.remoteservices.repositories.webapifitbitrepository import (
+    WebApiFitbitRepository,
+)
+from slackhealthbot.remoteservices.repositories.webapiwithingsrepository import (
+    WebApiWithingsRepository,
+)
+from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
+    WebhookSlackRepository,
+)
 
 _ctx_db = ContextVar("ctx_db")
 _ctx_withings_repository = ContextVar("withings_repository")
@@ -31,44 +57,56 @@ async def get_db():
         _ctx_db.set(None)
 
 
-async def get_withings_repository(
+async def get_local_withings_repository(
     db: AsyncSession = Depends(get_db),
-) -> WithingsRepository:
-    repo = WithingsDbRepository(db=db)
+) -> LocalWithingsRepository:
+    repo = SQLAlchemyWithingsRepository(db=db)
     _ctx_withings_repository.set(repo)
     yield repo
     _ctx_withings_repository.set(None)
 
 
-def request_context_withings_repository() -> WithingsRepository:
+def request_context_withings_repository() -> LocalWithingsRepository:
     return _ctx_withings_repository.get()
 
 
-async def get_fitbit_repository(
+def get_remote_withings_repository() -> RemoteWithingsRepository:
+    return WebApiWithingsRepository()
+
+
+async def get_local_fitbit_repository(
     db: AsyncSession = Depends(get_db),
-) -> FitbitRepository:
-    repo = FitbitDbRepository(db=db)
+) -> LocalFitbitRepository:
+    repo = SQLAlchemyFitbitRepository(db=db)
     _ctx_fitbit_repository.set(repo)
     yield repo
     _ctx_fitbit_repository.set(None)
 
 
-def request_context_fitbit_repository() -> FitbitRepository:
+def get_remote_fitbit_repository() -> RemoteFitbitRepository:
+    return WebApiFitbitRepository()
+
+
+def get_slack_repository() -> RemoteSlackRepository:
+    return WebhookSlackRepository()
+
+
+def request_context_fitbit_repository() -> LocalFitbitRepository:
     return _ctx_fitbit_repository.get()
 
 
 # TODO move this
 def fitbit_repository_factory(
     db: AsyncSession | None = None,
-) -> Callable[[], AsyncContextManager[FitbitRepository]]:
+) -> Callable[[], AsyncContextManager[LocalFitbitRepository]]:
     @asynccontextmanager
-    async def ctx_mgr() -> FitbitRepository:
+    async def ctx_mgr() -> LocalFitbitRepository:
         autoclose_db = False
         _db = db
         if _db is None:
             _db = SessionLocal()
             autoclose_db = True
-        repo = FitbitDbRepository(db=_db)
+        repo = SQLAlchemyFitbitRepository(db=_db)
         _ctx_fitbit_repository.set(repo)
         yield repo
         _ctx_fitbit_repository.set(None)
