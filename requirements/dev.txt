@@ -1,12 +1,12 @@
 -r prod.txt
-black==24.1.1
+black==24.3.0
 factory-boy==3.3.0
-gevent==23.9.1 # for test coverage: https://stackoverflow.com/a/76033894/1204440
+gevent==24.2.1 # for test coverage: https://stackoverflow.com/a/76033894/1204440
 isort==5.13.2
 pytest-asyncio==0.23.5
 pytest-cov==4.1.0
-pytest-factoryboy==2.6.0
+pytest-factoryboy==2.7.0
 pytest-sqlalchemy-mock==0.1.5
-pytest==8.0.0
+pytest==8.1.1
 respx==0.20.2
-ruff==0.2.1
+ruff==0.3.3
