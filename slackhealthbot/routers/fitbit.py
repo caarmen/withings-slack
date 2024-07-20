@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 
-from slackhealthbot.core.exceptions import UserLoggedOutException
+from slackhealthbot.core.exceptions import UnknownUserException, UserLoggedOutException
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
 )
@@ -141,4 +141,7 @@ async def fitbit_notification_webhook(
                 fitbit_userid=notification.ownerId,
             )
             break
+        except UnknownUserException:
+            logging.info("fitbit_notification_webhook: unknown user")
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

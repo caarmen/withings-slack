@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy import and_, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.exceptions import UnknownUserException
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.data.database import models
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
@@ -130,7 +131,9 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
                 .join(models.User.fitbit)
                 .where(models.FitbitUser.oauth_userid == fitbit_userid)
             )
-        ).one()
+        ).one_or_none()
+        if not user:
+            raise UnknownUserException
         return User(
             identity=UserIdentity(
                 fitbit_userid=user.fitbit.oauth_userid,
@@ -236,7 +239,9 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
                     models.FitbitUser.oauth_userid == fitbit_userid
                 )
             )
-        ).one()
+        ).one_or_none()
+        if not fitbit_user:
+            raise UnknownUserException
         if not fitbit_user or not fitbit_user.last_sleep_end_time:
             return None
         return SleepData(

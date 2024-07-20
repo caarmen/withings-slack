@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 
-from slackhealthbot.core.exceptions import UserLoggedOutException
+from slackhealthbot.core.exceptions import UnknownUserException, UserLoggedOutException
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
 )
@@ -124,6 +124,9 @@ async def withings_notification_webhook(
                 slack_repo=slack_repo,
                 withings_userid=notification.userid,
             )
+        except UnknownUserException:
+            logging.info("withings_notification_webhook: unknown user")
+            return Response(status_code=status.HTTP_404_NOT_FOUND)
     else:
         logging.info("Ignoring duplicate withings notification")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
