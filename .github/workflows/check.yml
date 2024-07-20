@@ -8,6 +8,7 @@ jobs:
   Check:
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       checks: write
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +30,11 @@ jobs:
         if: always() # always run even if the previous step fails
         with:
           report_paths: 'reports/junit.xml'
+      - name: Post coverage report
+        uses: 5monkeys/cobertura-action@v14
+        with:
+          path: reports/coverage.xml
+          minimum_coverage: 80
       - name: Archive reports
         if: always()
         uses: actions/upload-artifact@v4
