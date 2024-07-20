@@ -3,6 +3,7 @@ import datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from slackhealthbot.core.exceptions import UnknownUserException
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.data.database import models
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
@@ -126,7 +127,9 @@ class SQLAlchemyWithingsRepository(LocalWithingsRepository):
                 .join(models.User.withings)
                 .where(models.WithingsUser.oauth_userid == withings_userid)
             )
-        ).one()
+        ).one_or_none()
+        if not user:
+            raise UnknownUserException
         return User(
             identity=UserIdentity(
                 withings_userid=user.withings.oauth_userid,

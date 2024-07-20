@@ -223,3 +223,26 @@ async def test_duplicate_weight_notification(
     # Then we don't post to stack a second time
     assert weight_request.call_count == 1
     assert slack_request.call_count == 1
+
+
+def test_notification_unknown_user(
+    client: TestClient,
+):
+    """
+    Given some data in the db
+    When we receive a withings notification for an unknown user
+    Then the webhook returns the expected error.
+    """
+    # When we receive a withings notification for an unknown user
+    with client:
+        response = client.post(
+            "/withings-notification-webhook/",
+            data={
+                "userid": "UNKNOWNUSER",
+                "startdate": 1683894606,
+                "enddate": 1686570821,
+            },
+        )
+
+    # Then the webhook returns the expected error.
+    assert response.status_code == status.HTTP_404_NOT_FOUND
