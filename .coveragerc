@@ -1,2 +1,7 @@
 [run]
 concurrency = thread,gevent
+
+[report]
+exclude_also =
+    ; Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod
