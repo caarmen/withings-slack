@@ -31,12 +31,13 @@ async def test_top_activities(
     recent_date = datetime.datetime(2024, 1, 2, 23, 44, 55)
     old_date = datetime.datetime(2023, 3, 4, 15, 44, 33)
 
-    # Our user, our activity, all-time top record for calories
-    all_time_top_calories_activity: models.FitbitActivity = (
+    # Our user, our activity, all-time top record for calories and distance
+    all_time_top_calories_and_distance_activity: models.FitbitActivity = (
         fitbit_activity_factory.create(
             fitbit_user_id=user.fitbit.id,
             type_id=activity_type,
             calories=600,
+            distance_km=3.2,
             total_minutes=18,
             fat_burn_minutes=17,
             cardio_minutes=16,
@@ -45,12 +46,13 @@ async def test_top_activities(
         )
     )
 
-    # Our user, our activity, recent top record for calories
-    recent_top_calories_activity: models.FitbitActivity = (
+    # Our user, our activity, recent top record for calories and distance
+    recent_top_calories_and_distance_activity: models.FitbitActivity = (
         fitbit_activity_factory.create(
             fitbit_user_id=user.fitbit.id,
             type_id=activity_type,
             calories=599,
+            distance_km=3.1,
             total_minutes=18,
             fat_burn_minutes=17,
             cardio_minutes=16,
@@ -65,6 +67,7 @@ async def test_top_activities(
             fitbit_user_id=user.fitbit.id,
             type_id=activity_type,
             calories=333,
+            distance_km=2.5,
             total_minutes=30,
             fat_burn_minutes=29,
             cardio_minutes=28,
@@ -78,6 +81,7 @@ async def test_top_activities(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,
         calories=333,
+        distance_km=2.5,
         total_minutes=29,
         fat_burn_minutes=28,
         cardio_minutes=27,
@@ -90,6 +94,7 @@ async def test_top_activities(
         fitbit_user_id=user.fitbit.id,
         type_id=activity_type,
         calories=400,
+        distance_km=2.8,
         total_minutes=20,
         fat_burn_minutes=19,
         cardio_minutes=18,
@@ -102,6 +107,7 @@ async def test_top_activities(
         fitbit_user_id=other_user.fitbit.id,
         type_id=activity_type,
         calories=800,
+        distance_km=10.2,
         total_minutes=69,
         fat_burn_minutes=68,
         cardio_minutes=67,
@@ -114,6 +120,7 @@ async def test_top_activities(
         fitbit_user_id=user.fitbit.id,
         type_id=999,
         calories=900,
+        distance_km=8.3,
         total_minutes=98,
         fat_burn_minutes=97,
         cardio_minutes=96,
@@ -128,7 +135,8 @@ async def test_top_activities(
         )
     )
     assert all_time_top_activity_stats == TopActivityStats(
-        top_calories=all_time_top_calories_activity.calories,
+        top_calories=all_time_top_calories_and_distance_activity.calories,
+        top_distance_km=all_time_top_calories_and_distance_activity.distance_km,
         top_total_minutes=all_time_top_minutes_activity.total_minutes,
         top_zone_minutes=[
             ActivityZoneMinutes(
@@ -154,7 +162,8 @@ async def test_top_activities(
         )
     )
     assert recent_top_activity_stats == TopActivityStats(
-        top_calories=recent_top_calories_activity.calories,
+        top_calories=recent_top_calories_and_distance_activity.calories,
+        top_distance_km=recent_top_calories_and_distance_activity.distance_km,
         top_total_minutes=recent_top_minutes_activity.total_minutes,
         top_zone_minutes=[
             ActivityZoneMinutes(
@@ -191,6 +200,7 @@ async def test_top_activities_no_history(
     )
     assert all_time_top_activity_stats == TopActivityStats(
         top_calories=None,
+        top_distance_km=None,
         top_total_minutes=None,
         top_zone_minutes=[],
     )
@@ -204,6 +214,7 @@ async def test_top_activities_no_history(
     )
     assert recent_top_activity_stats == TopActivityStats(
         top_calories=None,
+        top_distance_km=None,
         top_total_minutes=None,
         top_zone_minutes=[],
     )

@@ -207,6 +207,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
             type_id=activity.type_id,
             total_minutes=activity.total_minutes,
             calories=activity.calories,
+            distance_km=activity.distance_km,
             **{f"{x.zone}_minutes": x.minutes for x in activity.zone_minutes},
             fitbit_user_id=user.id,
         )
@@ -276,6 +277,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
 
         columns = [
             models.FitbitActivity.calories,
+            models.FitbitActivity.distance_km,
             models.FitbitActivity.total_minutes,
             models.FitbitActivity.fat_burn_minutes,
             models.FitbitActivity.cardio_minutes,
@@ -301,6 +303,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
 
         return TopActivityStats(
             top_calories=row["top_calories"],
+            top_distance_km=row["top_distance_km"],
             top_total_minutes=row["top_total_minutes"],
             top_zone_minutes=[
                 ActivityZoneMinutes(
@@ -320,6 +323,7 @@ def _db_activity_to_domain_activity(
         log_id=db_activity.log_id,
         type_id=db_activity.type_id,
         calories=db_activity.calories,
+        distance_km=db_activity.distance_km,
         total_minutes=db_activity.total_minutes,
         zone_minutes=[
             ActivityZoneMinutes(
