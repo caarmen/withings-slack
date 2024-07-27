@@ -21,12 +21,14 @@ class ActivityData:
     type_id: int
     total_minutes: int
     calories: int
+    distance_km: float | None
     zone_minutes: list[ActivityZoneMinutes]
 
 
 @dataclasses.dataclass
 class TopActivityStats:
     top_calories: int | None
+    top_distance_km: float | None
     top_total_minutes: int | None
     top_zone_minutes: list[ActivityZoneMinutes]
 

@@ -408,6 +408,109 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
         "all-time record",
     ),
+    "New Walking activity, previous walking without km": FitbitActivityScenario(
+        input_initial_activity_data={
+            "log_id": 1234,
+            "total_minutes": 8,
+            "calories": 70,
+            "fat_burn_minutes": 1,
+            "cardio_minutes": 20,
+            "out_of_range_minutes": None,
+            "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+        },
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 12,
+                                "type": "FAT_BURN",
+                            },
+                            {
+                                "minutes": 9,
+                                "type": "CARDIO",
+                            },
+                            {
+                                "minutes": 10,
+                                "type": "OUT_OF_RANGE",
+                            },
+                            {
+                                "minutes": 11,
+                                "type": "PEAK",
+                            },
+                        ]
+                    },
+                    "activityName": "Walking",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                    "distance": 1.2,
+                    "distanceUnit": "Kilometer",
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
+        + ".*Calories.*76.*➡️ New all-time record.*Distance.*1.2.*"
+        + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
+        "all-time record",
+    ),
+    "New Walking activity, previous walking with km": FitbitActivityScenario(
+        input_initial_activity_data={
+            "log_id": 1234,
+            "total_minutes": 8,
+            "calories": 70,
+            "distance_km": 0.1,
+            "fat_burn_minutes": 1,
+            "cardio_minutes": 20,
+            "out_of_range_minutes": None,
+            "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+        },
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 12,
+                                "type": "FAT_BURN",
+                            },
+                            {
+                                "minutes": 9,
+                                "type": "CARDIO",
+                            },
+                            {
+                                "minutes": 10,
+                                "type": "OUT_OF_RANGE",
+                            },
+                            {
+                                "minutes": 11,
+                                "type": "PEAK",
+                            },
+                        ]
+                    },
+                    "activityName": "Walking",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                    "distance": 1.2,
+                    "distanceUnit": "Kilometer",
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
+        + ".*Calories.*76.*➡️ New all-time record.*Distance.*1.2.*⬆️ New all-time record.*"
+        + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
+        "all-time record",
+    ),
     "New unrecognized activity": FitbitActivityScenario(
         input_initial_activity_data={
             "log_id": 1234,

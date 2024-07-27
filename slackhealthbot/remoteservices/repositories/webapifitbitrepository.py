@@ -96,6 +96,11 @@ def remote_service_activity_to_domain_activity(
         log_id=fitbit_activity.logId,
         type_id=fitbit_activity.activityTypeId,
         calories=fitbit_activity.calories,
+        distance_km=(
+            fitbit_activity.distance
+            if fitbit_activity.distanceUnit == "Kilometer"
+            else None
+        ),
         total_minutes=fitbit_activity.duration // 60000,
         zone_minutes=[
             ActivityZoneMinutes(zone=ActivityZone[x.type.upper()], minutes=x.minutes)

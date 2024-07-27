@@ -125,6 +125,7 @@ async def test_fitbit_activity_factory(
     assert repo_activity.type_id == fitbit_activity.type_id
     assert repo_activity.total_minutes == fitbit_activity.total_minutes
     assert repo_activity.calories == fitbit_activity.calories
+    assert repo_activity.distance_km == fitbit_activity.distance_km
     assert repo_activity.zone_minutes == [
         ActivityZoneMinutes(
             zone=ActivityZone.PEAK,

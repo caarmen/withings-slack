@@ -28,6 +28,8 @@ class FitbitActivity(BaseModel):
     activityTypeId: int
     calories: int
     duration: int
+    distance: float | None = None
+    distanceUnit: str | None = None
 
 
 class FitbitActivities(BaseModel):

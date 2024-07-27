@@ -62,6 +62,31 @@ def test_get_activity_calories_change_icon(
 @pytest.mark.parametrize(
     [
         "input_value",
+        "expected_output",
+    ],
+    [
+        (0, "➡️"),
+        (1, "➡️"),
+        (-1, "➡️"),
+        (30, "⬆️"),
+        (-30, "⬇️"),
+        (20, "↗️"),
+        (-20, "↘️"),
+    ],
+)
+def test_get_activity_distance_km_change_icon(
+    input_value: int,
+    expected_output: str,
+):
+    actual_output = usecase_post_activity.get_activity_distance_km_change_icon(
+        distance_km_change_pct=input_value
+    )
+    assert actual_output == expected_output
+
+
+@pytest.mark.parametrize(
+    [
+        "input_value",
         "input_all_time_top_value",
         "input_recent_top_value",
         "expected_output",
@@ -102,6 +127,7 @@ CREATE_MESSAGE_SCENARIOS = [
             type_id=123,
             total_minutes=120,
             calories=315,
+            distance_km=10.2,
             zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
@@ -114,7 +140,7 @@ CREATE_MESSAGE_SCENARIOS = [
             ],
         ),
         expected_message_regex="^.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! "
-        "🏆.* ⬆️ New all-time record! 🏆$",
+        "🏆.* ⬆️ New all-time record! 🏆.* ⬆️ New all-time record! 🏆$",
     ),
     CreateMessageScenario(
         name="recent top record",
@@ -123,6 +149,7 @@ CREATE_MESSAGE_SCENARIOS = [
             type_id=123,
             total_minutes=90,
             calories=175,
+            distance_km=8.1,
             zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
@@ -134,7 +161,7 @@ CREATE_MESSAGE_SCENARIOS = [
                 ),
             ],
         ),
-        expected_message_regex="^.* ⬆️ New record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆.* ⬆️ New "
+        expected_message_regex="^.* ⬆️ New record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆.* ⬆️ New "
         "record \\(last 30 days\\)! 🏆.* ➡️ New record \\(last 30 days\\)! 🏆$",
     ),
     CreateMessageScenario(
@@ -144,6 +171,7 @@ CREATE_MESSAGE_SCENARIOS = [
             type_id=123,
             total_minutes=1,
             calories=1,
+            distance_km=0.1,
             zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
@@ -155,7 +183,7 @@ CREATE_MESSAGE_SCENARIOS = [
                 ),
             ],
         ),
-        expected_message_regex="^.* ⬇️ .* ⬇️ .* ⬇️ .* ⬇️ $",
+        expected_message_regex="^.* ⬇️ .* ⬇️ .* ⬇️ .* ⬇️ .* ⬇️ $",
     ),
 ]
 
@@ -173,6 +201,7 @@ def test_create_message(scenario: CreateMessageScenario):
             type_id=123,
             total_minutes=15,
             calories=150,
+            distance_km=7.3,
             zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
@@ -187,6 +216,7 @@ def test_create_message(scenario: CreateMessageScenario):
         all_time_top_activity_data=TopActivityStats(
             top_total_minutes=100,
             top_calories=215,
+            top_distance_km=9.0,
             top_zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,
@@ -201,6 +231,7 @@ def test_create_message(scenario: CreateMessageScenario):
         recent_top_activity_data=TopActivityStats(
             top_total_minutes=90,
             top_calories=175,
+            top_distance_km=8.1,
             top_zone_minutes=[
                 ActivityZoneMinutes(
                     zone=ActivityZone.CARDIO,

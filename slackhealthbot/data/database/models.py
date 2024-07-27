@@ -65,6 +65,7 @@ class FitbitActivity(TimestampMixin, Base):
     type_id: Mapped[int] = mapped_column()
     total_minutes: Mapped[int] = mapped_column()
     calories: Mapped[int] = mapped_column()
+    distance_km: Mapped[Optional[float]] = mapped_column()
     fat_burn_minutes: Mapped[Optional[int]] = mapped_column()
     cardio_minutes: Mapped[Optional[int]] = mapped_column()
     peak_minutes: Mapped[Optional[int]] = mapped_column()

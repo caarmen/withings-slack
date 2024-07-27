@@ -34,6 +34,20 @@ def create_message(
         calories_icon = get_activity_calories_change_icon(
             activity.calories - activity_history.latest_activity_data.calories,
         )
+        distance_km_icon = (
+            get_activity_distance_km_change_icon(
+                (
+                    activity.distance_km
+                    - activity_history.latest_activity_data.distance_km
+                )
+                * 100
+                / activity.distance_km,
+            )
+            if activity.distance_km
+            and activity_history.latest_activity_data.distance_km
+            else None
+        )
+
         for zone_minutes in activity.zone_minutes:
             last_zone_minutes = next(
                 (
@@ -48,7 +62,7 @@ def create_message(
             )
 
     else:
-        duration_icon = calories_icon = ""
+        duration_icon = calories_icon = distance_km_icon = ""
     duration_record_text = get_ranking_text(
         activity.total_minutes,
         activity_history.all_time_top_activity_data.top_total_minutes,
@@ -61,6 +75,19 @@ def create_message(
         activity_history.recent_top_activity_data.top_calories,
         record_history_days=record_history_days,
     )
+    distance_km_record_text = (
+        get_ranking_text(
+            activity.distance_km,
+            activity_history.all_time_top_activity_data.top_distance_km,
+            activity_history.recent_top_activity_data.top_distance_km,
+            record_history_days=record_history_days,
+        )
+        if activity.distance_km
+        and activity_history.all_time_top_activity_data.top_distance_km
+        and activity_history.recent_top_activity_data
+        else None
+    )
+
     for zone_minutes in activity.zone_minutes:
         all_time_top_value = next(
             (
@@ -89,6 +116,8 @@ New {activity_name} activity from <@{slack_alias}>:
     • Duration: {activity.total_minutes} minutes {duration_icon} {duration_record_text}
     • Calories: {activity.calories} {calories_icon} {calories_record_text}
 """
+    if activity.distance_km:
+        message += f"    • Distance: {activity.distance_km}km {distance_km_icon} {distance_km_record_text}"
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
@@ -133,6 +162,22 @@ def get_activity_calories_change_icon(calories_change: int) -> str:
     if calories_change < -CALORIES_CHANGE_LARGE:
         return "⬇️"
     if calories_change < -CALORIES_CHANGE_SMALL:
+        return "↘️"
+    return "➡️"
+
+
+DISTANCE_CHANGE_PCT_SMALL = 15
+DISTANCE_CHANGE_PCT_LARGE = 25
+
+
+def get_activity_distance_km_change_icon(distance_km_change_pct: int) -> str:
+    if distance_km_change_pct > DISTANCE_CHANGE_PCT_LARGE:
+        return "⬆️"
+    if distance_km_change_pct > DISTANCE_CHANGE_PCT_SMALL:
+        return "↗️"
+    if distance_km_change_pct < -DISTANCE_CHANGE_PCT_LARGE:
+        return "⬇️"
+    if distance_km_change_pct < -DISTANCE_CHANGE_PCT_SMALL:
         return "↘️"
     return "➡️"
 
