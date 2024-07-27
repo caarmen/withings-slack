@@ -413,6 +413,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "log_id": 1234,
             "total_minutes": 8,
             "calories": 70,
+            "distance_km": None,
             "fat_burn_minutes": 1,
             "cardio_minutes": 20,
             "out_of_range_minutes": None,
@@ -448,14 +449,14 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                     "logId": 1235,
                     "calories": 76,
                     "duration": 665000,
-                    "distance": 1.2,
+                    "distance": 1.119999,
                     "distanceUnit": "Kilometer",
                 },
             ]
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
-        + ".*Calories.*76.*➡️ New all-time record.*Distance.*1.2.*"
+        + ".*Calories.*76.*➡️ New all-time record.*Distance: 1.120 km  New all-time record.*"
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
         "all-time record",
     ),
@@ -500,14 +501,14 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                     "logId": 1235,
                     "calories": 76,
                     "duration": 665000,
-                    "distance": 1.2,
+                    "distance": 1.119999,
                     "distanceUnit": "Kilometer",
                 },
             ]
         },
         expected_new_last_activity_log_id=1235,
         expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
-        + ".*Calories.*76.*➡️ New all-time record.*Distance.*1.2.*⬆️ New all-time record.*"
+        + ".*Calories.*76.*➡️ New all-time record.*Distance: 1.120 km.*⬆️ New all-time record.*"
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
         "all-time record",
     ),
