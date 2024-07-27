@@ -45,7 +45,7 @@ def create_message(
             )
             if activity.distance_km
             and activity_history.latest_activity_data.distance_km
-            else None
+            else ""
         )
 
         for zone_minutes in activity.zone_minutes:
@@ -83,8 +83,6 @@ def create_message(
             record_history_days=record_history_days,
         )
         if activity.distance_km
-        and activity_history.all_time_top_activity_data.top_distance_km
-        and activity_history.recent_top_activity_data
         else None
     )
 
@@ -117,7 +115,7 @@ New {activity_name} activity from <@{slack_alias}>:
     • Calories: {activity.calories} {calories_icon} {calories_record_text}
 """
     if activity.distance_km:
-        message += f"    • Distance: {activity.distance_km}km {distance_km_icon} {distance_km_record_text}"
+        message += f"    • Distance: {activity.distance_km:.3f} km {distance_km_icon} {distance_km_record_text}"
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
