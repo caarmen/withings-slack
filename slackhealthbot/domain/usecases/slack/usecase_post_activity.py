@@ -115,7 +115,8 @@ New {activity_name} activity from <@{slack_alias}>:
     • Calories: {activity.calories} {calories_icon} {calories_record_text}
 """
     if activity.distance_km:
-        message += f"    • Distance: {activity.distance_km:.3f} km {distance_km_icon} {distance_km_record_text}"
+        message += f"""    • Distance: {activity.distance_km:.3f} km {distance_km_icon} {distance_km_record_text}
+"""
     message += "\n".join(
         [
             f"    • {format_activity_zone(zone_minutes.zone)}"
