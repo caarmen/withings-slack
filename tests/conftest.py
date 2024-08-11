@@ -6,6 +6,9 @@ from fastapi.testclient import TestClient
 from pytest_factoryboy import register
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from alembic import command
+from alembic.config import Config
+from slackhealthbot.data.database import connection as db_connection
 from slackhealthbot.data.database.models import Base
 from slackhealthbot.data.repositories.sqlalchemyfitbitrepository import (
     SQLAlchemyFitbitRepository,
@@ -59,6 +62,24 @@ def async_connection_url(db_path):
 @pytest.fixture
 def connection_url(db_path):
     return f"sqlite:///{db_path}"
+
+
+@pytest.fixture()
+def apply_alembic_migration(
+    async_connection_url: str,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    with monkeypatch.context() as mp:
+        mp.setattr(db_connection, "connection_url", async_connection_url)
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+
+
+@pytest.fixture(autouse=True)
+def setup_db(apply_alembic_migration, connection):
+    # This fixture ensures that the alembic migration is applied
+    # before the connection fixture is used.
+    pass
 
 
 @pytest_asyncio.fixture
