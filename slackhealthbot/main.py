@@ -33,7 +33,7 @@ from slackhealthbot.tasks import fitbitpoll
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    logger.configure_logging()
+    logger.configure_logging(settings.sql_log_level)
     oauth_withings.configure(
         WithingsUpdateTokenUseCase(
             request_context_withings_repository,

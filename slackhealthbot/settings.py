@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     ]
     fitbit_activity_record_history_days: int = 180
     slack_webhook_url: HttpUrl
+    sql_log_level: str = "WARNING"
     model_config = SettingsConfigDict(env_file=".env")
 
     @property

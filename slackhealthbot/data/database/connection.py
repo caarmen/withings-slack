@@ -1,5 +1,7 @@
+import logging
 from pathlib import Path
 
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from slackhealthbot.settings import settings
@@ -13,3 +15,10 @@ engine = create_async_engine(
 SessionLocal = async_sessionmaker(
     autocommit=False, autoflush=False, bind=engine, future=True
 )
+
+if settings.sql_log_level.upper() == "DEBUG":
+
+    def before_cursor_execute(_conn, _cursor, statement, parameters, *args):
+        logging.debug(f"{statement}; args={parameters}")
+
+    event.listen(engine.sync_engine, "before_cursor_execute", before_cursor_execute)

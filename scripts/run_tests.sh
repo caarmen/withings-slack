@@ -1,5 +1,5 @@
 rm -rf reports
-python -m pytest \
+SQL_LOG_LEVEL=DEBUG python -m pytest \
   --numprocesses=auto \
   --cov=slackhealthbot \
   --cov-report=xml \
