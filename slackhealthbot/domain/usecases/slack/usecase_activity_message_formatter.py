@@ -59,8 +59,8 @@ def get_ranking_text(
     recent_top_value: int,
     record_history_days: int,
 ) -> str:
-    if value >= all_time_top_value:
+    if value and all_time_top_value and value >= all_time_top_value:
         return "New all-time record! 🏆"
-    if value >= recent_top_value:
+    if value and recent_top_value and value >= recent_top_value:
         return f"New record (last {record_history_days} days)! 🏆"
     return ""
