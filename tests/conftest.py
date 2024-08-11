@@ -1,9 +1,10 @@
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from pytest_factoryboy import register
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm.session import Session
 
 from slackhealthbot.data.database.models import Base
 from slackhealthbot.data.repositories.sqlalchemyfitbitrepository import (
@@ -46,14 +47,23 @@ def sqlalchemy_declarative_base():
 
 
 @pytest.fixture
-def connection_url(tmp_path):
-    return f"sqlite:///{tmp_path / 'database.db'}"
+def db_path(tmp_path: Path) -> str:
+    return str(tmp_path / "database.db")
+
+
+@pytest.fixture
+def async_connection_url(db_path):
+    return f"sqlite+aiosqlite:///{db_path}"
+
+
+@pytest.fixture
+def connection_url(db_path):
+    return f"sqlite:///{db_path}"
 
 
 @pytest_asyncio.fixture
-async def mocked_async_session(mocked_session: Session):
-    connection_url = f"sqlite+aiosqlite:///{mocked_session.bind.engine.url.database}"
-    engine = create_async_engine(connection_url)
+async def mocked_async_session(async_connection_url: str):
+    engine = create_async_engine(async_connection_url)
     session: AsyncSession = async_sessionmaker(bind=engine)()
     yield session
     await session.close()
