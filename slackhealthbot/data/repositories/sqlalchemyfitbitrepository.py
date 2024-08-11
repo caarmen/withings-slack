@@ -17,6 +17,7 @@ from slackhealthbot.domain.models.activity import (
     ActivityZoneMinutes,
     DailyActivityStats,
     TopActivityStats,
+    TopDailyActivityStats,
 )
 from slackhealthbot.domain.models.sleep import SleepData
 
@@ -387,6 +388,43 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
             )
             for daily_activity in daily_activities
         ]
+
+    async def get_top_daily_activity_stats_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        since: datetime.datetime | None = None,
+    ) -> TopActivityStats:
+        columns = [
+            models.FitbitDailyActivity.count_activities,
+            models.FitbitDailyActivity.sum_calories,
+            models.FitbitDailyActivity.sum_distance_km,
+            models.FitbitDailyActivity.sum_total_minutes,
+            models.FitbitDailyActivity.sum_fat_burn_minutes,
+            models.FitbitDailyActivity.sum_cardio_minutes,
+            models.FitbitDailyActivity.sum_peak_minutes,
+            models.FitbitDailyActivity.sum_out_of_range_minutes,
+        ]
+        conditions = [
+            models.FitbitUser.oauth_userid == fitbit_userid,
+            models.FitbitDailyActivity.type_id == type_id,
+        ]
+        if since:
+            conditions.append(models.FitbitDailyActivity.date >= since)
+
+        subqueries = [
+            select(func.max(column))
+            .join(models.FitbitUser)
+            .where(and_(*conditions))
+            .label(f"top_{column.name}")
+            for column in columns
+        ]
+
+        results = await self.db.execute(statement=select(*subqueries))
+
+        # noinspection PyProtectedMember
+        row = results.one()._asdict()
+        return TopDailyActivityStats(**row)
 
 
 def _db_activity_to_domain_activity(

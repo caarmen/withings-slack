@@ -54,3 +54,23 @@ class DailyActivityStats:
     sum_cardio_minutes: int | None
     sum_peak_minutes: int | None
     sum_out_of_range_minutes: int | None
+
+
+@dataclasses.dataclass
+class TopDailyActivityStats:
+    top_count_activities: int
+    top_sum_calories: int
+    top_sum_distance_km: float | None
+    top_sum_total_minutes: int
+    top_sum_fat_burn_minutes: int | None
+    top_sum_cardio_minutes: int | None
+    top_sum_peak_minutes: int | None
+    top_sum_out_of_range_minutes: int | None
+
+
+@dataclasses.dataclass
+class DailyActivityHistory:
+    previous_daily_activity_stats: DailyActivityStats | None
+    new_daily_activity_stats: DailyActivityStats | None
+    all_time_top_daily_activity_stats: TopDailyActivityStats
+    recent_top_daily_activity_stats: TopDailyActivityStats

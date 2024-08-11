@@ -138,3 +138,15 @@ class LocalFitbitRepository(ABC):
         If no date is provided, returns the stats for today.
         """
         pass
+
+    @abstractmethod
+    async def get_top_daily_activity_stats_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        since: datetime.datetime | None = None,
+    ) -> TopActivityStats:
+        """
+        Get the top daily activity stats for the given user and activity type.
+        """
+        pass
