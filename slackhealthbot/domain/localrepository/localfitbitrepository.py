@@ -115,6 +115,19 @@ class LocalFitbitRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_latest_daily_activity_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        before: datetime.date | None = None,
+    ) -> DailyActivityStats | None:
+        """
+        Get the latest daily stats for the given user and activity type, before the given date..
+        If no date is provided, today's date is used.
+        """
+        pass
+
+    @abstractmethod
     async def get_daily_activities_by_type(
         self,
         type_ids: set[int],

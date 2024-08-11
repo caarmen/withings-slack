@@ -340,23 +340,23 @@ async def test_daily_activities_multiple_entries(
     )
 
     # Get the list of daily activity stats for all users and activity types
-    list_daily_activity_stats: list[DailyActivityStats] = (
+    list_daily_activity_stats_all_users_and_types: list[DailyActivityStats] = (
         await local_fitbit_repository.get_daily_activities_by_type(
             type_ids={1234, 1235},
             when=datetime.date(2024, 1, 2),
         )
     )
-    assert len(list_daily_activity_stats) == 3  # noqa: PLR2004
+    assert len(list_daily_activity_stats_all_users_and_types) == 3  # noqa: PLR2004
 
-    actual_counts = {
+    actual_counts_all_users_and_types = {
         (
             x.slack_alias,
             x.type_id,
             x.count_activities,
         )
-        for x in list_daily_activity_stats
+        for x in list_daily_activity_stats_all_users_and_types
     }
-    expected_counts = {
+    expected_counts_all_users_and_types = {
         (
             "user1",
             1234,
@@ -373,4 +373,33 @@ async def test_daily_activities_multiple_entries(
             1,
         ),
     }
-    assert actual_counts == expected_counts
+    assert actual_counts_all_users_and_types == expected_counts_all_users_and_types
+
+    # Get the list of daily activity stats just one user and activity type.
+    actual_daily_activity_stats_one_user_and_type: DailyActivityStats = (
+        await local_fitbit_repository.get_latest_daily_activity_by_user_and_activity_type(
+            fitbit_userid=user1.fitbit.oauth_userid,
+            type_id=1235,
+            before=datetime.date(2024, 1, 4),
+        )
+    )
+    assert actual_daily_activity_stats_one_user_and_type is not None
+    assert (
+        actual_daily_activity_stats_one_user_and_type.count_activities
+        == 2  # noqa: PLR2004
+    )
+    assert (
+        actual_daily_activity_stats_one_user_and_type.type_id == 1235  # noqa: PLR2004
+    )
+    assert actual_daily_activity_stats_one_user_and_type.slack_alias == "user1"
+
+    # Get the list of daily activity stats just one user and activity type, with no match.
+    actual_daily_activity_stats_one_user_and_type: DailyActivityStats = (
+        await local_fitbit_repository.get_latest_daily_activity_by_user_and_activity_type(
+            fitbit_userid=user1.fitbit.oauth_userid,
+            type_id=1235,
+            before=datetime.date(2024, 1, 2),
+        )
+    )
+
+    assert actual_daily_activity_stats_one_user_and_type is None
