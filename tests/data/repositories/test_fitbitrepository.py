@@ -9,6 +9,7 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
 from slackhealthbot.domain.models.activity import (
     ActivityZone,
     ActivityZoneMinutes,
+    DailyActivityStats,
     TopActivityStats,
 )
 from tests.testsupport.factories.factories import (
@@ -218,3 +219,158 @@ async def test_top_activities_no_history(
         top_total_minutes=None,
         top_zone_minutes=[],
     )
+
+
+@pytest.mark.asyncio
+async def test_daily_activities_one_entry(
+    local_fitbit_repository: LocalFitbitRepository,
+    fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+):
+    """
+    Given multiple activities of one given type for a user on one day
+    When we request the daily activities for that day
+    Then we get the expected aggregation counts.
+    """
+    user_factory, _, fitbit_activity_factory = fitbit_factories
+    user: models.User = user_factory.create(slack_alias="jondoe")
+    fitbit_activity_factory.create(
+        fitbit_user_id=user.fitbit.id,
+        type_id=1234,
+        calories=400,
+        distance_km=2.8,
+        total_minutes=20,
+        fat_burn_minutes=19,
+        cardio_minutes=18,
+        peak_minutes=17,
+        out_of_range_minutes=None,
+        updated_at=datetime.datetime(2024, 1, 2, 23, 44, 55),
+    )
+    fitbit_activity_factory.create(
+        fitbit_user_id=user.fitbit.id,
+        type_id=1234,
+        calories=500,
+        distance_km=2.6,
+        total_minutes=10,
+        fat_burn_minutes=18,
+        cardio_minutes=17,
+        peak_minutes=None,
+        out_of_range_minutes=None,
+        updated_at=datetime.datetime(2024, 1, 2, 23, 44, 55),
+    )
+
+    actual_daily_activity_stats: list[DailyActivityStats] = (
+        await local_fitbit_repository.get_daily_activities_by_type(
+            type_ids={1234},
+            when=datetime.date(2024, 1, 2),
+        )
+    )
+    expected_daily_activity_stats = [
+        DailyActivityStats(
+            fitbit_userid=user.fitbit.oauth_userid,
+            slack_alias="jondoe",
+            type_id=1234,
+            count_activities=2,
+            sum_calories=900,
+            sum_distance_km=pytest.approx(5.4),
+            sum_total_minutes=30,
+            sum_fat_burn_minutes=37,
+            sum_cardio_minutes=35,
+            sum_peak_minutes=17,
+            sum_out_of_range_minutes=None,
+        )
+    ]
+    assert actual_daily_activity_stats == expected_daily_activity_stats
+
+
+@pytest.mark.asyncio
+async def test_daily_activities_multiple_entries(
+    local_fitbit_repository: LocalFitbitRepository,
+    fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+):
+    """
+    Given activities for multiple users and types for a given date
+    When we request the daily activities for that day
+    Then we get the expected aggregation counts.
+    """
+    user_factory, _, fitbit_activity_factory = fitbit_factories
+    user1: models.User = user_factory.create(slack_alias="user1")
+    user2: models.User = user_factory.create(slack_alias="user2")
+
+    # Matching entries:
+    # User 1:
+    fitbit_activity_factory.create(
+        fitbit_user_id=user1.fitbit.id,
+        type_id=1235,
+        updated_at=datetime.datetime(2024, 1, 2, 3, 3, 4),
+    )
+    fitbit_activity_factory.create(
+        fitbit_user_id=user1.fitbit.id,
+        type_id=1235,
+        updated_at=datetime.datetime(2024, 1, 2, 4, 3, 4),
+    )
+    fitbit_activity_factory.create(
+        fitbit_user_id=user1.fitbit.id,
+        type_id=1234,
+        updated_at=datetime.datetime(2024, 1, 2, 5, 3, 4),
+    )
+    # User 2:
+    fitbit_activity_factory.create(
+        fitbit_user_id=user2.fitbit.id,
+        type_id=1234,
+        updated_at=datetime.datetime(2024, 1, 2, 5, 3, 4),
+    )
+
+    # Not matching entries:
+    # User 1:
+    fitbit_activity_factory.create(
+        fitbit_user_id=user1.fitbit.id,
+        type_id=1234,
+        updated_at=datetime.datetime(2024, 1, 4, 1, 3, 3),
+    )
+    fitbit_activity_factory.create(
+        fitbit_user_id=user1.fitbit.id,
+        type_id=1235,
+        updated_at=datetime.datetime(2024, 1, 4, 1, 2, 3),
+    )
+    # User 2:
+    fitbit_activity_factory.create(
+        fitbit_user_id=user2.fitbit.id,
+        type_id=1235,
+        updated_at=datetime.datetime(2023, 12, 4, 1, 2, 3),
+    )
+
+    # Get the list of daily activity stats for all users and activity types
+    list_daily_activity_stats: list[DailyActivityStats] = (
+        await local_fitbit_repository.get_daily_activities_by_type(
+            type_ids={1234, 1235},
+            when=datetime.date(2024, 1, 2),
+        )
+    )
+    assert len(list_daily_activity_stats) == 3  # noqa: PLR2004
+
+    actual_counts = {
+        (
+            x.slack_alias,
+            x.type_id,
+            x.count_activities,
+        )
+        for x in list_daily_activity_stats
+    }
+    expected_counts = {
+        (
+            "user1",
+            1234,
+            1,
+        ),
+        (
+            "user1",
+            1235,
+            2,
+        ),
+        (
+            "user2",
+            1234,
+            1,
+        ),
+    }
+    assert actual_counts == expected_counts

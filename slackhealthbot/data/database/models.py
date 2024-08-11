@@ -78,7 +78,11 @@ class FitbitActivity(TimestampMixin, Base):
 class FitbitDailyActivity(Base):
     __tablename__ = "fitbit_daily_activities"
     __table_args__ = {"info": {"is_view": True}}
-    fitbit_user_id: Mapped[int] = mapped_column(primary_key=True)
+    fitbit_user_id: Mapped[int] = mapped_column(
+        ForeignKey("fitbit_users.id"),
+        primary_key=True,
+    )
+    fitbit_user: Mapped["FitbitUser"] = relationship(lazy="joined", join_depth=2)
     type_id: Mapped[int] = mapped_column(primary_key=True)
     date: Mapped[datetime] = mapped_column(primary_key=True)
     count_activities: Mapped[int] = mapped_column()

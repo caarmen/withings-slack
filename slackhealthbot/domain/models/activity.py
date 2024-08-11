@@ -39,3 +39,18 @@ class ActivityHistory:
     new_activity_data: ActivityData
     all_time_top_activity_data: TopActivityStats
     recent_top_activity_data: TopActivityStats
+
+
+@dataclasses.dataclass
+class DailyActivityStats:
+    fitbit_userid: int
+    slack_alias: str
+    type_id: int
+    count_activities: int
+    sum_calories: int
+    sum_distance_km: float | None
+    sum_total_minutes: int
+    sum_fat_burn_minutes: int | None
+    sum_cardio_minutes: int | None
+    sum_peak_minutes: int | None
+    sum_out_of_range_minutes: int | None
