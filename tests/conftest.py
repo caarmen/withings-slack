@@ -67,9 +67,7 @@ def local_withings_repository(
 
 
 @pytest.fixture
-def remote_withings_repository(
-    mocked_async_session: AsyncSession,
-) -> RemoteWithingsRepository:
+def remote_withings_repository() -> RemoteWithingsRepository:
     return WebApiWithingsRepository()
 
 
@@ -81,9 +79,7 @@ def local_fitbit_repository(
 
 
 @pytest.fixture
-def remote_fitbit_repository(
-    mocked_async_session: AsyncSession,
-) -> RemoteFitbitRepository:
+def remote_fitbit_repository() -> RemoteFitbitRepository:
     return WebApiFitbitRepository()
 
 
