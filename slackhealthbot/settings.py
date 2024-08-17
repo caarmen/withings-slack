@@ -1,4 +1,5 @@
 import dataclasses
+import datetime as dt
 from pathlib import Path
 
 from pydantic import AnyHttpUrl, HttpUrl
@@ -49,6 +50,7 @@ class Settings(BaseSettings):
     fitbit_daily_activity_type_ids: list[int] = [
         90019,
     ]
+    fitbit_daily_activity_post_time: dt.time = dt.time(hour=23, second=50)
     fitbit_activity_record_history_days: int = 180
     slack_webhook_url: HttpUrl
     sql_log_level: str = "WARNING"

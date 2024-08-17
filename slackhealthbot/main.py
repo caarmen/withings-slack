@@ -1,5 +1,6 @@
 import random
 import string
+from asyncio import Task
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -29,6 +30,7 @@ from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
 from slackhealthbot.settings import settings
 from slackhealthbot.tasks import fitbitpoll
+from slackhealthbot.tasks.post_daily_activities_task import post_daily_activities
 
 
 @asynccontextmanager
@@ -54,9 +56,19 @@ async def lifespan(_app: FastAPI):
             slack_repo=get_slack_repository(),
             initial_delay_s=10,
         )
+    daily_activity_task: Task | None = None
+    if settings.fitbit_daily_activity_type_ids:
+        daily_activity_task = await post_daily_activities(
+            local_fitbit_repo_factory=fitbit_repository_factory(),
+            activity_type_ids=set(settings.fitbit_daily_activity_type_ids),
+            slack_repo=get_slack_repository(),
+            post_time=settings.fitbit_daily_activity_post_time,
+        )
     yield
     if schedule_task:
         schedule_task.cancel()
+    if daily_activity_task:
+        daily_activity_task.cancel()
 
 
 app = FastAPI(

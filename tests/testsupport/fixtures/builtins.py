@@ -13,8 +13,10 @@ def freeze_time(
     local_timezone: ZoneInfo = ZoneInfo("UTC"),
 ):
     class FrozenDate(dt.datetime):
-        def now(tz):
-            return FrozenDate(*frozen_datetime_args, tzinfo=tz)
+        def now(tz=None):
+            if tz:
+                return FrozenDate(*frozen_datetime_args, tzinfo=tz)
+            return FrozenDate(*frozen_datetime_args)
 
         def astimezone(self):
             return super().astimezone(tz=local_timezone)
