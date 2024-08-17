@@ -52,6 +52,10 @@ async def do(
         return None
 
     last_activity_data: ActivityData = (
+        # Look up the previous activity for this user and type
+        # before saving the new activity.
+        # Note: if this isn't a realtime activity type, this
+        # lookup won't be used. Maybe this can be improved.
         await local_fitbit_repo.get_latest_activity_by_user_and_type(
             fitbit_userid=fitbit_userid,
             type_id=new_activity_data.type_id,
@@ -62,6 +66,12 @@ async def do(
         fitbit_userid=fitbit_userid,
         activity=new_activity_data,
     )
+
+    if new_activity_data.type_id not in settings.fitbit_realtime_activity_type_ids:
+        # This activity isn't to be posted in realtime to slack.
+        # We're done for now.
+        return
+
     all_time_top_activity_stats: TopActivityStats = (
         await local_fitbit_repo.get_top_activity_stats_by_user_and_activity_type(
             fitbit_userid=fitbit_userid,

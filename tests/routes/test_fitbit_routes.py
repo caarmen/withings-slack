@@ -107,9 +107,10 @@ async def test_sleep_notification(
     argvalues=activity_scenarios.values(),
 )
 @pytest.mark.asyncio
-async def test_activity_notification(
+async def test_activity_notification(  # noqa PLR0913
     local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
@@ -149,6 +150,10 @@ async def test_activity_notification(
         return_value=Response(200)
     )
 
+    if scenario.settings_override:
+        for key, value in scenario.settings_override.items():
+            monkeypatch.setattr(settings, key, value)
+
     # When we receive the callback from fitbit that a new activity is available
     with client:
         response = client.post(
@@ -173,7 +178,7 @@ async def test_activity_notification(
             type_id=activity_type_id,
         )
     )
-    if scenario.is_new_log_expected:
+    if scenario.expected_new_activity_created:
         assert repo_activity.log_id == scenario.expected_new_last_activity_log_id
     elif scenario.input_initial_activity_data:
         assert repo_activity.log_id == scenario.input_initial_activity_data["log_id"]
