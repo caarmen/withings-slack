@@ -35,10 +35,12 @@ def get_uvicorn_log_config() -> dict:
     )
 
 
-def configure_logging():
+def configure_logging(sql_log_level: str):
     # This setup impacts the logs sent from our own code as well as logs from httpx.
     console_handler = logging.StreamHandler()
     console_handler.addFilter(CorrelationIdFilter())
+    logging.getLogger("sqlalchemy.engine").setLevel(getattr(logging, sql_log_level))
+
     logging.basicConfig(
         handlers=[console_handler],
         format=logging_format_prefix

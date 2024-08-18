@@ -123,9 +123,10 @@ async def test_fitbit_poll_sleep(
     argvalues=activity_scenarios.values(),
 )
 @pytest.mark.asyncio
-async def test_fitbit_poll_activity(
+async def test_fitbit_poll_activity(  # noqa PLR0913
     fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
+    monkeypatch: pytest.MonkeyPatch,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
     client: TestClient,
@@ -170,6 +171,10 @@ async def test_fitbit_poll_activity(
         return_value=Response(200)
     )
 
+    if scenario.settings_override:
+        for key, value in scenario.settings_override.items():
+            monkeypatch.setattr(settings, key, value)
+
     # When we poll for new sleep data
     # Use the client as a context manager so that the app lifespan hook is called
     # https://fastapi.tiangolo.com/advanced/testing-events/
@@ -189,7 +194,7 @@ async def test_fitbit_poll_activity(
             type_id=activity_type_id,
         )
     )
-    if scenario.is_new_log_expected:
+    if scenario.expected_new_activity_created:
         assert repo_activity.log_id == scenario.expected_new_last_activity_log_id
     elif scenario.input_initial_activity_data:
         assert repo_activity.log_id == scenario.input_initial_activity_data["log_id"]

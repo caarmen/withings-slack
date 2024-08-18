@@ -3,7 +3,11 @@ import datetime
 from abc import ABC, abstractmethod
 
 from slackhealthbot.core.models import OAuthFields
-from slackhealthbot.domain.models.activity import ActivityData, TopActivityStats
+from slackhealthbot.domain.models.activity import (
+    ActivityData,
+    DailyActivityStats,
+    TopActivityStats,
+)
 from slackhealthbot.domain.models.sleep import SleepData
 
 
@@ -108,4 +112,41 @@ class LocalFitbitRepository(ABC):
         type_id: int,
         since: datetime.datetime | None = None,
     ) -> TopActivityStats:
+        pass
+
+    @abstractmethod
+    async def get_latest_daily_activity_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        before: datetime.date | None = None,
+    ) -> DailyActivityStats | None:
+        """
+        Get the latest daily stats for the given user and activity type, before the given date..
+        If no date is provided, today's date is used.
+        """
+        pass
+
+    @abstractmethod
+    async def get_daily_activities_by_type(
+        self,
+        type_ids: set[int],
+        when: datetime.date | None = None,
+    ) -> DailyActivityStats | None:
+        """
+        Get the stats for the given date and activity types.
+        If no date is provided, returns the stats for today.
+        """
+        pass
+
+    @abstractmethod
+    async def get_top_daily_activity_stats_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        since: datetime.datetime | None = None,
+    ) -> TopActivityStats:
+        """
+        Get the top daily activity stats for the given user and activity type.
+        """
         pass

@@ -15,7 +15,9 @@ from slackhealthbot.domain.models.activity import (
     ActivityData,
     ActivityZone,
     ActivityZoneMinutes,
+    DailyActivityStats,
     TopActivityStats,
+    TopDailyActivityStats,
 )
 from slackhealthbot.domain.models.sleep import SleepData
 
@@ -314,6 +316,115 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
                 if row.get(f"top_{x}_minutes")
             ],
         )
+
+    async def get_latest_daily_activity_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        before: datetime.date | None = None,
+    ) -> DailyActivityStats | None:
+        activity_date = before if before else datetime.date.today()
+        daily_activity: models.FitbitDailyActivity = (
+            await self.db.scalars(
+                statement=select(models.FitbitDailyActivity)
+                .join(models.FitbitUser)
+                .join(models.User)
+                .where(
+                    and_(
+                        models.FitbitDailyActivity.date < activity_date,
+                        models.FitbitUser.oauth_userid == fitbit_userid,
+                        models.FitbitDailyActivity.type_id == type_id,
+                    )
+                )
+                .order_by(desc(models.FitbitDailyActivity.date))
+            )
+        ).first()
+        if not daily_activity:
+            return None
+        return DailyActivityStats(
+            fitbit_userid=daily_activity.fitbit_user.oauth_userid,
+            slack_alias=daily_activity.fitbit_user.user.slack_alias,
+            type_id=daily_activity.type_id,
+            count_activities=daily_activity.count_activities,
+            sum_calories=daily_activity.sum_calories,
+            sum_distance_km=daily_activity.sum_distance_km,
+            sum_total_minutes=daily_activity.sum_total_minutes,
+            sum_fat_burn_minutes=daily_activity.sum_fat_burn_minutes,
+            sum_cardio_minutes=daily_activity.sum_cardio_minutes,
+            sum_peak_minutes=daily_activity.sum_peak_minutes,
+            sum_out_of_range_minutes=daily_activity.sum_out_of_range_minutes,
+        )
+
+    async def get_daily_activities_by_type(
+        self,
+        type_ids: set[int],
+        when: datetime.date | None = None,
+    ) -> list[DailyActivityStats]:
+        activity_date = when if when else datetime.date.today()
+        daily_activities: list[models.FitbitDailyActivity] = await self.db.scalars(
+            statement=select(models.FitbitDailyActivity)
+            .join(models.FitbitUser)
+            .join(models.User)
+            .where(
+                and_(
+                    models.FitbitDailyActivity.date == activity_date,
+                    models.FitbitDailyActivity.type_id.in_(type_ids),
+                )
+            )
+        )
+        return [
+            DailyActivityStats(
+                fitbit_userid=daily_activity.fitbit_user.oauth_userid,
+                slack_alias=daily_activity.fitbit_user.user.slack_alias,
+                type_id=daily_activity.type_id,
+                count_activities=daily_activity.count_activities,
+                sum_calories=daily_activity.sum_calories,
+                sum_distance_km=daily_activity.sum_distance_km,
+                sum_total_minutes=daily_activity.sum_total_minutes,
+                sum_fat_burn_minutes=daily_activity.sum_fat_burn_minutes,
+                sum_cardio_minutes=daily_activity.sum_cardio_minutes,
+                sum_peak_minutes=daily_activity.sum_peak_minutes,
+                sum_out_of_range_minutes=daily_activity.sum_out_of_range_minutes,
+            )
+            for daily_activity in daily_activities
+        ]
+
+    async def get_top_daily_activity_stats_by_user_and_activity_type(
+        self,
+        fitbit_userid: str,
+        type_id: int,
+        since: datetime.datetime | None = None,
+    ) -> TopActivityStats:
+        columns = [
+            models.FitbitDailyActivity.count_activities,
+            models.FitbitDailyActivity.sum_calories,
+            models.FitbitDailyActivity.sum_distance_km,
+            models.FitbitDailyActivity.sum_total_minutes,
+            models.FitbitDailyActivity.sum_fat_burn_minutes,
+            models.FitbitDailyActivity.sum_cardio_minutes,
+            models.FitbitDailyActivity.sum_peak_minutes,
+            models.FitbitDailyActivity.sum_out_of_range_minutes,
+        ]
+        conditions = [
+            models.FitbitUser.oauth_userid == fitbit_userid,
+            models.FitbitDailyActivity.type_id == type_id,
+        ]
+        if since:
+            conditions.append(models.FitbitDailyActivity.date >= since)
+
+        subqueries = [
+            select(func.max(column))
+            .join(models.FitbitUser)
+            .where(and_(*conditions))
+            .label(f"top_{column.name}")
+            for column in columns
+        ]
+
+        results = await self.db.execute(statement=select(*subqueries))
+
+        # noinspection PyProtectedMember
+        row = results.one()._asdict()
+        return TopDailyActivityStats(**row)
 
 
 def _db_activity_to_domain_activity(

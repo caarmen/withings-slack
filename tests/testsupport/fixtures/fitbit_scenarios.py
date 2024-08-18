@@ -270,10 +270,8 @@ class FitbitActivityScenario:
     input_mock_fitbit_response: dict[str, Any]
     expected_new_last_activity_log_id: int
     expected_message_pattern: str | None
-
-    @property
-    def is_new_log_expected(self) -> bool:
-        return bool(self.expected_message_pattern)
+    expected_new_activity_created: bool
+    settings_override: dict[str, Any] | None = None
 
 
 activity_scenarios: dict[str, FitbitActivityScenario] = {
@@ -311,6 +309,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1234,
+        expected_new_activity_created=True,
         expected_message_pattern="New Spinning activity.*Fat burn.*8.*New all-time record",
     ),
     "New Spinning activity, partial zones": FitbitActivityScenario(
@@ -355,6 +354,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
         expected_message_pattern=(
             "New Spinning activity.*⬇️ New record.*⬆️ New all-time record.*Fat burn.*8.*➡.*New all-time "
             "record.*Cardio.*9.*↘️ New record"
@@ -404,6 +404,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
         expected_message_pattern="New Spinning activity.*↗️ New all-time record.*➡️ New all-time record.*"
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
         "all-time record",
@@ -455,6 +456,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
         expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
         + ".*Calories.*76.*➡️ New all-time record.*Distance: 1.120 km  New all-time record.*"
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
@@ -507,6 +509,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
         expected_message_pattern="New Walking activity.*Duration.*↗️ New all-time record"
         + ".*Calories.*76.*➡️ New all-time record.*Distance: 1.120 km.*⬆️ New all-time record.*"
         + "Fat burn.*12.*⬆️ New all-time record.*Cardio.*9.*⬇️ New record.*Out of range.*10.*↗️.*Peak.*11.*⬆️ New "
@@ -555,7 +558,58 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ]
         },
         expected_new_last_activity_log_id=1234,
+        expected_new_activity_created=False,
         expected_message_pattern=None,
+    ),
+    "New daily only activity": FitbitActivityScenario(
+        input_initial_activity_data={
+            "log_id": 1234,
+            "calories": 70,
+            "fat_burn_minutes": 1,
+            "cardio_minutes": 20,
+            "out_of_range_minutes": None,
+            "peak_minutes": None,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+        },
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "type": "FAT_BURN",
+                            },
+                            {
+                                "minutes": 9,
+                                "type": "CARDIO",
+                            },
+                            {
+                                "minutes": 0,
+                                "type": "OUT_OF_RANGE",
+                            },
+                            {
+                                "minutes": 0,
+                                "type": "PEAK",
+                            },
+                        ]
+                    },
+                    "activityName": "Spinning",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
+        expected_message_pattern=None,
+        settings_override={
+            "fitbit_realtime_activity_type_ids": [],
+            "fitbit_daily_activity_type_ids": [55001],
+        },
     ),
     "Invalid json response": FitbitActivityScenario(
         input_initial_activity_data={
@@ -569,6 +623,7 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
         },
         input_mock_fitbit_response={"foo": "bar"},
+        expected_new_activity_created=False,
         expected_new_last_activity_log_id=1234,
         expected_message_pattern=None,
     ),

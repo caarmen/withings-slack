@@ -1,4 +1,5 @@
 import dataclasses
+import datetime as dt
 from pathlib import Path
 
 from pydantic import AnyHttpUrl, HttpUrl
@@ -37,16 +38,22 @@ class Settings(BaseSettings):
     fitbit_client_subscriber_verification_code: str
     fitbit_poll_interval_s: int = 3600
     fitbit_poll_enabled: bool = True
-    fitbit_activity_type_ids: list[int] = [
+    fitbit_realtime_activity_type_ids: list[int] = [
         # See https://dev.fitbit.com/build/reference/web-api/activity/get-all-activity-types/
         # for the list of all supported activity types and their ids
         55001,  # Spinning
-        # 90013,  # Walk
+        90013,  # Walk
         # 90001,  # Bike
+        # 90019,  # Treadmill
         # 1071,   # Outdoor Bike
     ]
+    fitbit_daily_activity_type_ids: list[int] = [
+        90019,
+    ]
+    fitbit_daily_activity_post_time: dt.time = dt.time(hour=23, second=50)
     fitbit_activity_record_history_days: int = 180
     slack_webhook_url: HttpUrl
+    sql_log_level: str = "WARNING"
     model_config = SettingsConfigDict(env_file=".env")
 
     @property
@@ -64,6 +71,12 @@ class Settings(BaseSettings):
             base_url=self.fitbit_base_url,
             oauth_scopes=self.fitbit_oauth_scopes,
             subscriber_verification_code=self.fitbit_client_subscriber_verification_code,
+        )
+
+    @property
+    def fitbit_activity_type_ids(self) -> list[int]:
+        return (
+            self.fitbit_realtime_activity_type_ids + self.fitbit_daily_activity_type_ids
         )
 
 

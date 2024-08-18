@@ -1,10 +1,14 @@
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
 from fastapi.testclient import TestClient
 from pytest_factoryboy import register
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm.session import Session
 
+from alembic import command
+from alembic.config import Config
+from slackhealthbot.data.database import connection as db_connection
 from slackhealthbot.data.database.models import Base
 from slackhealthbot.data.repositories.sqlalchemyfitbitrepository import (
     SQLAlchemyFitbitRepository,
@@ -46,14 +50,41 @@ def sqlalchemy_declarative_base():
 
 
 @pytest.fixture
-def connection_url(tmp_path):
-    return f"sqlite:///{tmp_path / 'database.db'}"
+def db_path(tmp_path: Path) -> str:
+    return str(tmp_path / "database.db")
+
+
+@pytest.fixture
+def async_connection_url(db_path):
+    return f"sqlite+aiosqlite:///{db_path}"
+
+
+@pytest.fixture
+def connection_url(db_path):
+    return f"sqlite:///{db_path}"
+
+
+@pytest.fixture()
+def apply_alembic_migration(
+    async_connection_url: str,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    with monkeypatch.context() as mp:
+        mp.setattr(db_connection, "connection_url", async_connection_url)
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+
+
+@pytest.fixture(autouse=True)
+def setup_db(apply_alembic_migration, connection):
+    # This fixture ensures that the alembic migration is applied
+    # before the connection fixture is used.
+    pass
 
 
 @pytest_asyncio.fixture
-async def mocked_async_session(mocked_session: Session):
-    connection_url = f"sqlite+aiosqlite:///{mocked_session.bind.engine.url.database}"
-    engine = create_async_engine(connection_url)
+async def mocked_async_session(async_connection_url: str):
+    engine = create_async_engine(async_connection_url)
     session: AsyncSession = async_sessionmaker(bind=engine)()
     yield session
     await session.close()
@@ -67,9 +98,7 @@ def local_withings_repository(
 
 
 @pytest.fixture
-def remote_withings_repository(
-    mocked_async_session: AsyncSession,
-) -> RemoteWithingsRepository:
+def remote_withings_repository() -> RemoteWithingsRepository:
     return WebApiWithingsRepository()
 
 
@@ -81,9 +110,7 @@ def local_fitbit_repository(
 
 
 @pytest.fixture
-def remote_fitbit_repository(
-    mocked_async_session: AsyncSession,
-) -> RemoteFitbitRepository:
+def remote_fitbit_repository() -> RemoteFitbitRepository:
     return WebApiFitbitRepository()
 
 
