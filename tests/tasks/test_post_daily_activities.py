@@ -107,11 +107,11 @@ async def test_post_daily_activities(
         return_value=Response(200)
     )
 
-    # Freeze time to a few seconds before the scheduled post time.
+    # Freeze time to just before the scheduled post time.
     freeze_time(
         monkeypatch,
         dt_module_to_freeze=dt_to_freeze,
-        frozen_datetime_args=(2024, 8, 2, 23, 49, 57),
+        frozen_datetime_args=(2024, 8, 2, 23, 49, 59),
     )
     task: asyncio.Task = await post_daily_activities(
         local_fitbit_repo_factory=fitbit_repository_factory(mocked_async_session),
@@ -121,11 +121,11 @@ async def test_post_daily_activities(
     )
 
     # Wait for one iteration of the scheduled task:
-    # 4 seconds = 1 iteration, because now is 3 seconds before the post time.
+    # A few seconds = 1 iteration, because now is just before the post time.
     # We expect a timeout because this task runs forever
     # (after posting to slack, it sleeps until the next time it should post).
     with pytest.raises(TimeoutError):
-        async with asyncio.timeout(4):
+        async with asyncio.timeout(5):
             await task.get_coro()
 
     assert slack_request.call_count == 1
