@@ -10,4 +10,5 @@ async def post_message(message: str):
             json={
                 "text": message,
             },
+            timeout=30.0,
         )
