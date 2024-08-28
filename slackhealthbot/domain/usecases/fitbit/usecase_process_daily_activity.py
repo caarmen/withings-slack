@@ -19,6 +19,7 @@ activity_names = {
     55001: "Spinning",
     90013: "Walking",
     90019: "Treadmill",
+    90001: "Bike",
 }
 
 
