@@ -53,7 +53,7 @@ async def test_process_daily_activities(
         total_minutes=17,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=old_date,
     )
     fitbit_activity_factory.create(
@@ -65,7 +65,7 @@ async def test_process_daily_activities(
         cardio_minutes=12,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=old_date,
     )
 
@@ -83,7 +83,7 @@ async def test_process_daily_activities(
         cardio_minutes=8,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=recent_date,
     )
     fitbit_activity_factory.create(
@@ -95,7 +95,7 @@ async def test_process_daily_activities(
         cardio_minutes=1,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=recent_date,
     )
 
@@ -113,7 +113,7 @@ async def test_process_daily_activities(
         cardio_minutes=2,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=today,
     )
     fitbit_activity_factory.create(
@@ -125,7 +125,7 @@ async def test_process_daily_activities(
         cardio_minutes=10,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=today,
     )
 

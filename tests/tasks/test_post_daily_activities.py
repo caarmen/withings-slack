@@ -56,7 +56,7 @@ async def test_post_daily_activities(
         total_minutes=120,
         fat_burn_minutes=60,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=old_date,
     )
 
@@ -70,7 +70,7 @@ async def test_post_daily_activities(
         total_minutes=115,
         fat_burn_minutes=45,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=recent_date,
     )
 
@@ -84,7 +84,7 @@ async def test_post_daily_activities(
         total_minutes=110,
         fat_burn_minutes=40,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=two_days_ago,
     )
 
@@ -98,7 +98,7 @@ async def test_post_daily_activities(
         total_minutes=116,
         fat_burn_minutes=41,
         peak_minutes=1,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=today,
     )
 

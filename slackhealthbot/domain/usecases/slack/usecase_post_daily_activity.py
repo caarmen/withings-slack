@@ -85,19 +85,19 @@ def create_message(
             and history.previous_daily_activity_stats.sum_peak_minutes
             else ""
         )
-        out_of_range_minutes_icon = (
+        out_of_zone_minutes_icon = (
             get_activity_minutes_change_icon(
-                history.new_daily_activity_stats.sum_out_of_range_minutes
-                - history.previous_daily_activity_stats.sum_out_of_range_minutes,
+                history.new_daily_activity_stats.sum_out_of_zone_minutes
+                - history.previous_daily_activity_stats.sum_out_of_zone_minutes,
             )
-            if history.new_daily_activity_stats.sum_out_of_range_minutes
-            and history.previous_daily_activity_stats.sum_out_of_range_minutes
+            if history.new_daily_activity_stats.sum_out_of_zone_minutes
+            and history.previous_daily_activity_stats.sum_out_of_zone_minutes
             else ""
         )
     else:
         calories_icon = distance_km_icon = total_minutes_icon = (
             fat_burn_minutes_icon
-        ) = cardio_minutes_icon = peak_minutes_icon = out_of_range_minutes_icon = ""
+        ) = cardio_minutes_icon = peak_minutes_icon = out_of_zone_minutes_icon = ""
 
     calories_record_text = get_ranking_text(
         history.new_daily_activity_stats.sum_calories,
@@ -141,10 +141,10 @@ def create_message(
         record_history_days=record_history_days,
     )
 
-    out_of_range_minutes_record_text = get_ranking_text(
-        history.new_daily_activity_stats.sum_out_of_range_minutes,
-        history.all_time_top_daily_activity_stats.top_sum_out_of_range_minutes,
-        history.recent_top_daily_activity_stats.top_sum_out_of_range_minutes,
+    out_of_zone_minutes_record_text = get_ranking_text(
+        history.new_daily_activity_stats.sum_out_of_zone_minutes,
+        history.all_time_top_daily_activity_stats.top_sum_out_of_zone_minutes,
+        history.recent_top_daily_activity_stats.top_sum_out_of_zone_minutes,
         record_history_days=record_history_days,
     )
 
@@ -166,8 +166,8 @@ New daily {activity_name} activity from <@{slack_alias}>:
     if history.new_daily_activity_stats.sum_peak_minutes:
         message += f"""    • Total peak minutes: {history.new_daily_activity_stats.sum_peak_minutes} {peak_minutes_icon} {peak_minutes_record_text}
 """
-    if history.new_daily_activity_stats.sum_out_of_range_minutes:
-        message += f"""    • Total out of range minutes: {history.new_daily_activity_stats.sum_out_of_range_minutes} {out_of_range_minutes_icon} {out_of_range_minutes_record_text}
+    if history.new_daily_activity_stats.sum_out_of_zone_minutes:
+        message += f"""    • Total out of zone minutes: {history.new_daily_activity_stats.sum_out_of_zone_minutes} {out_of_zone_minutes_icon} {out_of_zone_minutes_record_text}
 """
 
     return message

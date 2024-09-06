@@ -243,7 +243,7 @@ async def test_daily_activities_one_entry(
         fat_burn_minutes=19,
         cardio_minutes=18,
         peak_minutes=17,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=datetime.datetime(2024, 1, 2, 23, 44, 55),
     )
     fitbit_activity_factory.create(
@@ -255,7 +255,7 @@ async def test_daily_activities_one_entry(
         fat_burn_minutes=18,
         cardio_minutes=17,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=datetime.datetime(2024, 1, 2, 23, 44, 55),
     )
 
@@ -277,7 +277,7 @@ async def test_daily_activities_one_entry(
             sum_fat_burn_minutes=37,
             sum_cardio_minutes=35,
             sum_peak_minutes=17,
-            sum_out_of_range_minutes=None,
+            sum_out_of_zone_minutes=None,
         )
     ]
     assert actual_daily_activity_stats == expected_daily_activity_stats
@@ -432,7 +432,7 @@ async def test_top_daily_activities(
         total_minutes=17,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=old_date,
     )
     fitbit_activity_factory.create(
@@ -444,7 +444,7 @@ async def test_top_daily_activities(
         cardio_minutes=12,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=old_date,
     )
 
@@ -462,7 +462,7 @@ async def test_top_daily_activities(
         cardio_minutes=8,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=recent_date,
     )
     fitbit_activity_factory.create(
@@ -474,7 +474,7 @@ async def test_top_daily_activities(
         cardio_minutes=1,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=recent_date,
     )
 
@@ -492,7 +492,7 @@ async def test_top_daily_activities(
         cardio_minutes=2,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=today,
     )
     fitbit_activity_factory.create(
@@ -504,7 +504,7 @@ async def test_top_daily_activities(
         cardio_minutes=10,
         fat_burn_minutes=None,
         peak_minutes=None,
-        out_of_range_minutes=None,
+        out_of_zone_minutes=None,
         updated_at=today,
     )
 
@@ -523,7 +523,7 @@ async def test_top_daily_activities(
         top_sum_cardio_minutes=25,
         top_sum_fat_burn_minutes=None,
         top_sum_peak_minutes=None,
-        top_sum_out_of_range_minutes=None,
+        top_sum_out_of_zone_minutes=None,
     )
     assert actual_top_daily_activities_all_time == expected_top_activities_all_time
 
@@ -543,7 +543,7 @@ async def test_top_daily_activities(
         top_sum_cardio_minutes=12,
         top_sum_fat_burn_minutes=None,
         top_sum_peak_minutes=None,
-        top_sum_out_of_range_minutes=None,
+        top_sum_out_of_zone_minutes=None,
     )
     assert (
         actual_top_daily_activities_recent_times

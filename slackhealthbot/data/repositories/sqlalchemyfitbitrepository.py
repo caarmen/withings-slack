@@ -352,7 +352,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
             sum_fat_burn_minutes=daily_activity.sum_fat_burn_minutes,
             sum_cardio_minutes=daily_activity.sum_cardio_minutes,
             sum_peak_minutes=daily_activity.sum_peak_minutes,
-            sum_out_of_range_minutes=daily_activity.sum_out_of_range_minutes,
+            sum_out_of_zone_minutes=daily_activity.sum_out_of_zone_minutes,
         )
 
     async def get_daily_activities_by_type(
@@ -384,7 +384,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
                 sum_fat_burn_minutes=daily_activity.sum_fat_burn_minutes,
                 sum_cardio_minutes=daily_activity.sum_cardio_minutes,
                 sum_peak_minutes=daily_activity.sum_peak_minutes,
-                sum_out_of_range_minutes=daily_activity.sum_out_of_range_minutes,
+                sum_out_of_zone_minutes=daily_activity.sum_out_of_zone_minutes,
             )
             for daily_activity in daily_activities
         ]
@@ -403,7 +403,7 @@ class SQLAlchemyFitbitRepository(LocalFitbitRepository):
             models.FitbitDailyActivity.sum_fat_burn_minutes,
             models.FitbitDailyActivity.sum_cardio_minutes,
             models.FitbitDailyActivity.sum_peak_minutes,
-            models.FitbitDailyActivity.sum_out_of_range_minutes,
+            models.FitbitDailyActivity.sum_out_of_zone_minutes,
         ]
         conditions = [
             models.FitbitUser.oauth_userid == fitbit_userid,

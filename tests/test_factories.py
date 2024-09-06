@@ -140,7 +140,7 @@ async def test_fitbit_activity_factory(
             minutes=fitbit_activity.fat_burn_minutes,
         ),
         ActivityZoneMinutes(
-            zone=ActivityZone.OUT_OF_RANGE,
-            minutes=fitbit_activity.out_of_range_minutes,
+            zone=ActivityZone.OUT_OF_ZONE,
+            minutes=fitbit_activity.out_of_zone_minutes,
         ),
     ]
