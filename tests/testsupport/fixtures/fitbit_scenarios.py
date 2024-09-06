@@ -547,6 +547,10 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                                 "minutes": 0,
                                 "type": "PEAK",
                             },
+                            {
+                                "minutes": 2,
+                                "type": "COOLDOWN",
+                            },
                         ]
                     },
                     "activityName": "Glandating",
