@@ -69,7 +69,7 @@ class FitbitActivity(TimestampMixin, Base):
     fat_burn_minutes: Mapped[Optional[int]] = mapped_column()
     cardio_minutes: Mapped[Optional[int]] = mapped_column()
     peak_minutes: Mapped[Optional[int]] = mapped_column()
-    out_of_range_minutes: Mapped[Optional[int]] = mapped_column()
+    out_of_zone_minutes: Mapped[Optional[int]] = mapped_column()
     fitbit_user_id: Mapped[int] = mapped_column(
         ForeignKey("fitbit_users.id", ondelete="CASCADE")
     )
@@ -92,4 +92,4 @@ class FitbitDailyActivity(Base):
     sum_fat_burn_minutes: Mapped[Optional[int]] = mapped_column()
     sum_cardio_minutes: Mapped[Optional[int]] = mapped_column()
     sum_peak_minutes: Mapped[Optional[int]] = mapped_column()
-    sum_out_of_range_minutes: Mapped[Optional[int]] = mapped_column()
+    sum_out_of_zone_minutes: Mapped[Optional[int]] = mapped_column()

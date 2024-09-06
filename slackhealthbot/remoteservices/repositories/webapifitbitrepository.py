@@ -105,7 +105,7 @@ def remote_service_activity_to_domain_activity(
         zone_minutes=[
             ActivityZoneMinutes(zone=ActivityZone[x.type.upper()], minutes=x.minutes)
             for x in fitbit_activity.activeZoneMinutes.minutesInHeartRateZones
-            if x.minutes > 0
+            if x.type.upper() in ActivityZone.__members__ and x.minutes > 0
         ],
     )
 

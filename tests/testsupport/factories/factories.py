@@ -33,7 +33,7 @@ class FitbitActivityFactory(SQLAlchemyModelFactory):
     cardio_minutes = Faker("pyint")
     fat_burn_minutes = Faker("pyint")
     peak_minutes = Faker("pyint")
-    out_of_range_minutes = Faker("pyint")
+    out_of_zone_minutes = Faker("pyint")
     fitbit_user_id = Faker("pyint")
 
 

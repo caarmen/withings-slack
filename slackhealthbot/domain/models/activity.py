@@ -6,7 +6,7 @@ class ActivityZone(StrEnum):
     PEAK = auto()
     CARDIO = auto()
     FAT_BURN = auto()
-    OUT_OF_RANGE = auto()
+    OUT_OF_ZONE = auto()
 
 
 @dataclasses.dataclass
@@ -53,7 +53,7 @@ class DailyActivityStats:
     sum_fat_burn_minutes: int | None
     sum_cardio_minutes: int | None
     sum_peak_minutes: int | None
-    sum_out_of_range_minutes: int | None
+    sum_out_of_zone_minutes: int | None
 
 
 @dataclasses.dataclass
@@ -65,7 +65,7 @@ class TopDailyActivityStats:
     top_sum_fat_burn_minutes: int | None
     top_sum_cardio_minutes: int | None
     top_sum_peak_minutes: int | None
-    top_sum_out_of_range_minutes: int | None
+    top_sum_out_of_zone_minutes: int | None
 
 
 @dataclasses.dataclass
