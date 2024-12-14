@@ -1,0 +1,32 @@
+# App config for test scenarios
+
+logging:
+  sql_log_level: "DEBUG"
+
+fitbit:
+  activities:
+    activity_types:
+      - name: Dancing
+        id: 123
+        report_daily: true
+        report_realtime: true
+
+      - name: Treadmill
+        id: 90019
+        report_daily: true
+        report_realtime: false
+
+      - name: Spinning
+        id: 55001
+        report_daily: false
+        report_realtime: true
+
+      - name: Walking
+        id: 55001
+        report_daily: false
+        report_realtime: true
+
+      - name: Walk
+        id: 90013
+        report_daily: false
+        report_realtime: true

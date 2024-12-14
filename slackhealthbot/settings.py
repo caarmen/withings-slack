@@ -1,5 +1,6 @@
 import dataclasses
 import datetime as dt
+import os
 from pathlib import Path
 
 import yaml
@@ -93,7 +94,10 @@ class AppSettings(BaseSettings):
     @classmethod
     def _load_merged_config(cls) -> dict:
         default_config = cls._load_yaml_file("config/app-default.yaml", required=True)
-        custom_config = cls._load_yaml_file("config/app-custom.yaml", required=False)
+        custom_config = cls._load_yaml_file(
+            os.environ.get("SHB_CUSTOM_CONFIG_PATH", "config/app-custom.yaml"),
+            required=False,
+        )
         return deep_update(default_config, custom_config)
 
     @classmethod

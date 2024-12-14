@@ -12,6 +12,9 @@ def client(mocked_async_session) -> TestClient:
     return TestClient(app)
 
 
-@pytest.fixture
-def settings() -> Settings:
+@pytest.fixture(autouse=True)
+def settings(monkeypatch: pytest.MonkeyPatch) -> Settings:
+    monkeypatch.setenv(
+        "SHB_CUSTOM_CONFIG_PATH", "tests/testsupport/config/app-test.yaml"
+    )
     return app.container.settings.provided()
