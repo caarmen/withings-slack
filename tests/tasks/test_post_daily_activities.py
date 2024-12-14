@@ -19,7 +19,7 @@ from tests.testsupport.factories.factories import (
     FitbitUserFactory,
     UserFactory,
 )
-from tests.testsupport.fixtures.builtins import freeze_time
+from tests.testsupport.mock.builtins import freeze_time
 
 
 @pytest.mark.asyncio
