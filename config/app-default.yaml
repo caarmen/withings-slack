@@ -19,6 +19,9 @@ fitbit:
   activities:
     history_days: 180 # how far to look back to report new records of best times/durations/calories/etc.
     daily_report_time: "23:50" # Time of day (HH:mm)to post daily reports to slack.
+    default_report:
+      daily: false
+      realtime: true
 
     activity_types:
       # Configuration specific to activity types.
@@ -38,15 +41,18 @@ fitbit:
       # report_realtime: whether a report should be posted to slack for this activity type as soon as we receive it from fitbit
       - name: Treadmill
         id: 90019
-        report_daily: true
-        report_realtime: false
+        report:
+          daily: true
+          realtime: false
 
       - name: Spinning
         id: 55001
-        report_daily: false
-        report_realtime: true
+        report:
+          daily: false
+          realtime: true
 
       - name: Walk
         id: 90013
-        report_daily: false
-        report_realtime: true
+        report:
+          daily: false
+          realtime: true

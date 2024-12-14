@@ -37,17 +37,25 @@ class Poll(BaseModel):
     interval_seconds: int = 3600
 
 
+class Report(BaseModel):
+    daily: bool
+    realtime: bool
+
+
 class ActivityType(BaseModel):
     name: str
     id: int
-    report_daily: bool = False
-    report_realtime: bool = True
+    report: Report | None = None
 
 
 class Activities(BaseModel):
     daily_report_time: dt.time = dt.time(hour=23, second=50)
     history_days: int = 180
     activity_types: list[ActivityType]
+    default_report: Report = Report(
+        daily=False,
+        realtime=True,
+    )
 
 
 class Fitbit(BaseModel):
@@ -120,12 +128,24 @@ class AppSettings(BaseSettings):
     @property
     def fitbit_realtime_activity_type_ids(self) -> list[int]:
         return [
-            x.id for x in self.fitbit.activities.activity_types if x.report_realtime
+            x.id
+            for x in self.fitbit.activities.activity_types
+            if (
+                (x.report and x.report.realtime)
+                or (x.report is None and self.fitbit.activities.default_report.realtime)
+            )
         ]
 
     @property
     def fitbit_daily_activity_type_ids(self) -> list[int]:
-        return [x.id for x in self.fitbit.activities.activity_types if x.report_daily]
+        return [
+            x.id
+            for x in self.fitbit.activities.activity_types
+            if (
+                (x.report and x.report.daily)
+                or (x.report is None and self.fitbit.activities.default_report.daily)
+            )
+        ]
 
     @property
     def fitbit_activity_type_ids(self) -> list[int]:
