@@ -1,5 +1,9 @@
 import datetime
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
     UserIdentity,
@@ -17,15 +21,17 @@ from slackhealthbot.domain.remoterepository.remoteslackrepository import (
 )
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
 from slackhealthbot.domain.usecases.slack import usecase_post_activity
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 
 
-async def do(
+@inject
+async def do(  # noqa: PLR0913 deal with this later
     local_fitbit_repo: LocalFitbitRepository,
     remote_fitbit_repo: RemoteFitbitRepository,
     slack_repo: RemoteSlackRepository,
     fitbit_userid: str,
     when: datetime.datetime,
+    settings: Settings = Depends(Provide[Container.settings]),
 ) -> ActivityData | None:
     user_identity: UserIdentity = (
         await local_fitbit_repo.get_user_identity_by_fitbit_userid(
@@ -48,6 +54,7 @@ async def do(
         fitbit_userid=fitbit_userid,
         type_id=new_activity_data.type_id,
         log_id=new_activity_data.log_id,
+        settings=settings,
     ):
         return None
 
@@ -112,6 +119,7 @@ async def _is_new_valid_activity(
     fitbit_userid: str,
     type_id: int,
     log_id: int,
+    settings: Settings,
 ) -> bool:
     return (
         type_id in settings.app_settings.fitbit_activity_type_ids

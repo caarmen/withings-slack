@@ -156,7 +156,9 @@ async def test_activity_notification(  # noqa PLR0913
             settings_attribute_tokens = key.split(".")
             settings_attribute_to_patch = settings_attribute_tokens.pop()
             settings_obj_path_to_patch = ".".join(settings_attribute_tokens)
-            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(settings)
+            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(
+                client.app.container.settings.provided()
+            )
             monkeypatch.setattr(
                 settings_obj_to_patch, settings_attribute_to_patch, value
             )

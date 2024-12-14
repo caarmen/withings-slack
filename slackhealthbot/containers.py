@@ -9,6 +9,7 @@ class Container(containers.DeclarativeContainer):
     wiring_config = containers.WiringConfiguration(
         modules=[
             "slackhealthbot.domain.usecases.fitbit.usecase_process_daily_activity",
+            "slackhealthbot.domain.usecases.fitbit.usecase_process_new_activity",
         ],
     )
 
