@@ -23,7 +23,7 @@ from tests.testsupport.factories.factories import (
     FitbitUserFactory,
     UserFactory,
 )
-from tests.testsupport.fixtures.fitbit_scenarios import activity_scenarios
+from tests.testsupport.testdata.fitbit_scenarios import activity_scenarios
 
 
 @pytest.mark.asyncio

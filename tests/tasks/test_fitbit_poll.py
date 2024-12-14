@@ -36,7 +36,7 @@ from tests.testsupport.factories.factories import (
     FitbitUserFactory,
     UserFactory,
 )
-from tests.testsupport.fixtures.fitbit_scenarios import (
+from tests.testsupport.testdata.fitbit_scenarios import (
     FitbitActivityScenario,
     FitbitSleepScenario,
     activity_scenarios,

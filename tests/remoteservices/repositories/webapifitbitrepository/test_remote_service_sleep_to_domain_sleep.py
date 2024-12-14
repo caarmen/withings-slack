@@ -51,7 +51,7 @@ def test_parse_sleep(input_filename: str, expected_sleep_data: SleepData):
     input_file = (
         Path(os.path.abspath(__file__)).parent.parent.parent.parent
         / "testsupport"
-        / "fixtures"
+        / "testdata"
         / input_filename
     )
     with open(input_file) as sleep_input:
