@@ -14,7 +14,7 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
 )
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -34,12 +34,13 @@ from tests.testsupport.testdata.fitbit_scenarios import (
     argvalues=sleep_scenarios.values(),
 )
 @pytest.mark.asyncio
-async def test_sleep_notification(
+async def test_sleep_notification(  # noqa: PLR0913
     local_fitbit_repository: LocalFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitSleepScenario,
+    settings: Settings,
 ):
     """
     Given a user with a given previous sleep logged
@@ -115,6 +116,7 @@ async def test_activity_notification(  # noqa PLR0913
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
+    settings: Settings,
 ):
     """
     Given a user with a given previous activity logged
@@ -156,9 +158,7 @@ async def test_activity_notification(  # noqa PLR0913
             settings_attribute_tokens = key.split(".")
             settings_attribute_to_patch = settings_attribute_tokens.pop()
             settings_obj_path_to_patch = ".".join(settings_attribute_tokens)
-            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(
-                client.app.container.settings.provided()
-            )
+            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(settings)
             monkeypatch.setattr(
                 settings_obj_to_patch, settings_attribute_to_patch, value
             )
@@ -211,6 +211,7 @@ async def test_duplicate_activity_notification(
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user
@@ -304,6 +305,7 @@ async def test_duplicate_sleep_notification(
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user

@@ -21,7 +21,7 @@ from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
 from slackhealthbot.routers.dependencies import fitbit_repository_factory
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
@@ -32,12 +32,13 @@ from tests.testsupport.testdata.fitbit_scenarios import activity_scenarios
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_ok(
+async def test_refresh_token_ok(  # noqa: PLR0913
     mocked_async_session: AsyncSession,
     remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is expired
@@ -142,12 +143,13 @@ async def test_refresh_token_ok(
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_fail(
+async def test_refresh_token_fail(  # noqa: PLR0913
     local_fitbit_repository: LocalFitbitRepository,
     remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is expired and invalid
@@ -230,12 +232,13 @@ class LoginScenario(enum.Enum):
 
 
 @pytest.mark.asyncio
-async def test_logged_out(
+async def test_logged_out(  # noqa: PLR0913
     local_fitbit_repository: LocalFitbitRepository,
     remote_fitbit_repository: RemoteFitbitRepository,
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is invalid
