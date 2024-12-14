@@ -1,18 +1,24 @@
 import logging
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.settings import fitbit_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 
+@inject
 async def subscribe(
     oauth_token: OAuthFields,
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
     for collectionPath in ["sleep", "activities"]:
         response = await requests.post(
-            provider=settings.name,
+            provider=settings.fitbit_oauth_settings.name,
             token=oauth_token,
-            url=f"{settings.base_url}1/user/-/{collectionPath}/apiSubscriptions/{oauth_token.oauth_userid}-{collectionPath}.json",
+            url=f"{settings.fitbit_oauth_settings.base_url}1/user/-/{collectionPath}/apiSubscriptions/{oauth_token.oauth_userid}-{collectionPath}.json",
         )
         logging.info(
             f"Fitbit {collectionPath} subscription response: {response.json()}"

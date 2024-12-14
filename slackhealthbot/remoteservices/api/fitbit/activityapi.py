@@ -3,11 +3,14 @@ import json
 import logging
 from typing import Self
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
 from pydantic import BaseModel
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.settings import fitbit_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 
 class FitbitMinutesInHeartRateZone(BaseModel):
@@ -40,8 +43,11 @@ class FitbitActivities(BaseModel):
         return cls(**json.loads(text))
 
 
+@inject
 async def get_activity(
-    oauth_token: OAuthFields, when: datetime.datetime
+    oauth_token: OAuthFields,
+    when: datetime.datetime,
+    settings: Settings = Depends(Provide[Container.settings]),
 ) -> FitbitActivities | None:
     """
     :raises:
@@ -50,9 +56,9 @@ async def get_activity(
     logging.info("get_activity for user")
     when_str = when.strftime("%Y-%m-%dT%H:%M:%S")
     response = await requests.get(
-        provider=settings.name,
+        provider=settings.fitbit_oauth_settings.name,
         token=oauth_token,
-        url=f"{settings.base_url}1/user/-/activities/list.json",
+        url=f"{settings.fitbit_oauth_settings.base_url}1/user/-/activities/list.json",
         params={
             "beforeDate": when_str,
             "sort": "desc",

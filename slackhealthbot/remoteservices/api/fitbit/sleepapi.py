@@ -3,11 +3,14 @@ import json
 import logging
 from typing import Annotated, Literal, Self, Union
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
 from pydantic import BaseModel, Field
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.settings import fitbit_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 
 class FitbitSleepItemSummaryItem(BaseModel):
@@ -62,9 +65,11 @@ class FitbitSleep(BaseModel):
         return cls(**json.loads(text))
 
 
+@inject
 async def get_sleep(
     oauth_token: OAuthFields,
     when: datetime.date,
+    settings: Settings = Depends(Provide[Container.settings]),
 ) -> FitbitSleep | None:
     """
     :raises:
@@ -73,9 +78,9 @@ async def get_sleep(
     logging.info("get_sleep for user")
     when_str = when.strftime("%Y-%m-%d")
     response = await requests.get(
-        provider=settings.name,
+        provider=settings.fitbit_oauth_settings.name,
         token=oauth_token,
-        url=f"{settings.base_url}1.2/user/-/sleep/date/{when_str}.json",
+        url=f"{settings.fitbit_oauth_settings.base_url}1.2/user/-/sleep/date/{when_str}.json",
     )
     try:
         return FitbitSleep.parse(response.content)

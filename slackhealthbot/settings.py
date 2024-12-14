@@ -158,10 +158,3 @@ class Settings:
             oauth_scopes=self.app_settings.fitbit.oauth_scopes,
             subscriber_verification_code=self.secret_settings.fitbit_client_subscriber_verification_code,
         )
-
-
-settings = Settings(
-    app_settings=AppSettings(),
-    secret_settings=SecretSettings(),
-)
-fitbit_oauth_settings = settings.fitbit_oauth_settings
