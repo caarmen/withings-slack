@@ -164,5 +164,4 @@ settings = Settings(
     app_settings=AppSettings(),
     secret_settings=SecretSettings(),
 )
-withings_oauth_settings = settings.withings_oauth_settings
 fitbit_oauth_settings = settings.fitbit_oauth_settings
