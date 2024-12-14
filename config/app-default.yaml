@@ -22,6 +22,15 @@ fitbit:
     default_report:
       daily: false
       realtime: true
+      fields:
+        - activity_count
+        - distance
+        - calories
+        - duration
+        - fat_burn_minutes
+        - cardio_minutes
+        - peak_minutes
+        - out_of_zone_minutes
 
     activity_types:
       # Configuration specific to activity types.
@@ -44,6 +53,8 @@ fitbit:
         report:
           daily: true
           realtime: false
+          fields:
+             - distance
 
       - name: Spinning
         id: 55001

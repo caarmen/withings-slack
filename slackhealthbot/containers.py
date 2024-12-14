@@ -11,6 +11,7 @@ class Container(containers.DeclarativeContainer):
             "slackhealthbot.domain.usecases.fitbit.usecase_process_daily_activity",
             "slackhealthbot.domain.usecases.fitbit.usecase_process_new_activity",
             "slackhealthbot.domain.usecases.slack.usecase_post_user_logged_out",
+            "slackhealthbot.domain.usecases.slack.usecase_post_activity",
             "slackhealthbot.oauth.fitbitconfig",
             "slackhealthbot.oauth.withingsconfig",
             "slackhealthbot.remoteservices.api.fitbit.activityapi",

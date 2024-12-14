@@ -1,8 +1,10 @@
 import dataclasses
 import datetime as dt
+import enum
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import yaml
 from pydantic import AnyHttpUrl, BaseModel, HttpUrl
@@ -37,9 +39,21 @@ class Poll(BaseModel):
     interval_seconds: int = 3600
 
 
+class ReportField(enum.StrEnum):
+    activity_count = enum.auto()
+    distance = enum.auto()
+    calories = enum.auto()
+    duration = enum.auto()
+    fat_burn_minutes = enum.auto()
+    cardio_minutes = enum.auto()
+    peak_minutes = enum.auto()
+    out_of_zone_minutes = enum.auto()
+
+
 class Report(BaseModel):
     daily: bool
     realtime: bool
+    fields: Optional[list[ReportField]] = None
 
 
 class ActivityType(BaseModel):
@@ -55,6 +69,7 @@ class Activities(BaseModel):
     default_report: Report = Report(
         daily=False,
         realtime=True,
+        fields=[x for x in ReportField],
     )
 
 
