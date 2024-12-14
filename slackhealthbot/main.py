@@ -29,13 +29,14 @@ from slackhealthbot.routers.dependencies import (
 )
 from slackhealthbot.routers.fitbit import router as fitbit_router
 from slackhealthbot.routers.withings import router as withings_router
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from slackhealthbot.tasks import fitbitpoll
 from slackhealthbot.tasks.post_daily_activities_task import post_daily_activities
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
+    settings: Settings = _app.container.settings.provided()
     logger.configure_logging(settings.app_settings.logging.sql_log_level)
     oauth_withings.configure(
         WithingsUpdateTokenUseCase(
