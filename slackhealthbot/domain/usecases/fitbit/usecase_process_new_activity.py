@@ -67,7 +67,10 @@ async def do(
         activity=new_activity_data,
     )
 
-    if new_activity_data.type_id not in settings.fitbit_realtime_activity_type_ids:
+    if (
+        new_activity_data.type_id
+        not in settings.app_settings.fitbit_realtime_activity_type_ids
+    ):
         # This activity isn't to be posted in realtime to slack.
         # We're done for now.
         return
@@ -83,7 +86,9 @@ async def do(
             fitbit_userid=fitbit_userid,
             type_id=new_activity_data.type_id,
             since=datetime.datetime.now(datetime.timezone.utc)
-            - datetime.timedelta(days=settings.fitbit_activity_record_history_days),
+            - datetime.timedelta(
+                days=settings.app_settings.fitbit.activities.history_days
+            ),
         )
     )
     await usecase_post_activity.do(
@@ -96,7 +101,7 @@ async def do(
             all_time_top_activity_data=all_time_top_activity_stats,
             recent_top_activity_data=recent_top_activity_stats,
         ),
-        record_history_days=settings.fitbit_activity_record_history_days,
+        record_history_days=settings.app_settings.fitbit.activities.history_days,
     )
 
     return new_activity_data
@@ -109,7 +114,7 @@ async def _is_new_valid_activity(
     log_id: int,
 ) -> bool:
     return (
-        type_id in settings.fitbit_activity_type_ids
+        type_id in settings.app_settings.fitbit_activity_type_ids
         and not await repo.get_activity_by_user_and_log_id(
             fitbit_userid=fitbit_userid,
             log_id=log_id,
