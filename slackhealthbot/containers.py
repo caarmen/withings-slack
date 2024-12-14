@@ -13,6 +13,7 @@ class Container(containers.DeclarativeContainer):
             "slackhealthbot.domain.usecases.slack.usecase_post_user_logged_out",
             "slackhealthbot.remoteservices.api.slack.messageapi",
             "slackhealthbot.tasks.fitbitpoll",
+            "slackhealthbot.data.database.connection",
         ],
     )
 

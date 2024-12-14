@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 from slackhealthbot.data.database import models as db_models
-from slackhealthbot.data.database.connection import connection_url
+from slackhealthbot.data.database.connection import get_connection_url
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -45,7 +45,7 @@ async def run_async_migrations():
     """
 
     config_dict = config.get_section(config.config_ini_section, {})
-    db_connection_dict = {"sqlalchemy.url": connection_url}
+    db_connection_dict = {"sqlalchemy.url": get_connection_url()}
 
     connectable = async_engine_from_config(
         {**config_dict, **db_connection_dict},
@@ -71,7 +71,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = connection_url
+    url = get_connection_url()
 
     context.configure(
         url=url,
