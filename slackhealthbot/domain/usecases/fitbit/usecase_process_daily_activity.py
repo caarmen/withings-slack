@@ -1,5 +1,9 @@
 import datetime as dt
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
     UserIdentity,
@@ -13,7 +17,7 @@ from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
 )
 from slackhealthbot.domain.usecases.slack import usecase_post_daily_activity
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 
 activity_names = {
     55001: "Spinning",
@@ -23,10 +27,12 @@ activity_names = {
 }
 
 
+@inject
 async def do(
     local_fitbit_repo: LocalFitbitRepository,
     slack_repo: RemoteSlackRepository,
     daily_activity: DailyActivityStats,
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
     now = dt.datetime.now(dt.timezone.utc)
     fitbit_userid = daily_activity.fitbit_userid

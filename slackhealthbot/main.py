@@ -10,6 +10,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from slackhealthbot import logger
+from slackhealthbot.containers import Container
 from slackhealthbot.domain.usecases.fitbit.usecase_update_user_oauth import (
     UpdateTokenUseCase as FitbitUpdateTokenUseCase,
 )
@@ -84,6 +85,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+container = Container()
+app.container = container
 app.include_router(withings_router)
 app.include_router(fitbit_router)
 
