@@ -72,6 +72,9 @@ class Activities(BaseModel):
         fields=[x for x in ReportField],
     )
 
+    def get_activity_type(self, id: int) -> ActivityType | None:
+        return next((x for x in self.activity_types if x.id == id), None)
+
 
 class Fitbit(BaseModel):
     poll: Poll
@@ -141,17 +144,6 @@ class AppSettings(BaseSettings):
         return (env_settings, yaml_settings_source)
 
     @property
-    def fitbit_realtime_activity_type_ids(self) -> list[int]:
-        return [
-            x.id
-            for x in self.fitbit.activities.activity_types
-            if (
-                (x.report and x.report.realtime)
-                or (x.report is None and self.fitbit.activities.default_report.realtime)
-            )
-        ]
-
-    @property
     def fitbit_daily_activity_type_ids(self) -> list[int]:
         return [
             x.id
@@ -161,12 +153,6 @@ class AppSettings(BaseSettings):
                 or (x.report is None and self.fitbit.activities.default_report.daily)
             )
         ]
-
-    @property
-    def fitbit_activity_type_ids(self) -> list[int]:
-        return (
-            self.fitbit_realtime_activity_type_ids + self.fitbit_daily_activity_type_ids
-        )
 
 
 class SecretSettings(BaseSettings):
