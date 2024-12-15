@@ -624,6 +624,62 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
             ],
         },
     ),
+    "Activity type without report block": FitbitActivityScenario(
+        input_initial_activity_data={
+            "log_id": 1234,
+            "total_minutes": 30,
+            "calories": 10,
+            "fat_burn_minutes": 7,
+            "cardio_minutes": 13,
+            "created_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+            "updated_at": datetime.datetime(1999, 12, 31, 0, 0, 0),
+        },
+        input_mock_fitbit_response={
+            "activities": [
+                {
+                    "activeZoneMinutes": {
+                        "minutesInHeartRateZones": [
+                            {
+                                "minutes": 8,
+                                "type": "FAT_BURN",
+                            },
+                            {
+                                "minutes": 9,
+                                "type": "CARDIO",
+                            },
+                            {
+                                "minutes": 0,
+                                "type": "OUT_OF_ZONE",
+                            },
+                            {
+                                "minutes": 0,
+                                "type": "PEAK",
+                            },
+                        ]
+                    },
+                    "activityName": "Spinning",
+                    "activityTypeId": 55001,
+                    "logId": 1235,
+                    "calories": 76,
+                    "duration": 665000,
+                },
+            ]
+        },
+        expected_new_last_activity_log_id=1235,
+        expected_new_activity_created=True,
+        expected_message_pattern=(
+            "New Spinning activity.*⬇️ New record.*⬆️ New all-time record.*Fat burn.*8.*➡.*New all-time "
+            "record.*Cardio.*9.*↘️ New record"
+        ),
+        settings_override={
+            "app_settings.fitbit.activities.activity_types": [
+                ActivityType(
+                    name="Spinning",
+                    id=55001,
+                )
+            ],
+        },
+    ),
     "Invalid json response": FitbitActivityScenario(
         input_initial_activity_data={
             "log_id": 1234,
