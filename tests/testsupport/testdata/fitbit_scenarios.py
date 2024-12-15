@@ -3,7 +3,7 @@ import datetime
 from typing import Any
 
 from slackhealthbot.domain.models.sleep import SleepData
-from slackhealthbot.settings import ActivityType
+from slackhealthbot.settings import ActivityType, Report
 
 
 @dataclasses.dataclass
@@ -616,8 +616,10 @@ activity_scenarios: dict[str, FitbitActivityScenario] = {
                 ActivityType(
                     name="Spinning",
                     id=55001,
-                    report_realtime=False,
-                    report_daily=True,
+                    report=Report(
+                        realtime=False,
+                        daily=True,
+                    ),
                 )
             ],
         },

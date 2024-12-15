@@ -1,8 +1,11 @@
 import dataclasses
 import datetime as dt
+import enum
 import os
+from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import yaml
 from pydantic import AnyHttpUrl, BaseModel, HttpUrl
@@ -37,17 +40,78 @@ class Poll(BaseModel):
     interval_seconds: int = 3600
 
 
+class ReportField(enum.StrEnum):
+    activity_count = enum.auto()
+    distance = enum.auto()
+    calories = enum.auto()
+    duration = enum.auto()
+    fat_burn_minutes = enum.auto()
+    cardio_minutes = enum.auto()
+    peak_minutes = enum.auto()
+    out_of_zone_minutes = enum.auto()
+
+
+class Report(BaseModel):
+    daily: bool
+    realtime: bool
+    fields: Optional[list[ReportField]] = None
+
+
 class ActivityType(BaseModel):
     name: str
     id: int
-    report_daily: bool = False
-    report_realtime: bool = True
+    report: Report | None = None
 
 
 class Activities(BaseModel):
     daily_report_time: dt.time = dt.time(hour=23, second=50)
     history_days: int = 180
     activity_types: list[ActivityType]
+    default_report: Report = Report(
+        daily=False,
+        realtime=True,
+        fields=[x for x in ReportField],
+    )
+
+    def get_activity_type(self, id: int) -> ActivityType | None:
+        return next((x for x in self.activity_types if x.id == id), None)
+
+    def get_report(self, activity_type_id: int) -> Report | None:
+        """
+        Get the report configuration for the given activity type.
+        If the activity type doesn't have an explicit report configuration,
+        fallback to the default report configuration.
+
+        If the activity type report configuration is missing some attributes,
+        fill them in with the default report configuration. This applies to the
+        following attributes:
+        - fields
+
+        :return None: If the activity type id is unknown
+        """
+        activity_type = self.get_activity_type(id=activity_type_id)
+        if not activity_type:
+            return None
+
+        if activity_type.report is None:
+            return self.default_report
+
+        report = deepcopy(activity_type.report)
+        if not report.fields:
+            report.fields = self.default_report.fields
+
+        return report
+
+    @property
+    def daily_activity_type_ids(self) -> list[int]:
+        return [
+            x.id
+            for x in self.activity_types
+            if (
+                (x.report and x.report.daily)
+                or (x.report is None and self.default_report.daily)
+            )
+        ]
 
 
 class Fitbit(BaseModel):
@@ -116,22 +180,6 @@ class AppSettings(BaseSettings):
                 yaml_file=file.name,
             )
         return (env_settings, yaml_settings_source)
-
-    @property
-    def fitbit_realtime_activity_type_ids(self) -> list[int]:
-        return [
-            x.id for x in self.fitbit.activities.activity_types if x.report_realtime
-        ]
-
-    @property
-    def fitbit_daily_activity_type_ids(self) -> list[int]:
-        return [x.id for x in self.fitbit.activities.activity_types if x.report_daily]
-
-    @property
-    def fitbit_activity_type_ids(self) -> list[int]:
-        return (
-            self.fitbit_realtime_activity_type_ids + self.fitbit_daily_activity_type_ids
-        )
 
 
 class SecretSettings(BaseSettings):

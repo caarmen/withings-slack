@@ -59,10 +59,13 @@ async def lifespan(_app: FastAPI):
             initial_delay_s=10,
         )
     daily_activity_task: Task | None = None
-    if settings.app_settings.fitbit_daily_activity_type_ids:
+    daily_activity_type_ids = (
+        settings.app_settings.fitbit.activities.daily_activity_type_ids
+    )
+    if daily_activity_type_ids:
         daily_activity_task = await post_daily_activities(
             local_fitbit_repo_factory=fitbit_repository_factory(),
-            activity_type_ids=set(settings.app_settings.fitbit_daily_activity_type_ids),
+            activity_type_ids=set(daily_activity_type_ids),
             slack_repo=get_slack_repository(),
             post_time=settings.app_settings.fitbit.activities.daily_report_time,
         )
