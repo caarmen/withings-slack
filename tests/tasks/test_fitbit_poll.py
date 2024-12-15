@@ -28,7 +28,7 @@ from slackhealthbot.routers.dependencies import (
     fitbit_repository_factory,
     request_context_fitbit_repository,
 )
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from slackhealthbot.tasks import fitbitpoll
 from slackhealthbot.tasks.fitbitpoll import Cache, do_poll
 from tests.testsupport.factories.factories import (
@@ -50,12 +50,13 @@ from tests.testsupport.testdata.fitbit_scenarios import (
     argvalues=sleep_scenarios.values(),
 )
 @pytest.mark.asyncio
-async def test_fitbit_poll_sleep(
+async def test_fitbit_poll_sleep(  # noqa: PLR0913
     fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitSleepScenario,
     client: TestClient,
+    settings: Settings,
 ):
     """
     Given a user with given previous sleep data logged
@@ -131,6 +132,7 @@ async def test_fitbit_poll_activity(  # noqa PLR0913
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     scenario: FitbitActivityScenario,
     client: TestClient,
+    settings: Settings,
 ):
     """
     Given a user with given previous activity data logged
@@ -177,7 +179,9 @@ async def test_fitbit_poll_activity(  # noqa PLR0913
             settings_attribute_tokens = key.split(".")
             settings_attribute_to_patch = settings_attribute_tokens.pop()
             settings_obj_path_to_patch = ".".join(settings_attribute_tokens)
-            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(settings)
+            settings_obj_to_patch = attrgetter(settings_obj_path_to_patch)(
+                settings,
+            )
             monkeypatch.setattr(
                 settings_obj_to_patch, settings_attribute_to_patch, value
             )
@@ -219,12 +223,13 @@ async def test_fitbit_poll_activity(  # noqa PLR0913
 
 
 @pytest.mark.asyncio
-async def test_schedule_fitbit_poll(
+async def test_schedule_fitbit_poll(  # noqa: PLR0913
     mocked_async_session,
     fitbit_repositories: tuple[LocalFitbitRepository, RemoteFitbitRepository],
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
     monkeypatch: pytest.MonkeyPatch,
+    settings: Settings,
 ):
     monkeypatch.setattr(settings.app_settings.fitbit.poll, "enabled", False)
     monkeypatch.setattr(settings.app_settings.fitbit.poll, "interval_seconds", 3)

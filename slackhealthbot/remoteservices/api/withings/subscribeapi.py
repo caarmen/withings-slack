@@ -1,21 +1,29 @@
 import logging
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.core.models import OAuthFields
 from slackhealthbot.oauth import requests
-from slackhealthbot.settings import withings_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 
+@inject
 async def subscribe(
     oauth_token: OAuthFields,
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
-    callbackurl = f"{settings.callback_url}withings-notification-webhook/"
+    callbackurl = (
+        f"{settings.withings_oauth_settings.callback_url}withings-notification-webhook/"
+    )
     # https://developer.withings.com/api-reference#tag/notify/operation/notify-subscribe
     try:
         response = await requests.post(
-            provider=settings.name,
+            provider=settings.withings_oauth_settings.name,
             token=oauth_token,
-            url=f"{settings.base_url}notify",
+            url=f"{settings.withings_oauth_settings.base_url}notify",
             data={
                 "action": "subscribe",
                 "callbackurl": callbackurl,

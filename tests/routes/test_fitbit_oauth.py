@@ -17,7 +17,7 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     UserIdentity,
 )
 from slackhealthbot.domain.models.activity import ActivityData
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -32,6 +32,7 @@ async def test_refresh_token_ok(
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is expired
@@ -140,6 +141,7 @@ async def test_refresh_token_fail(
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is expired and invalid
@@ -318,6 +320,7 @@ async def test_logged_out(
     client: TestClient,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given a user whose access token is invalid

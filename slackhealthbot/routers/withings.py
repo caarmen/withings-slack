@@ -1,8 +1,10 @@
 import logging
 
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UnknownUserException, UserLoggedOutException
 from slackhealthbot.domain.localrepository.localwithingsrepository import (
     LocalWithingsRepository,
@@ -28,7 +30,7 @@ from slackhealthbot.routers.dependencies import (
     get_slack_repository,
     templates,
 )
-from slackhealthbot.settings import withings_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 router = APIRouter()
 
@@ -44,14 +46,16 @@ def validate_withings_notification_webhook():
 
 
 @router.get("/withings-oauth-webhook/")
+@inject
 async def withings_oauth_webhook(
     request: Request,
     local_repo: LocalWithingsRepository = Depends(get_local_withings_repository),
     remote_repo: RemoteWithingsRepository = Depends(get_remote_withings_repository),
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
-    token: dict = await oauth.create_client(settings.name).authorize_access_token(
-        request
-    )
+    token: dict = await oauth.create_client(
+        settings.withings_oauth_settings.name
+    ).authorize_access_token(request)
     await usecase_login_user.do(
         local_repo=local_repo,
         remote_repo=remote_repo,
@@ -64,10 +68,17 @@ async def withings_oauth_webhook(
 
 
 @router.get("/v1/withings-authorization/{slack_alias}")
-async def get_withings_authorization(slack_alias: str, request: Request):
+@inject
+async def get_withings_authorization(
+    slack_alias: str,
+    request: Request,
+    settings: Settings = Depends(Provide[Container.settings]),
+):
     request.session["slack_alias"] = slack_alias
-    return await oauth.create_client(settings.name).authorize_redirect(
-        request, redirect_uri=settings.redirect_uri
+    return await oauth.create_client(
+        settings.withings_oauth_settings.name
+    ).authorize_redirect(
+        request, redirect_uri=settings.withings_oauth_settings.redirect_uri
     )
 
 

@@ -2,11 +2,13 @@ import logging
 from typing import Any, Callable, Coroutine
 
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
-from fastapi import status
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends, status
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.settings import fitbit_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 
 def fitbit_compliance_fix(session: AsyncOAuth2Client):
@@ -31,13 +33,19 @@ def is_auth_failure(response) -> bool:
     return response.status_code != status.HTTP_200_OK
 
 
-def configure(update_token_callback: Callable[[dict[str, Any]], Coroutine]):
+@inject
+def configure(
+    update_token_callback: Callable[[dict[str, Any]], Coroutine],
+    settings: Settings = Depends(Provide[Container.settings]),
+):
     oauth.register(
-        name=settings.name,
-        api_base_url=settings.base_url,
+        name=settings.fitbit_oauth_settings.name,
+        api_base_url=settings.fitbit_oauth_settings.base_url,
         authorize_url="https://www.fitbit.com/oauth2/authorize",
-        access_token_url=f"{settings.base_url}oauth2/token",
-        authorize_params={"scope": " ".join(settings.oauth_scopes)},
+        access_token_url=f"{settings.fitbit_oauth_settings.base_url}oauth2/token",
+        authorize_params={
+            "scope": " ".join(settings.fitbit_oauth_settings.oauth_scopes)
+        },
         compliance_fix=fitbit_compliance_fix,
         update_token=update_token_callback,
         token_endpoint_auth_method="client_secret_basic",

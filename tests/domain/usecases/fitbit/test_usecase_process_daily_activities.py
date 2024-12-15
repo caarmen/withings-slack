@@ -16,7 +16,7 @@ from slackhealthbot.domain.usecases.fitbit import usecase_process_daily_activiti
 from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -31,6 +31,7 @@ async def test_process_daily_activities(
     local_fitbit_repository: LocalFitbitRepository,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     user_factory, _, fitbit_activity_factory = fitbit_factories
     old_date = dt.datetime(2023, 3, 4, 15, 44, 33)

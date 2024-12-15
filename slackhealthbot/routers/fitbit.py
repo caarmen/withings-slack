@@ -1,9 +1,11 @@
 import datetime
 import logging
 
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UnknownUserException, UserLoggedOutException
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
@@ -27,35 +29,48 @@ from slackhealthbot.routers.dependencies import (
     get_slack_repository,
     templates,
 )
-from slackhealthbot.settings import fitbit_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 router = APIRouter()
 
 
 @router.get("/v1/fitbit-authorization/{slack_alias}")
-async def get_fitbit_authorization(slack_alias: str, request: Request):
+@inject
+async def get_fitbit_authorization(
+    slack_alias: str,
+    request: Request,
+    settings: Settings = Depends(Provide[Container.settings]),
+):
     request.session["slack_alias"] = slack_alias
-    return await oauth.create_client(settings.name).authorize_redirect(request)
+    return await oauth.create_client(
+        settings.fitbit_oauth_settings.name
+    ).authorize_redirect(request)
 
 
 @router.get("/fitbit-notification-webhook/")
-def validate_fitbit_notification_webhook(verify: str | None = None):
+@inject
+def validate_fitbit_notification_webhook(
+    verify: str | None = None,
+    settings: Settings = Depends(Provide[Container.settings]),
+):
     # See the fitbit verification doc:
     # https://dev.fitbit.com/build/reference/web-api/developer-guide/using-subscriptions/#Verifying-a-Subscriber
-    if verify == settings.subscriber_verification_code:
+    if verify == settings.fitbit_oauth_settings.subscriber_verification_code:
         return Response(status_code=204)
     return Response(status_code=404)
 
 
 @router.get("/fitbit-oauth-webhook/")
+@inject
 async def fitbit_oauth_webhook(
     request: Request,
     local_repo: LocalFitbitRepository = Depends(get_local_fitbit_repository),
     remote_repo: RemoteFitbitRepository = Depends(get_remote_fitbit_repository),
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
-    token: dict = await oauth.create_client(settings.name).authorize_access_token(
-        request
-    )
+    token: dict = await oauth.create_client(
+        settings.fitbit_oauth_settings.name
+    ).authorize_access_token(request)
     await usecase_login_user.do(
         local_repo=local_repo,
         remote_repo=remote_repo,

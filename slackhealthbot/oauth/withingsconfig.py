@@ -3,10 +3,13 @@ from typing import Any, Callable, Coroutine
 
 from authlib.common.urls import add_params_to_qs
 from authlib.integrations.httpx_client.oauth2_client import AsyncOAuth2Client
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
 
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.oauth.config import oauth
-from slackhealthbot.settings import withings_oauth_settings as settings
+from slackhealthbot.settings import Settings
 
 ACCESS_TOKEN_EXTRA_PARAMS = {
     "action": "requesttoken",
@@ -48,14 +51,20 @@ def is_auth_failure(response) -> bool:
     return False
 
 
-def configure(update_token_callback: Callable[[dict[str, Any]], Coroutine]):
+@inject
+def configure(
+    update_token_callback: Callable[[dict[str, Any]], Coroutine],
+    settings: Settings = Depends(Provide[Container.settings]),
+):
     oauth.register(
-        name=settings.name,
-        api_base_url=settings.base_url,
+        name=settings.withings_oauth_settings.name,
+        api_base_url=settings.withings_oauth_settings.base_url,
         authorize_url="https://account.withings.com/oauth2_user/authorize2",
-        access_token_url=f"{settings.base_url}v2/oauth2",
+        access_token_url=f"{settings.withings_oauth_settings.base_url}v2/oauth2",
         access_token_params=ACCESS_TOKEN_EXTRA_PARAMS,
-        authorize_params={"scope": ",".join(settings.oauth_scopes)},
+        authorize_params={
+            "scope": ",".join(settings.withings_oauth_settings.oauth_scopes)
+        },
         compliance_fix=withings_compliance_fix,
         update_token=update_token_callback,
         token_endpoint_auth_method="client_secret_post",
