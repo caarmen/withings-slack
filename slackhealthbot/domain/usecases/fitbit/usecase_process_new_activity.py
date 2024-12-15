@@ -21,7 +21,7 @@ from slackhealthbot.domain.remoterepository.remoteslackrepository import (
 )
 from slackhealthbot.domain.usecases.fitbit import usecase_get_last_activity
 from slackhealthbot.domain.usecases.slack import usecase_post_activity
-from slackhealthbot.settings import ActivityType, Settings
+from slackhealthbot.settings import Settings
 
 
 @inject
@@ -74,12 +74,10 @@ async def do(  # noqa: PLR0913 deal with this later
         activity=new_activity_data,
     )
 
-    activity_type: ActivityType = (
-        settings.app_settings.fitbit.activities.get_activity_type(
-            id=new_activity_data.type_id
-        )
+    report = settings.app_settings.fitbit.activities.get_report(
+        activity_type_id=new_activity_data.type_id
     )
-    if activity_type is None or not activity_type.report.realtime:
+    if report is None or not report.realtime:
         # This activity isn't to be posted in realtime to slack.
         # We're done for now.
         return
