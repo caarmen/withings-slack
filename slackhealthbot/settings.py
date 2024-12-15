@@ -2,6 +2,7 @@ import dataclasses
 import datetime as dt
 import enum
 import os
+from copy import deepcopy
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional
@@ -74,6 +75,32 @@ class Activities(BaseModel):
 
     def get_activity_type(self, id: int) -> ActivityType | None:
         return next((x for x in self.activity_types if x.id == id), None)
+
+    def get_report(self, activity_type_id: int) -> Report | None:
+        """
+        Get the report configuration for the given activity type.
+        If the activity type doesn't have an explicit report configuration,
+        fallback to the default report configuration.
+
+        If the activity type report configuration is missing some attributes,
+        fill them in with the default report configuration. This applies to the
+        following attributes:
+        - fields
+
+        :return None: If the activity type id is unknown
+        """
+        activity_type = self.get_activity_type(id=activity_type_id)
+        if not activity_type:
+            return None
+
+        if activity_type.report is None:
+            return self.default_report
+
+        report = deepcopy(activity_type.report)
+        if not report.fields:
+            report.fields = self.default_report.fields
+
+        return report
 
     @property
     def daily_activity_type_ids(self) -> list[int]:

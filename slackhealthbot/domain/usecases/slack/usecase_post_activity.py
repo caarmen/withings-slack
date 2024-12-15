@@ -123,18 +123,8 @@ def create_message(
             recent_top_value,
             record_history_days=record_history_days,
         )
-    activity_type_settings = next(
-        x
-        for x in settings.app_settings.fitbit.activities.activity_types
-        if x.name == activity_name
-    )
-    report_settings = (
-        activity_type_settings.report
-        if (
-            activity_type_settings.report
-            and activity_type_settings.report.fields is not None
-        )
-        else settings.app_settings.fitbit.activities.default_report
+    report_settings = settings.app_settings.fitbit.activities.get_report(
+        activity_type_id=activity_history.new_activity_data.type_id
     )
 
     message = f"""
