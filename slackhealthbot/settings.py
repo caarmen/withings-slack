@@ -75,6 +75,17 @@ class Activities(BaseModel):
     def get_activity_type(self, id: int) -> ActivityType | None:
         return next((x for x in self.activity_types if x.id == id), None)
 
+    @property
+    def daily_activity_type_ids(self) -> list[int]:
+        return [
+            x.id
+            for x in self.activity_types
+            if (
+                (x.report and x.report.daily)
+                or (x.report is None and self.default_report.daily)
+            )
+        ]
+
 
 class Fitbit(BaseModel):
     poll: Poll
@@ -142,17 +153,6 @@ class AppSettings(BaseSettings):
                 yaml_file=file.name,
             )
         return (env_settings, yaml_settings_source)
-
-    @property
-    def fitbit_daily_activity_type_ids(self) -> list[int]:
-        return [
-            x.id
-            for x in self.fitbit.activities.activity_types
-            if (
-                (x.report and x.report.daily)
-                or (x.report is None and self.fitbit.activities.default_report.daily)
-            )
-        ]
 
 
 class SecretSettings(BaseSettings):
