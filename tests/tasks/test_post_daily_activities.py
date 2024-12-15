@@ -11,7 +11,7 @@ from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
 from slackhealthbot.routers.dependencies import fitbit_repository_factory
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from slackhealthbot.tasks.post_daily_activities_task import dt as dt_to_freeze
 from slackhealthbot.tasks.post_daily_activities_task import post_daily_activities
 from tests.testsupport.factories.factories import (
@@ -28,6 +28,7 @@ async def test_post_daily_activities(
     mocked_async_session,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    settings: Settings,
 ):
     """
     Given some daily activity stats for a user and an activity type
@@ -115,7 +116,9 @@ async def test_post_daily_activities(
     )
     task: asyncio.Task = await post_daily_activities(
         local_fitbit_repo_factory=fitbit_repository_factory(mocked_async_session),
-        activity_type_ids=set(settings.app_settings.fitbit_daily_activity_type_ids),
+        activity_type_ids=set(
+            settings.app_settings.fitbit.activities.daily_activity_type_ids
+        ),
         slack_repo=WebhookSlackRepository(),
         post_time=settings.app_settings.fitbit.activities.daily_report_time,
     )

@@ -1,5 +1,7 @@
+import dataclasses
 import datetime as dt
 import json
+from pathlib import Path
 
 import pytest
 from httpx import Response
@@ -13,10 +15,11 @@ from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
 )
 from slackhealthbot.domain.usecases.fitbit import usecase_process_daily_activities
+from slackhealthbot.main import app
 from slackhealthbot.remoteservices.repositories.webhookslackrepository import (
     WebhookSlackRepository,
 )
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import AppSettings, SecretSettings, Settings
 from tests.testsupport.factories.factories import (
     FitbitActivityFactory,
     FitbitUserFactory,
@@ -25,18 +28,108 @@ from tests.testsupport.factories.factories import (
 from tests.testsupport.mock.builtins import freeze_time
 
 
+@dataclasses.dataclass
+class DailyActivityScenario:
+    id: str
+    custom_conf: str | None
+    expected_activity_message: str
+
+
+DAILY_ACTIVITY_SCENARIOS = [
+    DailyActivityScenario(
+        id="no custom conf",
+        custom_conf=None,
+        expected_activity_message="""New daily Treadmill activity from <@jdoe>:
+    • Activity count: 2
+    • Total duration: 15 minutes ↗️ New record (last 180 days)! 🏆
+    • Total calories: 250 ↗️ New record (last 180 days)! 🏆
+    • Distance: 15.000 km ⬆️ New record (last 180 days)! 🏆
+    • Total cardio minutes: 12 ↗️ New record (last 180 days)! 🏆""",
+    ),
+    DailyActivityScenario(
+        id="distance only",
+        custom_conf="""
+fitbit:
+  activities:
+    activity_types:
+      - name: Treadmill
+        id: 90019
+        report:
+          daily: true
+          realtime: false
+          fields:
+            - distance
+""",
+        expected_activity_message="""New daily Treadmill activity from <@jdoe>:
+    • Distance: 15.000 km ⬆️ New record (last 180 days)! 🏆""",
+    ),
+    DailyActivityScenario(
+        id="fat burn minutes without fat burn minutes",
+        custom_conf="""
+fitbit:
+  activities:
+    activity_types:
+      - name: Treadmill
+        id: 90019
+        report:
+          daily: true
+          realtime: false
+          fields:
+            - activity_count
+            - fat_burn_minutes
+""",
+        expected_activity_message="""New daily Treadmill activity from <@jdoe>:
+    • Activity count: 2""",
+    ),
+    DailyActivityScenario(
+        id="custom conf not overriding report values",
+        custom_conf="""
+fitbit:
+  activities:
+    activity_types:
+      - name: Treadmill
+        id: 90019
+""",
+        expected_activity_message="""New daily Treadmill activity from <@jdoe>:
+    • Activity count: 2
+    • Total duration: 15 minutes ↗️ New record (last 180 days)! 🏆
+    • Total calories: 250 ↗️ New record (last 180 days)! 🏆
+    • Distance: 15.000 km ⬆️ New record (last 180 days)! 🏆
+    • Total cardio minutes: 12 ↗️ New record (last 180 days)! 🏆""",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ids=[x.id for x in DAILY_ACTIVITY_SCENARIOS],
+    argnames="scenario",
+    argvalues=DAILY_ACTIVITY_SCENARIOS,
+)
 @pytest.mark.asyncio
-async def test_process_daily_activities(
+async def test_process_daily_activities(  # noqa: PLR0913
     monkeypatch: pytest.MonkeyPatch,
     local_fitbit_repository: LocalFitbitRepository,
     respx_mock: MockRouter,
     fitbit_factories: tuple[UserFactory, FitbitUserFactory, FitbitActivityFactory],
+    scenario: DailyActivityScenario,
+    settings: Settings,
+    tmp_path: Path,
 ):
+    if scenario.custom_conf:
+        custom_conf_path = tmp_path / "custom-conf.yaml"
+        with open(custom_conf_path, "w", encoding="utf-8") as custom_conf_file:
+            custom_conf_file.write(scenario.custom_conf)
+        with monkeypatch.context() as mp:
+            mp.setenv("SHB_CUSTOM_CONFIG_PATH", str(custom_conf_path))
+            settings = Settings(
+                app_settings=AppSettings(),
+                secret_settings=SecretSettings(),
+            )
     user_factory, _, fitbit_activity_factory = fitbit_factories
     old_date = dt.datetime(2023, 3, 4, 15, 44, 33)
     recent_date = dt.datetime(2024, 4, 2, 23, 44, 55)
     today = dt.datetime(2024, 8, 2, 10, 44, 55)
-    activity_type = 111
+    activity_type = 90019
     user: models.User = user_factory.create(slack_alias="jdoe")
 
     # All-time top stats in the old date:
@@ -140,22 +233,16 @@ async def test_process_daily_activities(
             dt_module_to_freeze=dt_to_freeze,
             frozen_datetime_args=(2024, 8, 2, 10, 44, 55),
         )
-        await usecase_process_daily_activities.do(
-            local_fitbit_repo=local_fitbit_repository,
-            type_ids={activity_type},
-            slack_repo=WebhookSlackRepository(),
-        )
+        with app.container.settings.override(settings):
+            await usecase_process_daily_activities.do(
+                local_fitbit_repo=local_fitbit_repository,
+                type_ids={activity_type},
+                slack_repo=WebhookSlackRepository(),
+            )
 
     assert slack_request.call_count == 1
     actual_activity_message = json.loads(slack_request.calls.last.request.content)[
         "text"
     ]
 
-    expected_activity_message = """New daily Unknown activity from <@jdoe>:
-    • Activity count: 2
-    • Total duration: 15 minutes ↗️ New record (last 180 days)! 🏆
-    • Total calories: 250 ↗️ New record (last 180 days)! 🏆
-    • Distance: 15.000 km ⬆️ New record (last 180 days)! 🏆
-    • Total cardio minutes: 12 ↗️ New record (last 180 days)! 🏆"""
-
-    assert actual_activity_message == expected_activity_message
+    assert actual_activity_message == scenario.expected_activity_message

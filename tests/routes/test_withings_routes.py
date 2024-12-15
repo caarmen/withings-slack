@@ -15,7 +15,7 @@ from slackhealthbot.domain.localrepository.localwithingsrepository import (
     FitnessData,
     LocalWithingsRepository,
 )
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 from tests.testsupport.factories.factories import UserFactory, WithingsUserFactory
 
 
@@ -39,12 +39,13 @@ class WeightNotificationScenario:
     ],
 )
 @pytest.mark.asyncio
-async def test_weight_notification(
+async def test_weight_notification(  # noqa: PLR0913
     local_withings_repository: LocalWithingsRepository,
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
     scenario: WeightNotificationScenario,
+    settings: Settings,
 ):
     """
     Given a user with a given previous weight logged
@@ -131,6 +132,7 @@ async def test_duplicate_weight_notification(
     client: TestClient,
     respx_mock: MockRouter,
     withings_factories: tuple[UserFactory, WithingsUserFactory],
+    settings: Settings,
 ):
     """
     Given a user with a given previous weight logged

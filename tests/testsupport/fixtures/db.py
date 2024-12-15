@@ -36,7 +36,7 @@ def apply_alembic_migration(
     monkeypatch: pytest.MonkeyPatch,
 ):
     with monkeypatch.context() as mp:
-        mp.setattr(db_connection, "connection_url", async_connection_url)
+        mp.setattr(db_connection, "get_connection_url", lambda: async_connection_url)
         alembic_cfg = Config("alembic.ini")
         command.upgrade(alembic_cfg, "head")
 

@@ -4,6 +4,10 @@ import datetime
 import logging
 from typing import AsyncContextManager, Callable
 
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.core.exceptions import UserLoggedOutException
 from slackhealthbot.domain.localrepository.localfitbitrepository import (
     LocalFitbitRepository,
@@ -20,7 +24,7 @@ from slackhealthbot.domain.usecases.fitbit import (
     usecase_process_new_sleep,
 )
 from slackhealthbot.domain.usecases.slack import usecase_post_user_logged_out
-from slackhealthbot.settings import settings
+from slackhealthbot.settings import Settings
 
 
 @dataclasses.dataclass
@@ -177,15 +181,20 @@ async def fitbit_poll_sleep(
                 )
 
 
-async def schedule_fitbit_poll(
+@inject
+async def schedule_fitbit_poll(  # noqa: PLR0913 deal with it later
     local_fitbit_repo_factory: Callable[[], AsyncContextManager[LocalFitbitRepository]],
     remote_fitbit_repo: RemoteFitbitRepository,
     slack_repo: RemoteSlackRepository,
-    initial_delay_s: int = settings.app_settings.fitbit.poll.interval_seconds,
+    initial_delay_s: int | None = None,
     cache: Cache = None,
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
     if cache is None:
         cache = Cache()
+
+    if initial_delay_s is None:
+        initial_delay_s = settings.app_settings.fitbit.poll.interval_seconds
 
     async def run_with_delay():
         await asyncio.sleep(initial_delay_s)

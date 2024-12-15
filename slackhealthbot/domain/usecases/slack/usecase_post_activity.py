@@ -1,3 +1,7 @@
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.domain.models.activity import ActivityHistory
 from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
@@ -9,6 +13,7 @@ from slackhealthbot.domain.usecases.slack.usecase_activity_message_formatter imp
     get_activity_minutes_change_icon,
     get_ranking_text,
 )
+from slackhealthbot.settings import ReportField, Settings
 
 
 async def do(
@@ -24,11 +29,13 @@ async def do(
     await repo.post_message(message.strip())
 
 
+@inject
 def create_message(
     slack_alias: str,
     activity_name: str,
     activity_history: ActivityHistory,
     record_history_days: int,
+    settings: Settings = Depends(Provide[Container.settings]),
 ):
     activity = activity_history.new_activity_data
     zone_icons = {}
@@ -116,12 +123,23 @@ def create_message(
             recent_top_value,
             record_history_days=record_history_days,
         )
+    report_settings = settings.app_settings.fitbit.activities.get_report(
+        activity_type_id=activity_history.new_activity_data.type_id
+    )
+
     message = f"""
 New {activity_name} activity from <@{slack_alias}>:
-    • Duration: {activity.total_minutes} minutes {duration_icon} {duration_record_text}
-    • Calories: {activity.calories} {calories_icon} {calories_record_text}
 """
-    if activity.distance_km:
+
+    if ReportField.duration in report_settings.fields:
+        message += f"""    • Duration: {activity.total_minutes} minutes {duration_icon} {duration_record_text}
+"""
+
+    if ReportField.calories in report_settings.fields:
+        message += f"""    • Calories: {activity.calories} {calories_icon} {calories_record_text}
+"""
+
+    if ReportField.distance in report_settings.fields and activity.distance_km:
         message += f"""    • Distance: {activity.distance_km:.3f} km {distance_km_icon} {distance_km_record_text}
 """
     message += "\n".join(
@@ -131,6 +149,7 @@ New {activity_name} activity from <@{slack_alias}>:
             + zone_icons.get(zone_minutes.zone, "")
             + f" {zone_record_texts.get(zone_minutes.zone, '')}"
             for zone_minutes in activity.zone_minutes
+            if f"{zone_minutes.zone}_minutes" in report_settings.fields
         ]
     )
     return message
