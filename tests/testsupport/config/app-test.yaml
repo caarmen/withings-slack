@@ -34,3 +34,9 @@ fitbit:
         report:
           daily: false
           realtime: true
+
+      - name: Unknown
+        id: 0
+        report:
+          daily: true
+          realtime: true

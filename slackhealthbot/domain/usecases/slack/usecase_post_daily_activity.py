@@ -1,3 +1,7 @@
+from dependency_injector.wiring import Provide, inject
+from fastapi import Depends
+
+from slackhealthbot.containers import Container
 from slackhealthbot.domain.models.activity import DailyActivityHistory
 from slackhealthbot.domain.remoterepository.remoteslackrepository import (
     RemoteSlackRepository,
@@ -8,6 +12,7 @@ from slackhealthbot.domain.usecases.slack.usecase_activity_message_formatter imp
     get_activity_minutes_change_icon,
     get_ranking_text,
 )
+from slackhealthbot.settings import ReportField, Settings
 
 
 async def do(
@@ -26,11 +31,13 @@ async def do(
     await repo.post_message(message.strip())
 
 
+@inject
 def create_message(
     slack_alias: str,
     activity_name: str,
     history: DailyActivityHistory,
     record_history_days: int,
+    settings: Settings = Depends(Provide[Container.settings]),
 ) -> str:
     if history.previous_daily_activity_stats:
         calories_icon = (
@@ -148,25 +155,63 @@ def create_message(
         record_history_days=record_history_days,
     )
 
+    activity_type_settings = next(
+        x
+        for x in settings.app_settings.fitbit.activities.activity_types
+        if x.name == activity_name
+    )
+    report_settings = (
+        activity_type_settings.report
+        if (
+            activity_type_settings.report
+            and activity_type_settings.report.fields is not None
+        )
+        else settings.app_settings.fitbit.activities.default_report
+    )
+
     message = f"""
 New daily {activity_name} activity from <@{slack_alias}>:
-    • Activity count: {history.new_daily_activity_stats.count_activities}
-    • Total duration: {history.new_daily_activity_stats.sum_total_minutes} minutes {total_minutes_icon} {total_minutes_record_text}
-    • Total calories: {history.new_daily_activity_stats.sum_calories} {calories_icon} {calories_record_text}
 """
-    if history.new_daily_activity_stats.sum_distance_km:
+
+    if ReportField.activity_count in report_settings.fields:
+        message += f"""    • Activity count: {history.new_daily_activity_stats.count_activities}
+"""
+
+    if ReportField.duration in report_settings.fields:
+        message += f"""    • Total duration: {history.new_daily_activity_stats.sum_total_minutes} minutes {total_minutes_icon} {total_minutes_record_text}
+"""
+
+    if ReportField.calories in report_settings.fields:
+        message += f"""    • Total calories: {history.new_daily_activity_stats.sum_calories} {calories_icon} {calories_record_text}
+"""
+    if (
+        ReportField.distance in report_settings.fields
+        and history.new_daily_activity_stats.sum_distance_km
+    ):
         message += f"""    • Distance: {history.new_daily_activity_stats.sum_distance_km:.3f} km {distance_km_icon} {distance_km_record_text}
 """
-    if history.new_daily_activity_stats.sum_fat_burn_minutes:
+    if (
+        ReportField.fat_burn_minutes in report_settings.fields
+        and history.new_daily_activity_stats.sum_fat_burn_minutes
+    ):
         message += f"""    • Total fat burn minutes: {history.new_daily_activity_stats.sum_fat_burn_minutes} {fat_burn_minutes_icon} {fat_burn_minutes_record_text}
 """
-    if history.new_daily_activity_stats.sum_cardio_minutes:
+    if (
+        ReportField.cardio_minutes in report_settings.fields
+        and history.new_daily_activity_stats.sum_cardio_minutes
+    ):
         message += f"""    • Total cardio minutes: {history.new_daily_activity_stats.sum_cardio_minutes} {cardio_minutes_icon} {cardio_minutes_record_text}
 """
-    if history.new_daily_activity_stats.sum_peak_minutes:
+    if (
+        ReportField.peak_minutes in report_settings.fields
+        and history.new_daily_activity_stats.sum_peak_minutes
+    ):
         message += f"""    • Total peak minutes: {history.new_daily_activity_stats.sum_peak_minutes} {peak_minutes_icon} {peak_minutes_record_text}
 """
-    if history.new_daily_activity_stats.sum_out_of_zone_minutes:
+    if (
+        ReportField.out_of_zone_minutes in report_settings.fields
+        and history.new_daily_activity_stats.sum_out_of_zone_minutes
+    ):
         message += f"""    • Total out of zone minutes: {history.new_daily_activity_stats.sum_out_of_zone_minutes} {out_of_zone_minutes_icon} {out_of_zone_minutes_record_text}
 """
 
