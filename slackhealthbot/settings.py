@@ -1,6 +1,8 @@
 import dataclasses
 import datetime as dt
+import os
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import yaml
 from pydantic import AnyHttpUrl, BaseModel, HttpUrl
@@ -73,7 +75,6 @@ class AppSettings(BaseSettings):
     fitbit: Fitbit
     model_config = SettingsConfigDict(
         env_nested_delimiter="__",
-        yaml_file="config/app-merged.yaml",
     )
 
     @classmethod
@@ -93,7 +94,10 @@ class AppSettings(BaseSettings):
     @classmethod
     def _load_merged_config(cls) -> dict:
         default_config = cls._load_yaml_file("config/app-default.yaml", required=True)
-        custom_config = cls._load_yaml_file("config/app-custom.yaml", required=False)
+        custom_config = cls._load_yaml_file(
+            os.environ.get("SHB_CUSTOM_CONFIG_PATH", "config/app-custom.yaml"),
+            required=False,
+        )
         return deep_update(default_config, custom_config)
 
     @classmethod
@@ -105,9 +109,12 @@ class AppSettings(BaseSettings):
         **kwargs,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         merged_config = cls._load_merged_config()
-        with open("config/app-merged.yaml", "w", encoding="utf-8") as file:
-            yaml.safe_dump(merged_config, file)
-        yaml_settings_source = YamlConfigSettingsSource(settings_cls)
+        with NamedTemporaryFile(mode="w") as file:
+            yaml.safe_dump(merged_config, file.file)
+            yaml_settings_source = YamlConfigSettingsSource(
+                settings_cls,
+                yaml_file=file.name,
+            )
         return (env_settings, yaml_settings_source)
 
     @property
